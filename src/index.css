@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
+
+@theme {
+  --color-primary: #FF7F50;
+  /* Coral Orange */
+  --color-primary-foreground: #FFFFFF;
+
+  --color-secondary: #4A5D85;
+  /* Dark Slate Blue */
+  --color-secondary-foreground: #FFFFFF;
+
+  --color-accent: #BCC6F7;
+  /* Lavender */
+  --color-accent-foreground: #4A5D85;
+
+  --color-background: #FFFBF0;
+  /* Cream */
+  --color-surface: #FFFFFF;
+}
+
+:root {
+  font-family: Cairo, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #1F2937;
+  background-color: var(--color-background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
