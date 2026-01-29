@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Calendar as CalendarIcon, Clock, Users, Plus, ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays, LogOut } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addDays, addMonths, subMonths, addWeeks, subWeeks, startOfDay, isWithinInterval } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, Users, Plus, ChevronLeft, ChevronRight, CalendarDays, LogOut } from 'lucide-react';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addDays, addMonths } from 'date-fns';
 import AddSessionForm from '../components/AddSessionForm';
 
 interface Session {
@@ -175,9 +175,9 @@ export default function Schedule() {
         if (viewMode === 'day') {
             setCurrentDate(d => direction === 'next' ? addDays(d, 1) : addDays(d, -1));
         } else if (viewMode === 'week') {
-            setCurrentDate(d => direction === 'next' ? addWeeks(d, 1) : subWeeks(d, 1));
+            setCurrentDate(d => direction === 'next' ? addDays(d, 7) : addDays(d, -7));
         } else {
-            setCurrentDate(d => direction === 'next' ? addMonths(d, 1) : subMonths(d, 1));
+            setCurrentDate(d => direction === 'next' ? addMonths(d, 1) : addMonths(d, -1));
         }
     };
 
@@ -298,11 +298,11 @@ export default function Schedule() {
                         {day}
                     </div>
                 ))}
-                {days.map((day, dayIdx) => {
+                {days.map((day: Date, dayIdx: number) => {
                     const isToday = isSameDay(day, new Date());
                     const daySessions = getSessionsForDay(day);
                     // Check if day is current month
-                    const isCurrentMonth = isSameMonth(day, currentDate);
+                    const isCurrentMonth = day.getMonth() === currentDate.getMonth() && day.getFullYear() === currentDate.getFullYear();
 
                     return (
                         <div
