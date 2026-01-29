@@ -71,10 +71,10 @@ export default function DashboardLayout() {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 z-50 w-64 bg-secondary text-white transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            <aside className={`fixed inset-y-0 start-0 z-50 w-64 bg-secondary text-white transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto ${sidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'
                 }`}>
                 <div className="flex items-center justify-center h-20 bg-secondary/80 border-b border-white/10 px-4">
-                    <img src="/logo.png" alt="Epic Gym Logo" className="h-14 w-auto object-contain drop-shadow-lg" />
+                    <img src="/logo_epic.png" alt="Epic Gym Logo" className="h-14 w-auto object-contain drop-shadow-lg" />
                 </div>
 
                 <div className="px-4 py-2 bg-white/5 mx-4 mt-4 rounded text-xs text-center uppercase tracking-wider text-gray-400">
@@ -92,7 +92,7 @@ export default function DashboardLayout() {
                                 to={item.to}
                                 onClick={() => setSidebarOpen(false)}
                                 className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
-                                    ? 'bg-primary text-white shadow-lg shadow-primary/30 translate-x-1'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/30 ltr:translate-x-1 rtl:-translate-x-1'
                                     : 'text-gray-300 hover:bg-white/10 hover:text-white'
                                     }`}
                             >
