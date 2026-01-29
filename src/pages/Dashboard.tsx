@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase';
 import { Users, Dumbbell, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useOutletContext, Navigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
+import { useDashboardStats } from '../hooks/useData';
 
 export default function Dashboard() {
     const { t } = useTranslation(); // Init hook
@@ -13,73 +14,34 @@ export default function Dashboard() {
         return <Navigate to="/schedule" replace />;
     }
 
-    const [stats, setStats] = useState({
+    const { data: stats, isLoading: loading } = useDashboardStats();
+
+    // Default stats to avoid undefined errors during loading
+    const displayStats = stats || {
         totalStudents: 0,
         activeCoaches: 0,
         monthlyRevenue: 0,
-        recentActivity: [] as any[]
-    });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
-
-    const fetchDashboardData = async () => {
-        setLoading(true);
-        try {
-            // 1. Get Counts
-            const { count: studentCount } = await supabase.from('students').select('*', { count: 'exact', head: true });
-            const { count: coachCount } = await supabase.from('coaches').select('*', { count: 'exact', head: true });
-
-            // 2. Get Revenue for current month
-            const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-            const { data: payments } = await supabase
-                .from('payments')
-                .select('amount')
-                .gte('payment_date', startOfMonth);
-
-            const revenue = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-
-            // 3. Get Recent Students (Activity)
-            const { data: recentStudents } = await supabase
-                .from('students')
-                .select('id, full_name, created_at')
-                .order('created_at', { ascending: false })
-                .limit(5);
-
-            setStats({
-                totalStudents: studentCount || 0,
-                activeCoaches: coachCount || 0,
-                monthlyRevenue: revenue,
-                recentActivity: recentStudents || []
-            });
-
-        } catch (error) {
-            console.error('Error loading dashboard:', error);
-        } finally {
-            setLoading(false);
-        }
+        recentActivity: []
     };
 
     const statCards = [
         {
             label: t('dashboard.totalStudents'),
-            value: stats.totalStudents,
+            value: displayStats.totalStudents,
             icon: Users,
             color: 'bg-blue-500',
             trend: '+12% from last month'
         },
         {
             label: t('dashboard.monthlyRevenue'),
-            value: stats.monthlyRevenue.toLocaleString() + ' EGP',
+            value: displayStats.monthlyRevenue.toLocaleString() + ' EGP',
             icon: TrendingUp,
             color: 'bg-green-500',
             trend: '+5% from last month'
         },
         {
             label: t('dashboard.activeCoaches'),
-            value: stats.activeCoaches,
+            value: displayStats.activeCoaches,
             icon: Dumbbell,
             color: 'bg-orange-500',
             trend: 'Stable'
@@ -126,10 +88,10 @@ export default function Dashboard() {
                     <div className="space-y-4">
                         {loading ? (
                             <p className="text-gray-400 text-sm">{t('common.loading')}</p>
-                        ) : stats.recentActivity.length === 0 ? (
+                        ) : displayStats.recentActivity.length === 0 ? (
                             <p className="text-gray-400 text-sm">{t('dashboard.noRecentActivity')}</p>
                         ) : (
-                            stats.recentActivity.map((student) => (
+                            displayStats.recentActivity.map((student: any) => (
                                 <div key={student.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold">

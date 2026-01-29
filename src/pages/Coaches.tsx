@@ -4,6 +4,7 @@ import { Plus, UserCheck, UserMinus, Dumbbell } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
 import Payroll from '../components/Payroll';
 import { useTranslation } from 'react-i18next';
+import { useCoaches } from '../hooks/useData';
 
 interface Coach {
     id: string;
@@ -17,8 +18,9 @@ interface Coach {
 
 export default function Coaches() {
     const { t } = useTranslation();
-    const [coaches, setCoaches] = useState<Coach[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: coachesData, isLoading: loading, refetch } = useCoaches();
+    const coaches = coachesData || [];
+
     const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -26,7 +28,6 @@ export default function Coaches() {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
-        fetchCoaches();
         fetchAttendance();
 
         // Update timer every second
@@ -48,14 +49,6 @@ export default function Coaches() {
             });
         }
         setAttendanceMap(map);
-    };
-
-    const fetchCoaches = async () => {
-        setLoading(true);
-        const { data, error } = await supabase.from('coaches').select('*');
-        if (error) console.error('Error:', error);
-        else setCoaches(data || []);
-        setLoading(false);
     };
 
     const getDuration = (checkInTime: string) => {
@@ -112,7 +105,7 @@ export default function Coaches() {
             console.error('Error deleting:', error);
             alert(t('common.deleteError'));
         } else {
-            fetchCoaches();
+            refetch();
         }
     };
 
@@ -235,7 +228,7 @@ export default function Coaches() {
                         setShowAddModal(false);
                         setEditingCoach(null);
                     }}
-                    onSuccess={fetchCoaches}
+                    onSuccess={refetch}
                 />
             )}
         </div>

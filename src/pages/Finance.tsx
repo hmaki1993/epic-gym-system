@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Plus, TrendingUp, Calendar, Search } from 'lucide-react';
 import AddPaymentForm from '../components/AddPaymentForm';
 import { format } from 'date-fns';
+import { usePayments } from '../hooks/useData';
 
 interface Payment {
     id: string;
@@ -16,35 +17,11 @@ interface Payment {
 }
 
 export default function Finance() {
-    const [payments, setPayments] = useState<Payment[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: paymentsData, isLoading: loading, refetch } = usePayments();
+    const payments = paymentsData || [];
+    const totalRevenue = payments.reduce((sum: any, p: any) => sum + Number(p.amount), 0);
+
     const [showAddModal, setShowAddModal] = useState(false);
-    const [totalRevenue, setTotalRevenue] = useState(0);
-
-    useEffect(() => {
-        fetchPayments();
-    }, []);
-
-    const fetchPayments = async () => {
-        setLoading(true);
-        // Fetch payments with student details
-        const { data, error } = await supabase
-            .from('payments')
-            .select(`
-                *,
-                students ( full_name )
-            `)
-            .order('payment_date', { ascending: false });
-
-        if (error) {
-            console.error('Error fetching payments:', error);
-        } else {
-            setPayments(data || []);
-            const total = (data || []).reduce((sum, p) => sum + Number(p.amount), 0);
-            setTotalRevenue(total);
-        }
-        setLoading(false);
-    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -137,7 +114,7 @@ export default function Finance() {
             {showAddModal && (
                 <AddPaymentForm
                     onClose={() => setShowAddModal(false)}
-                    onSuccess={fetchPayments}
+                    onSuccess={refetch}
                 />
             )}
         </div>

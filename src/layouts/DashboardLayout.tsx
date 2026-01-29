@@ -14,6 +14,7 @@ import {
     Globe
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import AdminAssistant from '../components/AdminAssistant';
 
 export default function DashboardLayout() {
     const { t, i18n } = useTranslation();
@@ -140,6 +141,8 @@ export default function DashboardLayout() {
                 <main className="flex-1 overflow-auto p-4 lg:p-8">
                     <Outlet context={{ role }} />
                 </main>
+
+                {role === 'admin' && <AdminAssistant />}
             </div>
         </div>
     );

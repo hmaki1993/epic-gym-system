@@ -4,6 +4,7 @@ import { Plus, Search, Filter, Smile } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import AddStudentForm from '../components/AddStudentForm';
 import { useTranslation } from 'react-i18next';
+import { useStudents } from '../hooks/useData';
 
 interface Student {
     id: string; // uuid
@@ -16,29 +17,11 @@ interface Student {
 
 export default function Students() {
     const { t } = useTranslation();
-    const [students, setStudents] = useState<Student[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: studentsData, isLoading: loading, refetch } = useStudents();
+    const students = studentsData || [];
+
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
-
-    useEffect(() => {
-        fetchStudents();
-    }, []);
-
-    const fetchStudents = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-            .from('students')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Error fetching students:', error);
-        } else {
-            setStudents(data || []);
-        }
-        setLoading(false);
-    };
 
     const getSubscriptionStatus = (expiryDate: string) => {
         const daysLeft = differenceInDays(new Date(expiryDate), new Date());
@@ -64,7 +47,7 @@ export default function Students() {
             console.error('Error deleting:', error);
             alert(t('common.deleteError'));
         } else {
-            fetchStudents();
+            refetch();
         }
     };
 
@@ -195,7 +178,7 @@ export default function Students() {
                         setShowAddModal(false);
                         setEditingStudent(null);
                     }}
-                    onSuccess={fetchStudents}
+                    onSuccess={refetch}
                 />
             )}
         </div>
