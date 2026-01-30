@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Building2, Palette } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
 export default function Settings() {
     const { t } = useTranslation();
@@ -100,7 +101,11 @@ export default function Settings() {
         // Dispatch a custom event so DashboardLayout knows to update immediately
         window.dispatchEvent(new Event('gymProfileUpdated'));
 
-        alert(t('common.saveSuccess'));
+        toast.success(t('common.saveSuccess'), {
+            style: {
+                border: '1px solid var(--color-primary)',
+            }
+        });
         setLoading(false);
     };
 

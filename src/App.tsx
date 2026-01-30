@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -24,6 +25,34 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'var(--color-surface)',
+            color: 'inherit', // Uses body color which adapts to theme
+            boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+            border: '1px solid rgba(128,128,128,0.1)',
+            borderRadius: '12px',
+            padding: '16px',
+            fontSize: '15px',
+            fontWeight: '500',
+          },
+          success: {
+            iconTheme: {
+              primary: 'var(--color-primary)',
+              secondary: 'var(--color-surface)',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: 'var(--color-surface)',
+            },
+          },
+        }}
+      />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
