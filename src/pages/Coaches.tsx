@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, UserCheck, UserMinus, Dumbbell } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, UserCheck, UserMinus } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
 import Payroll from '../components/Payroll';
 import { useTranslation } from 'react-i18next';
@@ -170,7 +170,7 @@ export default function Coaches() {
                                     />
                                 ) : (
                                     <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-secondary">
-                                        <Dumbbell className="w-6 h-6" />
+                                        <Medal className="w-6 h-6" />
                                     </div>
                                 )}
                                 <span className={`text-xs px-2 py-1 rounded-full font-medium mr-16 ${isCheckedIn ? 'bg-green-100 text-green-700 animate-pulse' : 'bg-gray-100 text-gray-500'}`}>
@@ -179,7 +179,10 @@ export default function Coaches() {
                             </div>
 
                             <h3 className="text-lg font-bold text-gray-900">{coach.full_name}</h3>
-                            <p className="text-gray-500 text-sm mb-4">{coach.specialty}</p>
+                            <div className="flex items-center text-gray-600 dark:text-gray-300">
+                                <Medal className="w-4 h-4 mr-2 opacity-70" />
+                                <span className="text-sm">{coach.specialty}</span>
+                            </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-50">
                                 {isCheckedIn ? (

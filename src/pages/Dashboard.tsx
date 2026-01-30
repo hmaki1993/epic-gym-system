@@ -1,4 +1,4 @@
-import { Users, Dumbbell, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
+import { Users, DollarSign, Medal, Calendar, TrendingUp, TrendingDown, Clock, Scale, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useOutletContext, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,7 @@ export default function Dashboard() {
         {
             label: t('dashboard.activeCoaches'),
             value: displayStats.activeCoaches,
-            icon: Dumbbell,
+            icon: Medal, // Changed from Dumbbell to Medal
             color: 'bg-orange-500',
             trend: 'Stable'
         }
