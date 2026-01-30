@@ -99,7 +99,7 @@ export default function DashboardLayout() {
 
     return (
         <div
-            className="min-h-screen bg-gray-50 overflow-x-hidden relative"
+            className="min-h-screen bg-gray-50 flex overflow-x-hidden"
             dir={isRtl ? 'rtl' : 'ltr'}
         >
             {/* Mobile Sidebar Overlay */}
@@ -115,16 +115,15 @@ export default function DashboardLayout() {
                 className={`
                     fixed inset-y-0 z-50 transition-transform duration-300 ease-in-out
                     w-64 bg-secondary text-white flex flex-col border-white/5 shadow-2xl lg:shadow-none
+                    lg:relative lg:translate-x-0
                     ${sidebarOpen
                         ? 'translate-x-0'
-                        : (isRtl ? 'translate-x-[100%]' : '-translate-x-[100%]')
+                        : (isRtl ? 'translate-x-full' : '-translate-x-full')
                     }
                     ${isRtl ? 'right-0' : 'left-0'}
-                    lg:translate-x-0
                 `}
             >
                 <div className="flex flex-col items-center justify-center pt-10 pb-6 bg-secondary/80 border-b border-white/10 px-4 relative">
-                    {/* Close button for mobile */}
                     <button
                         onClick={() => setSidebarOpen(false)}
                         className="lg:hidden absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-white/70"
@@ -134,7 +133,7 @@ export default function DashboardLayout() {
 
                     <img src="/logo.png" alt="Epic Gym Logo" className="h-20 w-auto object-contain drop-shadow-xl mb-4 transition-transform hover:scale-105" />
 
-                    <div className="text-center w-full animate-in fade-in slide-in-from-top-2">
+                    <div className="text-center w-full">
                         <h2 className="font-bold text-lg tracking-wide">{gymProfile.name}</h2>
                         <div className="text-xs text-gray-300 mt-1 font-medium space-y-0.5">
                             <p>{gymProfile.address}</p>
@@ -144,7 +143,7 @@ export default function DashboardLayout() {
                 </div>
 
                 <div className="px-4 py-2 bg-white/5 mx-4 mt-6 rounded text-xs text-center uppercase tracking-wider text-gray-400">
-                    {role || 'Loading...'}
+                    {role || t('common.loading')}
                 </div>
 
                 <nav className="mt-4 px-4 space-y-2 flex-grow overflow-y-auto custom-scrollbar">
@@ -181,11 +180,8 @@ export default function DashboardLayout() {
             </aside>
 
             {/* Main Content Area */}
-            <div className={`
-                min-h-screen w-full flex flex-col transition-all duration-300
-                ${isRtl ? 'lg:pr-64' : 'lg:pl-64'}
-            `}>
-                <header className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-100 bg-white sticky top-0 z-30 w-full">
+            <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+                <header className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-100 bg-white sticky top-0 z-30 w-full flex-shrink-0">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(true)}
@@ -206,7 +202,6 @@ export default function DashboardLayout() {
                             <Globe className="w-4 h-4 text-primary" />
                             <span>{i18n.language === 'en' ? 'العربية' : 'English'}</span>
                         </button>
-                        <div className="text-[10px] font-mono opacity-20 hidden sm:block">v1.0.0</div>
                     </div>
                 </header>
 
@@ -215,5 +210,7 @@ export default function DashboardLayout() {
                 </main>
             </div>
         </div>
+    );
+}
     );
 }
