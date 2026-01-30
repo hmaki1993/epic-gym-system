@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { Users, Dumbbell, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useOutletContext, Navigate } from 'react-router-dom';
@@ -10,11 +8,11 @@ export default function Dashboard() {
     const { t } = useTranslation(); // Init hook
     const { role } = useOutletContext<{ role: string }>() || { role: null };
 
-    if (role === 'coach') {
-        return <Navigate to="/schedule" replace />;
-    }
-
     const { data: stats, isLoading: loading } = useDashboardStats();
+
+    // if (role === 'coach') {
+    //     return <Navigate to="/schedule" replace />;
+    // }
 
     // Default stats to avoid undefined errors during loading
     const displayStats = stats || {
@@ -53,7 +51,7 @@ export default function Dashboard() {
             {/* Welcome Section */}
             <div>
                 <h1 className="text-3xl font-bold text-secondary">{t('common.dashboard')}</h1>
-                <p className="text-gray-500 mt-1">{t('dashboard.welcome')}, here's what's happening at Epic Gym.</p>
+                <p className="text-gray-500 mt-1">{t('dashboard.welcome')}, here&apos;s what&apos;s happening at Epic Gym.</p>
             </div>
 
             {/* Stats Grid */}

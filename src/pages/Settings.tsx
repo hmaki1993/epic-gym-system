@@ -10,7 +10,7 @@ export default function Settings() {
         address: 'Cairo, Egypt',
     });
     const [loading, setLoading] = useState(false);
-    const [currentTheme, setCurrentTheme] = useState('default');
+
 
     const themes = [
         { id: 'default', name: 'Epic Default', primary: '#FF7F50', secondary: '#4A5D85' },
@@ -21,13 +21,6 @@ export default function Settings() {
         { id: 'nature', name: 'Nature Calm', primary: '#65a30d', secondary: '#1a2e05' },
         { id: 'ember', name: 'Ember Glow', primary: '#ea580c', secondary: '#431407' },
     ];
-
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'default';
-        setCurrentTheme(savedTheme);
-        // Apply theme on mount (in case it wasn't applied by a previous visit in this session)
-        applyThemeStyles(savedTheme);
-    }, []);
 
     const applyThemeStyles = (themeId: string) => {
         const root = document.documentElement;
@@ -78,6 +71,13 @@ export default function Settings() {
             root.style.removeProperty('color');
         }
     };
+
+    const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'default');
+
+    useEffect(() => {
+        // Apply theme on mount (in case it wasn't applied by a previous visit in this session)
+        applyThemeStyles(currentTheme);
+    }, [currentTheme]);
 
     const applyTheme = (themeId: string) => {
         setCurrentTheme(themeId);

@@ -22,7 +22,8 @@ export default function Payroll({ refreshTrigger }: PayrollProps) {
 
     useEffect(() => {
         fetchPayroll();
-    }, [month, refreshTrigger]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshTrigger]);
 
     const fetchPayroll = async () => {
         setLoading(true);

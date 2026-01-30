@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Plus, TrendingUp, Calendar, Search } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, TrendingUp, Calendar } from 'lucide-react';
 import AddPaymentForm from '../components/AddPaymentForm';
 import { format } from 'date-fns';
 import { usePayments } from '../hooks/useData';
@@ -18,8 +17,8 @@ interface Payment {
 
 export default function Finance() {
     const { data: paymentsData, isLoading: loading, refetch } = usePayments();
-    const payments = paymentsData || [];
-    const totalRevenue = payments.reduce((sum: any, p: any) => sum + Number(p.amount), 0);
+    const payments = (paymentsData as Payment[]) || []; // Cast to Payment[] to usage type
+    const totalRevenue = payments.reduce((sum: number, p: Payment) => sum + Number(p.amount), 0);
 
     const [showAddModal, setShowAddModal] = useState(false);
 

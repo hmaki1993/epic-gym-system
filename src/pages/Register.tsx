@@ -20,7 +20,7 @@ export default function Register() {
 
         try {
             // 1. Sign up data
-            const { data, error: signUpError } = await supabase.auth.signUp({
+            const { error: signUpError } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
@@ -37,8 +37,12 @@ export default function Register() {
 
             alert('Account created! You can now sign in.');
             navigate('/login');
-        } catch (err: any) {
-            setError(err.message || 'Failed to register');
+        } catch (err: unknown) { // Use unknown instead of any
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Failed to register');
+            }
         } finally {
             setLoading(false);
         }

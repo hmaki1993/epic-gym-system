@@ -10,7 +10,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    const { i18n, t } = useTranslation();
+    const { i18n } = useTranslation();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,8 +25,12 @@ export default function Login() {
 
             if (error) throw error;
             navigate('/');
-        } catch (err: any) {
-            setError(err.message || 'Failed to login');
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Failed to login');
+            }
         } finally {
             setLoading(false);
         }
@@ -108,7 +112,7 @@ export default function Login() {
                     </form>
 
                     <p className="text-center mt-6 text-gray-600">
-                        Don't have an account?{' '}
+                        Don&apos;t have an account?{' '}
                         <Link to="/register" className="font-semibold text-primary hover:underline">
                             Sign Up
                         </Link>

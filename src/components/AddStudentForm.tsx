@@ -11,8 +11,7 @@ interface AddStudentFormProps {
 }
 
 export default function AddStudentForm({ onClose, onSuccess, initialData }: AddStudentFormProps) {
-    const { t, i18n } = useTranslation();
-    const isRtl = i18n.language === 'ar';
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -70,7 +69,8 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
             onClose();
         } catch (error) {
             console.error('Error saving student:', error);
-            alert('Error saving student');
+            console.error('Error saving student:', error);
+            alert(`Error saving student: ${error.message || JSON.stringify(error)}`);
         } finally {
             setLoading(false);
         }

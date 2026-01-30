@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { X, Save, UserPlus } from 'lucide-react';
 
@@ -19,7 +19,7 @@ interface AddCoachFormProps {
 }
 
 export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoachFormProps) {
-    const { t } = useTranslation();
+    // const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({

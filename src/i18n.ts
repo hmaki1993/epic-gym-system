@@ -33,6 +33,8 @@ i18n
                         name: 'Name',
                         phone: 'Phone',
                         status: 'Status',
+                        unknown: 'Unknown',
+                        invalid: 'Invalid',
 
                         date: 'Date',
                         role: 'Role',
@@ -147,6 +149,8 @@ i18n
                         name: 'الاسم',
                         phone: 'الهاتف',
                         status: 'الحالة',
+                        unknown: 'غير معروف',
+                        invalid: 'غير صالح',
 
                         date: 'التاريخ',
                         role: 'الدور',

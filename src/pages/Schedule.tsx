@@ -23,6 +23,7 @@ type ViewMode = 'day' | 'week' | 'month';
 export default function Schedule() {
     const { role } = useOutletContext<{ role: string }>() || { role: null };
     const [sessions, setSessions] = useState<Session[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -35,105 +36,7 @@ export default function Schedule() {
     const [coachId, setCoachId] = useState<string | null>(null);
     const [elapsedTime, setElapsedTime] = useState<string>('00:00:00');
 
-    useEffect(() => {
-        fetchSessions();
-        if (role === 'coach') {
-            fetchAttendanceStatus();
-        }
-    }, [role]);
-
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-
-        if (attendanceToday && attendanceToday.check_in_time && !attendanceToday.check_out_time) {
-            const startTime = new Date(attendanceToday.check_in_time).getTime();
-
-            const updateTimer = () => {
-                const now = new Date().getTime();
-                const diff = now - startTime;
-
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000); // Fixed parentheses
-
-                setElapsedTime(
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-                );
-            };
-
-            updateTimer(); // Initial call
-            interval = setInterval(updateTimer, 1000);
-        }
-
-        return () => clearInterval(interval);
-    }, [attendanceToday]);
-
-    const fetchAttendanceStatus = async () => {
-        setAttendanceLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            // 1. Get Coach ID
-            const { data: coachData } = await supabase
-                .from('coaches')
-                .select('id')
-                .eq('profile_id', user.id)
-                .single();
-
-            if (coachData) {
-                setCoachId(coachData.id);
-                // 2. Check today's attendance
-                const today = new Date().toISOString().split('T')[0];
-                const { data: attendance } = await supabase
-                    .from('coach_attendance')
-                    .select('*')
-                    .eq('coach_id', coachData.id)
-                    .eq('date', today)
-                    .single();
-
-                setAttendanceToday(attendance);
-            }
-        }
-        setAttendanceLoading(false);
-    };
-
-    const handleCheckIn = async () => {
-        if (!coachId) return;
-        setAttendanceLoading(true);
-        const today = new Date().toISOString().split('T')[0];
-        const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false });
-
-        const { data, error } = await supabase
-            .from('coach_attendance')
-            .insert({
-                coach_id: coachId,
-                date: today,
-                check_in_time: new Date().toISOString()
-            })
-            .select()
-            .single();
-
-        if (error) console.error('Check-in failed:', error);
-        else setAttendanceToday(data);
-        setAttendanceLoading(false);
-    };
-
-    const handleCheckOut = async () => {
-        if (!attendanceToday) return;
-        setAttendanceLoading(true);
-        const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false });
-
-        const { data, error } = await supabase
-            .from('coach_attendance')
-            .update({ check_out_time: new Date().toISOString() })
-            .eq('id', attendanceToday.id)
-            .select()
-            .single();
-
-        if (error) console.error('Check-out failed:', error);
-        else setAttendanceToday(data);
-        setAttendanceLoading(false);
-    };
-
+    // Hoisted functions
     const fetchSessions = async () => {
         setLoading(true);
 
@@ -170,6 +73,110 @@ export default function Schedule() {
         }
         setLoading(false);
     };
+
+    const fetchAttendanceStatus = async () => {
+        setAttendanceLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            // 1. Get Coach ID
+            const { data: coachData } = await supabase
+                .from('coaches')
+                .select('id')
+                .eq('profile_id', user.id)
+                .single();
+
+            if (coachData) {
+                setCoachId(coachData.id);
+                // 2. Check today's attendance
+                const today = new Date().toISOString().split('T')[0];
+                const { data: attendance } = await supabase
+                    .from('coach_attendance')
+                    .select('*')
+                    .eq('coach_id', coachData.id)
+                    .eq('date', today)
+                    .single();
+
+                setAttendanceToday(attendance);
+            }
+        }
+        setAttendanceLoading(false);
+    };
+
+    useEffect(() => {
+        fetchSessions();
+        if (role === 'coach') {
+            fetchAttendanceStatus();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [role]);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        if (attendanceToday && attendanceToday.check_in_time && !attendanceToday.check_out_time) {
+            const startTime = new Date(attendanceToday.check_in_time).getTime();
+
+            const updateTimer = () => {
+                const now = new Date().getTime();
+                const diff = now - startTime;
+
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000); // Fixed parentheses
+
+                setElapsedTime(
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                );
+            };
+
+            updateTimer(); // Initial call
+            interval = setInterval(updateTimer, 1000);
+        }
+
+        return () => clearInterval(interval);
+    }, [attendanceToday]);
+
+
+
+    const handleCheckIn = async () => {
+        if (!coachId) return;
+        setAttendanceLoading(true);
+        const today = new Date().toISOString().split('T')[0];
+        // const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+        const { data, error } = await supabase
+            .from('coach_attendance')
+            .insert({
+                coach_id: coachId,
+                date: today,
+                check_in_time: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) console.error('Check-in failed:', error);
+        else setAttendanceToday(data);
+        setAttendanceLoading(false);
+    };
+
+    const handleCheckOut = async () => {
+        if (!attendanceToday) return;
+        setAttendanceLoading(true);
+        // const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+        const { data, error } = await supabase
+            .from('coach_attendance')
+            .update({ check_out_time: new Date().toISOString() })
+            .eq('id', attendanceToday.id)
+            .select()
+            .single();
+
+        if (error) console.error('Check-out failed:', error);
+        else setAttendanceToday(data);
+        setAttendanceLoading(false);
+    };
+
+
 
     const navigateDate = (direction: 'prev' | 'next') => {
         if (viewMode === 'day') {
@@ -298,7 +305,7 @@ export default function Schedule() {
                         {day}
                     </div>
                 ))}
-                {days.map((day: Date, dayIdx: number) => {
+                {days.map((day: Date, _dayIdx: number) => {
                     const isToday = isSameDay(day, new Date());
                     const daySessions = getSessionsForDay(day);
                     // Check if day is current month

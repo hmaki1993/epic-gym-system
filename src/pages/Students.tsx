@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Search, Filter, Smile } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
@@ -23,8 +23,13 @@ export default function Students() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
 
-    const getSubscriptionStatus = (expiryDate: string) => {
-        const daysLeft = differenceInDays(new Date(expiryDate), new Date());
+    const getSubscriptionStatus = (expiryDate: string | null) => {
+        if (!expiryDate) return { label: t('common.unknown'), color: 'bg-gray-100 text-gray-700 border-gray-200' };
+
+        const date = new Date(expiryDate);
+        if (isNaN(date.getTime())) return { label: t('common.invalid'), color: 'bg-red-50 text-red-500 border-red-100' };
+
+        const daysLeft = differenceInDays(date, new Date());
 
         if (daysLeft < 0) return { label: t('students.expired'), color: 'bg-red-100 text-red-700 border-red-200' };
         if (daysLeft <= 3) return { label: t('students.expiringSoon'), color: 'bg-orange-100 text-orange-700 border-orange-200' };
@@ -33,8 +38,8 @@ export default function Students() {
     };
 
     const filteredStudents = students.filter(student =>
-        student.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.contact_number.includes(searchQuery)
+        (student.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (student.contact_number || '').includes(searchQuery)
     );
 
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -135,10 +140,14 @@ export default function Students() {
                                     return (
                                         <tr key={student.id} className="hover:bg-gray-50/50 transition-colors group">
                                             <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900">{student.full_name}</div>
+                                                <div className="font-semibold text-gray-900">
+                                                    {student.full_name || <span className="text-gray-400 italic">{t('common.unknown')}</span>}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600">{student.age}</td>
-                                            <td className="px-6 py-4 text-gray-600 font-mono text-sm">{student.contact_number}</td>
+                                            <td className="px-6 py-4 text-gray-600">{student.age || '-'}</td>
+                                            <td className="px-6 py-4 text-gray-600 font-mono text-sm">
+                                                {student.contact_number || <span className="text-gray-300">-</span>}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${status.color}`}>
                                                     {status.label}

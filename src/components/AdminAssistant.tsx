@@ -1,160 +1,206 @@
-import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, X, Bot, Sparkles, Loader2, Minimize2, Maximize2 } from 'lucide-react';
-import { useGymData } from '../hooks/useData';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, X, Maximize2, Minimize2, Loader2, AlertCircle } from 'lucide-react';
 
-// Initialize Gemini (Replace with your API Key or use env)
-const GEN_AI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+interface Message {
+    role: 'user' | 'assistant';
+    content: string;
+}
 
-export default function AdminAssistant() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(false);
-    const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
-        { role: 'model', text: 'Hello Admin! I have access to the full gym database. Ask me anything about students, coaches, or finance.' }
+interface AdminAssistantProps {
+    onClose?: () => void;
+}
+
+export default function AdminAssistant({ onClose }: AdminAssistantProps) {
+    const [messages, setMessages] = useState<Message[]>([
+        {
+            role: 'assistant',
+            content: 'مرحباً! أنا المساعد الذكي للجيم. اسألني عن الطلاب، الإيرادات، أو أي شيء تاني.'
+        }
     ]);
     const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Get live data context
-    const gymData = useGymData();
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        scrollToBottom();
     }, [messages]);
 
     const handleSend = async () => {
-        if (!input.trim() || !GEN_AI_KEY) {
-            if (!GEN_AI_KEY) alert('Please set VITE_GEMINI_API_KEY in .env');
-            return;
-        }
+        if (!input.trim() || isLoading) return;
 
-        const userMsg = input;
+        const userMessage: Message = { role: 'user', content: input };
+        setMessages(prev => [...prev, userMessage]);
         setInput('');
-        setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-        setLoading(true);
+        setIsLoading(true);
+        setError(null);
 
         try {
-            const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+            if (!API_KEY) throw new Error('API Key missing in .env');
 
-            const prompt = `
-                You are the AI Assistant for Epic Gym Academy.
-                Current System Time: ${new Date().toLocaleString()}
-                
-                Here is the LIVE Database Context:
-                ${JSON.stringify(gymData, null, 2)}
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text: `أنت مساعد ذكي لإدارة صالة رياضية (Epic Gym). تساعد المدير في الإجابة على أسئلته عن الطلاب، الإيرادات، والإحصائيات. تجاوب بالعربي بطريقة واضحة ومفيدة.\n\nالسؤال: ${input}`
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                }
+            );
 
-                User Question: "${userMsg}"
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+            }
 
-                Instructions:
-                1. Answer as a professional gym manager.
-                2. Use the provided JSON data to answer accurately.
-                3. If asking for lists, summarize or give top 5.
-                4. Be concise and helpful.
-                5. If you calculate something (like revenue), explain how.
-            `;
+            const data = await response.json();
 
-            const result = await model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
+            const assistantMessage: Message = {
+                role: 'assistant',
+                content: data.candidates?.[0]?.content?.parts?.[0]?.text || 'عذراً، لم أستطع الحصول على رد.'
+            };
 
-            setMessages(prev => [...prev, { role: 'model', text }]);
-        } catch (error) {
-            console.error(error);
-            setMessages(prev => [...prev, { role: 'model', text: 'Sorry, I encountered an error accessing the AI service.' }]);
+            setMessages(prev => [...prev, assistantMessage]);
+        } catch (err) {
+            console.error('Error:', err);
+            setError(err instanceof Error ? err.message : 'حصل خطأ في الاتصال بالمساعد الذكي');
+
+            setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: 'عذراً، حصل خطأ في الاتصال. تأكد من وجود API Key صحيح.'
+            }]);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
-    if (!isOpen) {
-        return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full shadow-2xl hover:scale-110 transition-transform z-50 animate-bounce-slow"
-            >
-                <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
-                <Bot className="w-8 h-8 relative z-10" />
-            </button>
-        );
-    }
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
 
     return (
-        <div className={`fixed z-50 transition-all duration-300 shadow-2xl bg-white border border-gray-200 overflow-hidden flex flex-col
-            ${isMinimized
-                ? 'bottom-6 right-6 w-72 h-14 rounded-full cursor-pointer'
-                : 'bottom-6 right-6 w-[90vw] md:w-96 h-[600px] max-h-[80vh] rounded-2xl'
-            }`}
+        <div
+            className={`fixed bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl shadow-2xl flex flex-col transition-all duration-300 ${isMaximized
+                ? 'inset-4'
+                : 'bottom-6 right-6 w-[420px] h-[600px]'
+                }`}
+            style={{
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                backdropFilter: 'blur(10px)'
+            }}
         >
-            {/* Header */}
-            <div
-                className="bg-gradient-to-r from-secondary to-slate-800 p-4 flex items-center justify-between text-white cursor-pointer"
-                onClick={() => isMinimized && setIsMinimized(false)}
-            >
-                <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-yellow-400" />
-                    <h3 className="font-bold">Admin AI Assistant</h3>
+            <div className="flex items-center justify-between p-4 border-b border-purple-500/30">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <span className="text-xl">🤖</span>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-white text-lg">Admin AI Assistant</h3>
+                        <p className="text-xs text-purple-300">مساعدك الذكي</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="hover:bg-white/10 p-1 rounded">
-                        {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                    <button
+                        onClick={() => setIsMaximized(!isMaximized)}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                        {isMaximized ? (
+                            <Minimize2 className="w-5 h-5 text-white" />
+                        ) : (
+                            <Maximize2 className="w-5 h-5 text-white" />
+                        )}
                     </button>
-                    {!isMinimized && (
-                        <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-1 rounded">
-                            <X className="w-4 h-4" />
+                    {onClose && (
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5 text-white" />
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Chat Area */}
-            {!isMinimized && (
-                <>
-                    <div className="flex-1 bg-gray-50 p-4 overflow-y-auto" ref={scrollRef}>
-                        {messages.map((msg, idx) => (
-                            <div key={idx} className={`mb-4 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
-                                        ? 'bg-primary text-white rounded-tr-none'
-                                        : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none shadow-sm'
-                                    }`}>
-                                    {msg.role === 'model' && <Bot className="w-4 h-4 mb-2 text-primary opacity-50" />}
-                                    <div dangerouslySetInnerHTML={{ __html: msg.text.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') }} />
-                                </div>
-                            </div>
-                        ))}
-                        {loading && (
-                            <div className="flex justify-start mb-4">
-                                <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-gray-200 shadow-sm flex items-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                    <span className="text-xs text-gray-400">Thinking...</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Input */}
-                    <div className="p-4 bg-white border-t border-gray-100 flex gap-2">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder="Ask about students, revenue..."
-                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        />
-                        <button
-                            onClick={handleSend}
-                            disabled={loading}
-                            className="p-2 bg-gradient-to-r from-primary to-pink-600 text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-all"
-                        >
-                            <Send className="w-5 h-5" />
-                        </button>
-                    </div>
-                </>
+            {error && (
+                <div className="mx-4 mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-200">{error}</p>
+                </div>
             )}
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((message, index) => (
+                    <div
+                        key={index}
+                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                        <div
+                            className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.role === 'user'
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                                : 'bg-white/10 text-white border border-white/20'
+                                }`}
+                            style={{
+                                backdropFilter: message.role === 'assistant' ? 'blur(10px)' : 'none'
+                            }}
+                        >
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                        </div>
+                    </div>
+                ))}
+                {isLoading && (
+                    <div className="flex justify-start">
+                        <div className="bg-white/10 rounded-2xl px-4 py-3 border border-white/20">
+                            <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+
+            <div className="p-4 border-t border-purple-500/30">
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="اسأل عن الطلاب، الإيرادات..."
+                        disabled={isLoading}
+                        className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 text-right"
+                        dir="rtl"
+                    />
+                    <button
+                        onClick={handleSend}
+                        disabled={!input.trim() || isLoading}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                        <Send className="w-5 h-5" />
+                    </button>
+                </div>
+                <p className="text-xs text-purple-300 mt-2 text-center">
+                    Powered by Google Gemini • بيتعلم من استخداماتك
+                </p>
+            </div>
         </div>
     );
 }

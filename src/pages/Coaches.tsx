@@ -27,14 +27,6 @@ export default function Coaches() {
     const [attendanceMap, setAttendanceMap] = useState<Record<string, any>>({});
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    useEffect(() => {
-        fetchAttendance();
-
-        // Update timer every second
-        const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(interval);
-    }, [refreshTrigger]);
-
     const fetchAttendance = async () => {
         const today = new Date().toISOString().slice(0, 10);
         const { data } = await supabase
@@ -44,12 +36,21 @@ export default function Coaches() {
 
         const map: Record<string, any> = {};
         if (data) {
-            data.forEach(record => {
+            data.forEach((record: any) => {
                 map[record.coach_id] = record;
             });
         }
         setAttendanceMap(map);
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchAttendance();
+
+        // Update timer every second
+        const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, [refreshTrigger]);
 
     const getDuration = (checkInTime: string) => {
         const start = new Date(checkInTime).getTime();
