@@ -99,13 +99,13 @@ export default function DashboardLayout() {
 
     return (
         <div
-            className="min-h-screen bg-gray-50 flex overflow-x-hidden"
+            className="min-h-screen bg-gray-50 overflow-x-hidden relative"
             dir={isRtl ? 'rtl' : 'ltr'}
         >
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
@@ -113,13 +113,14 @@ export default function DashboardLayout() {
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed inset-y-0 z-50 lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
-                    w-64 bg-secondary text-white flex-shrink-0 h-screen sticky top-0 overflow-y-auto flex flex-col border-white/5
+                    fixed inset-y-0 z-50 transition-transform duration-300 ease-in-out
+                    w-64 bg-secondary text-white flex flex-col border-white/5 shadow-2xl lg:shadow-none
                     ${sidebarOpen
                         ? 'translate-x-0'
-                        : (isRtl ? 'translate-x-full' : '-translate-x-full')
+                        : (isRtl ? 'translate-x-[100%]' : '-translate-x-[100%]')
                     }
-                    ${isRtl ? 'right-0 border-l' : 'left-0 border-r'}
+                    ${isRtl ? 'right-0' : 'left-0'}
+                    lg:translate-x-0
                 `}
             >
                 <div className="flex flex-col items-center justify-center pt-10 pb-6 bg-secondary/80 border-b border-white/10 px-4 relative">
@@ -179,9 +180,12 @@ export default function DashboardLayout() {
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 min-w-0 h-screen overflow-y-auto flex flex-col">
-                <header className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-100 bg-white sticky top-0 z-30">
+            {/* Main Content Area */}
+            <div className={`
+                min-h-screen w-full flex flex-col transition-all duration-300
+                ${isRtl ? 'lg:pr-64' : 'lg:pl-64'}
+            `}>
+                <header className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-100 bg-white sticky top-0 z-30 w-full">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(true)}
@@ -211,5 +215,7 @@ export default function DashboardLayout() {
                 </main>
             </div>
         </div>
+    );
+}
     );
 }
