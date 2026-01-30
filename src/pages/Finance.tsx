@@ -40,12 +40,12 @@ export default function Finance() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <div className="bg-gradient-to-br from-secondary to-slate-800 rounded-2xl p-6 text-white shadow-lg">
-                    <p className="text-white/60 font-medium mb-2 flex items-center gap-2">
+                    <p className="text-white/60 font-medium mb-2 flex items-center gap-2 text-xs sm:text-base">
                         <TrendingUp className="w-4 h-4" /> Total Revenue
                     </p>
-                    <h3 className="text-4xl font-bold">{totalRevenue.toLocaleString()} <span className="text-lg text-white/50 font-normal">EGP</span></h3>
+                    <h3 className="text-3xl sm:text-4xl font-bold">{totalRevenue.toLocaleString()} <span className="text-sm sm:text-lg text-white/50 font-normal">EGP</span></h3>
                 </div>
 
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

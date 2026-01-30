@@ -57,19 +57,19 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 {statCards.map((stat, index) => (
-                    <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
+                    <div key={index} className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">{stat.label}</p>
-                                <h3 className="text-3xl font-bold text-secondary">{loading ? '-' : stat.value}</h3>
+                                <p className="text-gray-500 text-xs sm:text-sm font-medium mb-1">{stat.label}</p>
+                                <h3 className="text-2xl sm:text-3xl font-bold text-secondary">{loading ? '-' : stat.value}</h3>
                             </div>
-                            <div className={`p-3 rounded-xl text-white ${stat.color} shadow-lg shadow-primary/10`}>
-                                <stat.icon className="w-6 h-6" />
+                            <div className={`p-2.5 sm:p-3 rounded-xl text-white ${stat.color} shadow-lg shadow-primary/10`}>
+                                <stat.icon className="w-5 h-5 sm:w-6 h-6" />
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center text-sm text-green-600 font-medium">
+                        <div className="mt-4 flex items-center text-xs sm:text-sm text-green-600 font-medium">
                             <ArrowUpRight className="w-4 h-4 mr-1" />
                             {stat.trend}
                         </div>

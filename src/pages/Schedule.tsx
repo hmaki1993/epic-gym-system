@@ -299,50 +299,52 @@ export default function Schedule() {
         const days = eachDayOfInterval({ start: startDate, end: endDate });
 
         return (
-            <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200">
-                {['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-                    <div key={day} className="bg-gray-50 p-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        {day}
-                    </div>
-                ))}
-                {days.map((day: Date, _dayIdx: number) => {
-                    const isToday = isSameDay(day, new Date());
-                    const daySessions = getSessionsForDay(day);
-                    // Check if day is current month
-                    const isCurrentMonth = day.getMonth() === currentDate.getMonth() && day.getFullYear() === currentDate.getFullYear();
-
-                    return (
-                        <div
-                            key={day.toString()}
-                            className={`bg-white min-h-[120px] p-2 relative group hover:bg-gray-50 transition-colors ${!isCurrentMonth ? 'bg-gray-50/50' : ''}`}
-                            onClick={() => {
-                                setCurrentDate(day);
-                                setViewMode('day');
-                            }}
-                        >
-                            <span className={`text-sm font-medium ${!isCurrentMonth ? 'text-gray-400' : 'text-gray-900'} ${isToday ? 'bg-primary text-white w-7 h-7 flex items-center justify-center rounded-full' : ''}`}>
-                                {format(day, 'd')}
-                            </span>
-
-                            <div className="mt-2 space-y-1">
-                                {daySessions.slice(0, 3).map(session => (
-                                    <div
-                                        key={session.id}
-                                        className="text-[10px] px-1.5 py-1 rounded bg-secondary/10 text-secondary border border-secondary/20 truncate"
-                                        title={`${session.title} (${session.start_time.slice(0, 5)})`}
-                                    >
-                                        {session.start_time.slice(0, 5)} {session.title}
-                                    </div>
-                                ))}
-                                {daySessions.length > 3 && (
-                                    <div className="text-[10px] text-gray-400 pl-1">
-                                        + {daySessions.length - 3} more
-                                    </div>
-                                )}
-                            </div>
+            <div className="overflow-x-auto pb-4 custom-scrollbar">
+                <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200 min-w-[800px]">
+                    {['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+                        <div key={day} className="bg-gray-50 p-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            {day}
                         </div>
-                    );
-                })}
+                    ))}
+                    {days.map((day: Date, _dayIdx: number) => {
+                        const isToday = isSameDay(day, new Date());
+                        const daySessions = getSessionsForDay(day);
+                        // Check if day is current month
+                        const isCurrentMonth = day.getMonth() === currentDate.getMonth() && day.getFullYear() === currentDate.getFullYear();
+
+                        return (
+                            <div
+                                key={day.toString()}
+                                className={`bg-white min-h-[120px] p-2 relative group hover:bg-gray-50 transition-colors ${!isCurrentMonth ? 'bg-gray-50/50' : ''}`}
+                                onClick={() => {
+                                    setCurrentDate(day);
+                                    setViewMode('day');
+                                }}
+                            >
+                                <span className={`text-sm font-medium ${!isCurrentMonth ? 'text-gray-400' : 'text-gray-900'} ${isToday ? 'bg-primary text-white w-7 h-7 flex items-center justify-center rounded-full' : ''}`}>
+                                    {format(day, 'd')}
+                                </span>
+
+                                <div className="mt-2 space-y-1">
+                                    {daySessions.slice(0, 3).map(session => (
+                                        <div
+                                            key={session.id}
+                                            className="text-[10px] px-1.5 py-1 rounded bg-secondary/10 text-secondary border border-secondary/20 truncate"
+                                            title={`${session.title} (${session.start_time.slice(0, 5)})`}
+                                        >
+                                            {session.start_time.slice(0, 5)} {session.title}
+                                        </div>
+                                    ))}
+                                    {daySessions.length > 3 && (
+                                        <div className="text-[10px] text-gray-400 pl-1">
+                                            + {daySessions.length - 3} more
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         );
     };

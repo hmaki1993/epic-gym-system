@@ -15,7 +15,7 @@ export default function Calculator() {
 
             {/* Premium segmented control */}
             <div
-                className="flex p-1.5 rounded-2xl w-fit relative backdrop-blur-md border border-white/5 shadow-inner"
+                className="flex p-1.5 rounded-2xl w-full sm:w-fit relative backdrop-blur-md border border-white/5 shadow-inner overflow-x-auto no-scrollbar scroll-smooth"
                 style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
             >
                 {['standard', 'bmi', 'calories'].map((tab) => (
@@ -23,8 +23,8 @@ export default function Calculator() {
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`
-                            relative px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 z-10
-                            flex items-center gap-2
+                            relative px-4 sm:px-6 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 z-10
+                            flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none justify-center
                         `}
                         style={{
                             backgroundColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
