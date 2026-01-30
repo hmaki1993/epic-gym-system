@@ -59,17 +59,17 @@ export default function Students() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-secondary">{t('students.title')}</h1>
-                    <p className="text-gray-500 mt-1">{t('students.subtitle')}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-secondary">{t('students.title')}</h1>
+                    <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('students.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => {
                         setEditingStudent(null);
                         setShowAddModal(true);
                     }}
-                    className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                    className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     <span className="font-semibold">{t('dashboard.addStudent')}</span>

@@ -12,7 +12,8 @@ import {
     LogOut,
     Menu,
     Globe,
-    Calculator
+    Calculator,
+    X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -101,12 +102,36 @@ export default function DashboardLayout() {
             className={`min-h-screen bg-gray-50 flex ${isRtl ? 'flex-row-reverse' : 'flex-row'}`}
             dir={isRtl ? 'rtl' : 'ltr'}
         >
+            {/* Mobile Sidebar Overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside
-                className={`w-64 bg-secondary text-white flex-shrink-0 h-screen sticky top-0 overflow-y-auto flex flex-col border-white/5`}
+                className={`
+                    fixed inset-y-0 z-50 lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
+                    w-64 bg-secondary text-white flex-shrink-0 h-screen sticky top-0 overflow-y-auto flex flex-col border-white/5
+                    ${sidebarOpen
+                        ? 'translate-x-0'
+                        : (isRtl ? 'translate-x-full' : '-translate-x-full')
+                    }
+                    ${isRtl ? 'right-0 border-l' : 'left-0 border-r'}
+                `}
             >
-                <div className="flex flex-col items-center justify-center pt-8 pb-6 bg-secondary/80 border-b border-white/10 px-4">
-                    <img src="/logo.png" alt="Epic Gym Logo" className="h-24 w-auto object-contain drop-shadow-xl mb-4 transition-transform hover:scale-105" />
+                <div className="flex flex-col items-center justify-center pt-10 pb-6 bg-secondary/80 border-b border-white/10 px-4 relative">
+                    {/* Close button for mobile */}
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="lg:hidden absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-white/70"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+
+                    <img src="/logo.png" alt="Epic Gym Logo" className="h-20 w-auto object-contain drop-shadow-xl mb-4 transition-transform hover:scale-105" />
 
                     <div className="text-center w-full animate-in fade-in slide-in-from-top-2">
                         <h2 className="font-bold text-lg tracking-wide">{gymProfile.name}</h2>
@@ -121,7 +146,7 @@ export default function DashboardLayout() {
                     {role || 'Loading...'}
                 </div>
 
-                <nav className="mt-4 px-4 space-y-2 flex-grow">
+                <nav className="mt-4 px-4 space-y-2 flex-grow overflow-y-auto custom-scrollbar">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.to;
@@ -130,8 +155,9 @@ export default function DashboardLayout() {
                             <Link
                                 key={item.to}
                                 to={item.to}
+                                onClick={() => setSidebarOpen(false)}
                                 className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
-                                    ? 'bg-primary text-white shadow-lg'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
                                     : 'text-gray-300 hover:bg-white/10 hover:text-white'
                                     }`}
                             >
@@ -154,16 +180,35 @@ export default function DashboardLayout() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 min-w-0 h-screen overflow-y-auto">
-                <div className="p-8">
-                    <header className="mb-8 flex justify-end items-center">
-                        <div className="text-xs font-mono opacity-30">v1.0.0</div>
-                    </header>
+            <div className="flex-1 min-w-0 h-screen overflow-y-auto flex flex-col">
+                <header className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-100 bg-white sticky top-0 z-30">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <h1 className="text-lg font-bold text-secondary lg:hidden line-clamp-1">
+                            {navItems.find(item => item.to === location.pathname)?.label || 'Epic Gym'}
+                        </h1>
+                    </div>
 
-                    <main>
-                        <Outlet context={{ role }} />
-                    </main>
-                </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleLanguage}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                        >
+                            <Globe className="w-4 h-4 text-primary" />
+                            <span>{i18n.language === 'en' ? 'العربية' : 'English'}</span>
+                        </button>
+                        <div className="text-[10px] font-mono opacity-20 hidden sm:block">v1.0.0</div>
+                    </div>
+                </header>
+
+                <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+                    <Outlet context={{ role }} />
+                </main>
             </div>
         </div>
     );

@@ -103,7 +103,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium opacity-80">{t('common.fullName', 'Full Name')}</label>
                             <input
@@ -128,7 +128,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium opacity-80">{t('common.phone', 'Phone Number')}</label>
                             <input

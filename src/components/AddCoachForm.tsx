@@ -222,7 +222,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium opacity-80">PT Rate (per session)</label>
                             <input

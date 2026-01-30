@@ -25,14 +25,14 @@ export default function Finance() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-secondary">Finance Overview</h1>
-                    <p className="text-gray-500 mt-1">Track revenue and handle payments</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-secondary">Finance Overview</h1>
+                    <p className="text-gray-500 mt-1 text-sm sm:text-base">Track revenue and handle payments</p>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105"
+                    className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
                 >
                     <Plus className="w-5 h-5" />
                     <span className="font-semibold">Record Payment</span>

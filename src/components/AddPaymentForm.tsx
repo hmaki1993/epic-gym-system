@@ -87,7 +87,7 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">Amount (EGP)</label>
                             <input
@@ -112,15 +112,15 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
 
                     <div className="space-y-1">
                         <label className="text-sm font-medium text-gray-700">Payment Method</label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {['cash', 'bank_transfer', 'card'].map(method => (
                                 <button
                                     key={method}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, payment_method: method })}
                                     className={`py-2 px-2 text-sm rounded-lg border capitalized ${formData.payment_method === method
-                                            ? 'bg-primary text-white border-primary'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-primary text-white border-primary'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                         }`}
                                 >
                                     {method.replace('_', ' ')}
