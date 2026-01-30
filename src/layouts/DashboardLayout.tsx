@@ -99,7 +99,7 @@ export default function DashboardLayout() {
 
     return (
         <div
-            className={`min-h-screen bg-gray-50 flex ${isRtl ? 'flex-row-reverse' : 'flex-row'}`}
+            className="min-h-screen bg-gray-50 flex overflow-x-hidden"
             dir={isRtl ? 'rtl' : 'ltr'}
         >
             {/* Mobile Sidebar Overlay */}
