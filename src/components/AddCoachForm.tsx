@@ -1,5 +1,5 @@
 import { useState } from 'react';
-// import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { X, Save, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -10,6 +10,8 @@ interface AddCoachFormProps {
     initialData?: {
         id: string;
         full_name: string;
+        email?: string;
+        role?: string;
         specialty: string;
         pt_rate: number;
         salary?: number;
@@ -20,11 +22,14 @@ interface AddCoachFormProps {
 }
 
 export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoachFormProps) {
-    // const { t } = useTranslation();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         full_name: initialData?.full_name || '',
+        email: initialData?.email || '',
+        password: '',
+        role: initialData?.role || 'coach',
         specialty: initialData?.specialty || '',
         pt_rate: initialData?.pt_rate?.toString() || '',
         salary: initialData?.salary?.toString() || '',
@@ -63,7 +68,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                 .from('coaches')
                 .getPublicUrl(filePath);
 
-            setFormData(prev => ({ ...prev, avatar_url: data.publicUrl }));
+            setFormData((prev: any) => ({ ...prev, avatar_url: data.publicUrl }));
         } catch (error) {
             console.error('Error uploading image:', error);
             toast.error('Error uploading image');
@@ -77,8 +82,26 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
         setLoading(true);
 
         try {
-            const coachData = {
+            let profileId = null;
+
+            // Handle Account Creation/Update via Edge Function if email/password provided
+            if (formData.email && (formData.password || !initialData)) {
+                const { data: functionData, error: functionError } = await supabase.functions.invoke('staff-management', {
+                    body: {
+                        email: formData.email,
+                        password: formData.password || Math.random().toString(36).slice(-8), // Temp pass if none provided on create
+                        fullName: formData.full_name,
+                        role: formData.role
+                    }
+                });
+
+                if (functionError) throw functionError;
+                profileId = functionData.user_id;
+            }
+
+            const coachData: any = {
                 full_name: formData.full_name,
+                email: formData.email,
                 specialty: formData.specialty,
                 pt_rate: parseFloat(formData.pt_rate) || 0,
                 salary: parseFloat(formData.salary) || 0,
@@ -86,6 +109,10 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                 image_pos_x: formData.image_pos_x,
                 image_pos_y: formData.image_pos_y
             };
+
+            if (profileId) {
+                coachData.profile_id = profileId;
+            }
 
             let error;
 
@@ -96,6 +123,17 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                     .update(coachData)
                     .eq('id', initialData.id);
                 error = updateError;
+
+                // Also update profile role and avatar if it changed/exists
+                if (profileId) {
+                    await supabase
+                        .from('profiles')
+                        .update({
+                            role: formData.role,
+                            avatar_url: formData.avatar_url
+                        })
+                        .eq('id', profileId);
+                }
             } else {
                 // Create new coach
                 const { error: insertError } = await supabase
@@ -105,12 +143,12 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             }
 
             if (error) throw error;
-            toast.success(initialData ? 'Coach updated successfully' : 'Coach added successfully');
+            toast.success(initialData ? t('common.saveSuccess') : 'Coach added successfully');
             onSuccess();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving coach:', error);
-            toast.error('Error saving coach');
+            toast.error(error.message || 'Error saving coach');
         } finally {
             setLoading(false);
         }
@@ -137,7 +175,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Full Name</label>
                             <input
@@ -145,7 +183,18 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 type="text"
                                 className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.full_name}
-                                onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                                onChange={(e) => {
+                                    const newName = e.target.value;
+                                    const emailName = newName.toLowerCase().replace(/\s+/g, '');
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        full_name: newName,
+                                        email: prev.email === '' || prev.email.includes(`${prev.full_name.toLowerCase().replace(/\s+/g, '')}@epic.com`)
+                                            ? (emailName ? `${emailName}@epic.com` : '')
+                                            : prev.email
+                                    }));
+                                }}
+                                placeholder="Anis..."
                             />
                         </div>
                         <div className="space-y-2">
@@ -191,7 +240,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                             min="0"
                                             max="100"
                                             value={formData.image_pos_x}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, image_pos_x: parseInt(e.target.value) }))}
+                                            onChange={(e) => setFormData((prev: any) => ({ ...prev, image_pos_x: parseInt(e.target.value) }))}
                                             className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
@@ -202,7 +251,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                             min="0"
                                             max="100"
                                             value={formData.image_pos_y}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, image_pos_y: parseInt(e.target.value) }))}
+                                            onChange={(e) => setFormData((prev: any) => ({ ...prev, image_pos_y: parseInt(e.target.value) }))}
                                             className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
@@ -225,6 +274,55 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                             <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
                             <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
                         </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Account Email</label>
+                            <input
+                                required
+                                type="email"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                placeholder="coach@epicgym.com"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">
+                                {initialData ? 'Update Password (Optional)' : 'Default Password'}
+                            </label>
+                            <input
+                                required={!initialData}
+                                type="password"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                value={formData.password}
+                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                placeholder="••••••••"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">System Access Role</label>
+                        <div className="relative group/role">
+                            <select
+                                required
+                                className="w-full px-5 py-3 bg-[#1e2330] border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white font-black uppercase tracking-[0.2em] text-center appearance-none cursor-pointer"
+                                value={formData.role}
+                                onChange={e => setFormData({ ...formData, role: e.target.value })}
+                            >
+                                <option value="coach" className="bg-[#1e2330]">{t('roles.coach')}</option>
+                                <option value="head_coach" className="bg-[#1e2330]">{t('roles.head_coach')}</option>
+                                <option value="admin" className="bg-[#1e2330]">{t('roles.admin')}</option>
+                                <option value="reception" className="bg-[#1e2330]">{t('roles.reception')}</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity">
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

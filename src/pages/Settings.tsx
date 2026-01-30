@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Save, Building2, Palette, Globe } from 'lucide-react';
+import { Save, Building2, Palette, Globe, User, Lock, Key } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -33,6 +34,37 @@ export default function Settings() {
     });
 
     const [loading, setLoading] = useState(false);
+    const [profileLoading, setProfileLoading] = useState(false);
+    const [passwordLoading, setPasswordLoading] = useState(false);
+
+    const [userData, setUserData] = useState({
+        full_name: '',
+        email: ''
+    });
+
+    const [passwordData, setPasswordData] = useState({
+        newPassword: '',
+        confirmPassword: ''
+    });
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', user.id)
+                    .single();
+
+                setUserData({
+                    full_name: profile?.full_name || '',
+                    email: user.email || ''
+                });
+            }
+        };
+        fetchProfile();
+    }, []);
 
     const themes = [
         { id: 'midnight', name: 'Midnight Blue', primary: '#818cf8', secondary: '#1e293b', bg: '#0f172a' },
@@ -62,21 +94,62 @@ export default function Settings() {
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-
         // Save to LocalStorage
         localStorage.setItem('gymProfile', JSON.stringify(gymProfile));
-
         // Dispatch a custom event so DashboardLayout knows to update immediately
         window.dispatchEvent(new Event('gymProfileUpdated'));
-
-        toast.success(t('common.saveSuccess'), {
-            style: {
-                border: '1px solid var(--color-primary)',
-            }
-        });
+        toast.success(t('common.saveSuccess'));
         setLoading(false);
+    };
+
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setProfileLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Not authenticated');
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({ full_name: userData.full_name })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            // Dispatch custom event for real-time header update
+            window.dispatchEvent(new Event('userProfileUpdated'));
+
+            toast.success(t('common.saveSuccess'));
+        } catch (error: any) {
+            console.error('Error updating profile:', error);
+            toast.error(error.message || 'Error updating profile');
+        } finally {
+            setProfileLoading(false);
+        }
+    };
+
+    const handleUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: passwordData.newPassword
+            });
+
+            if (error) throw error;
+            toast.success('Password updated successfully');
+            setPasswordData({ newPassword: '', confirmPassword: '' });
+        } catch (error: any) {
+            console.error('Error updating password:', error);
+            toast.error(error.message || 'Error updating password');
+        } finally {
+            setPasswordLoading(false);
+        }
     };
 
     // Helper to get input styles that work in both light and dark modes
@@ -237,6 +310,98 @@ export default function Settings() {
                             </form>
                         </div>
                     )}
+                </div>
+
+                {/* Personal Account Settings - Visible to All */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* My Profile */}
+                    <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                            <div className="p-3 bg-secondary/20 rounded-2xl text-primary">
+                                <User className="w-6 h-6" />
+                            </div>
+                            My Profile
+                        </h2>
+
+                        <form onSubmit={handleUpdateProfile} className="space-y-6">
+                            <div className="space-y-2 group">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Display Name</label>
+                                <input
+                                    type="text"
+                                    value={userData.full_name}
+                                    onChange={e => setUserData({ ...userData, full_name: e.target.value })}
+                                    className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white transition-all outline-none font-bold"
+                                    placeholder="Your Name"
+                                />
+                            </div>
+                            <div className="space-y-2 group opacity-50">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Email Address (Read-only)</label>
+                                <input
+                                    type="email"
+                                    disabled
+                                    value={userData.email}
+                                    className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white/40 cursor-not-allowed font-bold"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={profileLoading}
+                                className="w-full bg-white/5 hover:bg-white/10 text-white px-10 py-4 rounded-2xl border border-white/10 transition-all font-black uppercase tracking-widest text-[10px] hover:border-primary/30"
+                            >
+                                {profileLoading ? 'Saving...' : 'Update Display Name'}
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* Change Password */}
+                    <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                            <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-400">
+                                <Lock className="w-6 h-6" />
+                            </div>
+                            Change Password
+                        </h2>
+
+                        <form onSubmit={handleUpdatePassword} className="space-y-6">
+                            <div className="space-y-2 group">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">New Password</label>
+                                <div className="relative">
+                                    <Key className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={passwordData.newPassword}
+                                        onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                        className="w-full pl-14 pr-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-rose-500/50 text-white transition-all outline-none font-bold"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2 group">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Confirm New Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={passwordData.confirmPassword}
+                                        onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                        className="w-full pl-14 pr-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-rose-500/50 text-white transition-all outline-none font-bold"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={passwordLoading}
+                                className="w-full bg-rose-500 hover:bg-rose-600 text-white px-10 py-4 rounded-2xl shadow-lg shadow-rose-500/20 transition-all font-black uppercase tracking-widest text-[10px]"
+                            >
+                                {passwordLoading ? 'Updating...' : 'Change Password'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div >

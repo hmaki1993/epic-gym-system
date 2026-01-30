@@ -11,11 +11,13 @@ import toast from 'react-hot-toast';
 interface Coach {
     id: string;
     full_name: string;
+    email?: string;
     specialty: string;
     pt_rate: number;
     avatar_url?: string;
     image_pos_x?: number;
     image_pos_y?: number;
+    profiles?: { role: string };
 }
 
 export default function Coaches() {
@@ -169,9 +171,16 @@ export default function Coaches() {
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center text-white/60 mt-2 font-bold uppercase tracking-wider text-xs">
-                                <Medal className="w-4 h-4 mr-2 text-primary" />
-                                <span>{coach.specialty}</span>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-white/60 mt-2 font-bold uppercase tracking-wider text-[10px]">
+                                <div className="flex items-center">
+                                    <Medal className="w-3 h-3 mr-1.5 text-primary" />
+                                    <span>{coach.specialty}</span>
+                                </div>
+                                {coach.profiles?.role && (
+                                    <div className="bg-[#1e2330] px-3 py-1.5 rounded-xl border border-white/5 flex items-center justify-center">
+                                        <span className="text-white font-black uppercase tracking-[0.2em]">{t(`roles.${coach.profiles.role}`)}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Today's Times */}
@@ -232,7 +241,10 @@ export default function Coaches() {
             {/* Add/Edit Modal */}
             {showAddModal && (
                 <AddCoachForm
-                    initialData={editingCoach}
+                    initialData={editingCoach ? {
+                        ...editingCoach,
+                        role: editingCoach.profiles?.role || 'coach'
+                    } : null}
                     onClose={() => {
                         setShowAddModal(false);
                         setEditingCoach(null);

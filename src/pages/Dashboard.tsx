@@ -7,7 +7,7 @@ import CoachDashboard from './CoachDashboard';
 
 export default function Dashboard() {
     const { t } = useTranslation(); // Init hook
-    const { role } = useOutletContext<{ role: string }>() || { role: null };
+    const { role, fullName } = useOutletContext<{ role: string, fullName: string }>() || { role: null, fullName: null };
 
     const { data: stats, isLoading: loading } = useDashboardStats();
 
@@ -54,7 +54,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
                 <div className="text-center sm:text-left">
                     <h1 className="text-4xl sm:text-5xl font-extrabold premium-gradient-text tracking-tight uppercase leading-none">{t('common.dashboard')}</h1>
-                    <p className="text-white/60 mt-4 text-sm sm:text-lg font-bold tracking-wide uppercase opacity-100">{t('dashboard.welcome')}, here&apos;s what&apos;s happening today.</p>
+                    <p className="text-white/60 mt-4 text-sm sm:text-lg font-bold tracking-wide uppercase opacity-100">{t('dashboard.welcome')}, {fullName || role?.replace('_', ' ') || 'Admin'}.</p>
                 </div>
                 <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
                     <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>

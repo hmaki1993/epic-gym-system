@@ -24,10 +24,10 @@ export function useCoaches() {
         queryFn: async () => {
             const today = new Date().toISOString().split('T')[0];
 
-            // Get coaches
+            // Get coaches with roles
             const { data: coaches, error: coachesError } = await supabase
                 .from('coaches')
-                .select('*')
+                .select('*, profiles(role)')
                 .order('created_at', { ascending: false });
 
             if (coachesError) throw coachesError;

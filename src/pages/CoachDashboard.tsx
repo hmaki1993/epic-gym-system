@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 
 export default function CoachDashboard() {
     const { t, i18n } = useTranslation();
-    const { role } = useOutletContext<{ role: string }>() || { role: null };
+    const { role, fullName } = useOutletContext<{ role: string, fullName: string }>() || { role: null, fullName: null };
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [checkInTime, setCheckInTime] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -261,7 +261,7 @@ export default function CoachDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
                 <div className="text-center sm:text-left">
                     <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('coach.welcome')}
+                        {t('dashboard.welcome')}, COACH! 👋
                     </h1>
                     <p className="text-white/60 mt-4 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
                         {format(currentTime, 'EEEE, dd MMMM yyyy')}

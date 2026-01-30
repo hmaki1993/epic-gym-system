@@ -45,7 +45,10 @@ i18n
                         noResults: 'No results found',
                         daysLeft: '{{count}} days left',
                         cameras: 'Live Cameras',
-                        confirm: 'OK'
+                        confirm: 'OK',
+                        chat: 'Staff Chat',
+                        online: 'Online',
+                        offline: 'Offline'
                     },
                     cameras: {
                         subtitle: 'Monitor gym activities in real-time',
@@ -151,6 +154,12 @@ i18n
                         head_coach: 'Head Coach',
                         coach: 'Coach',
                         reception: 'Receptionist'
+                    },
+                    chat: {
+                        online: 'Online',
+                        me: 'You',
+                        online_count: 'Staff members currently online',
+                        only_you: 'Nobody else is online'
                     }
                 }
             },
@@ -187,7 +196,10 @@ i18n
                         noResults: 'لا توجد نتائج',
                         daysLeft: 'متبقي {{count}} يوم',
                         cameras: 'كاميرات المراقبة',
-                        confirm: 'تأكيد'
+                        confirm: 'تأكيد',
+                        chat: 'شات الموظفين',
+                        online: 'متصل',
+                        offline: 'غير متصل'
                     },
                     cameras: {
                         subtitle: 'مراقبة أنشطة الجيم في الوقت الفعلي',
@@ -293,6 +305,12 @@ i18n
                         head_coach: 'كبير المدربين',
                         coach: 'مدرب',
                         reception: 'موظف استقبال'
+                    },
+                    chat: {
+                        online: 'متصل',
+                        me: 'أنت',
+                        online_count: 'من الموظفين متصلون الآن',
+                        only_you: 'لا يوجد أحد غيرك متصل حالياً'
                     }
                 }
             }

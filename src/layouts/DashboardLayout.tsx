@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import FloatingChat from '../components/FloatingChat';
 import {
     LayoutDashboard,
     Users,
@@ -16,7 +17,8 @@ import {
     Building2,
     Search,
     Bell,
-    ChevronDown
+    ChevronDown,
+    MessageSquare
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -26,6 +28,10 @@ export default function DashboardLayout() {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [role, setRole] = useState<string | null>(null);
+    const [fullName, setFullName] = useState<string | null>(null);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [userStatus, setUserStatus] = useState<'online' | 'busy'>('online');
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<{ id: string, name: string, type: 'student' | 'coach' }[]>([]);
@@ -63,10 +69,25 @@ export default function DashboardLayout() {
             if (user) {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('role')
+                    .select('role, full_name, avatar_url')
                     .eq('id', user.id)
                     .single();
                 setRole(profile?.role || null);
+                setFullName(profile?.full_name || null);
+                setUserEmail(user.email || null);
+                setUserStatus(user.user_metadata?.status || 'online');
+
+                // If avatar is missing in profile, try fetching from coaches table (linked by profile_id)
+                if (!profile?.avatar_url) {
+                    const { data: coachData } = await supabase
+                        .from('coaches')
+                        .select('avatar_url')
+                        .eq('profile_id', user.id)
+                        .maybeSingle();
+                    setAvatarUrl(coachData?.avatar_url || null);
+                } else {
+                    setAvatarUrl(profile.avatar_url);
+                }
             }
         };
         fetchUserRole();
@@ -75,8 +96,14 @@ export default function DashboardLayout() {
             const saved = localStorage.getItem('gymProfile');
             if (saved) setGymProfile(JSON.parse(saved));
         };
+
+        // Also refresh user profile on event
         window.addEventListener('gymProfileUpdated', handleProfileUpdate);
-        return () => window.removeEventListener('gymProfileUpdated', handleProfileUpdate);
+        window.addEventListener('userProfileUpdated', fetchUserRole);
+        return () => {
+            window.removeEventListener('gymProfileUpdated', handleProfileUpdate);
+            window.removeEventListener('userProfileUpdated', fetchUserRole);
+        };
     }, []);
 
     useEffect(() => {
@@ -114,6 +141,15 @@ export default function DashboardLayout() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         navigate('/login');
+    };
+
+    const handleStatusChange = async (status: 'online' | 'busy') => {
+        const { error } = await supabase.auth.updateUser({
+            data: { status }
+        });
+        if (!error) {
+            setUserStatus(status);
+        }
     };
 
     const allNavItems = [
@@ -158,8 +194,12 @@ export default function DashboardLayout() {
                         </div>
                     </div>
 
-                    <div className="px-6 py-2 bg-white/10 mx-6 mt-4 rounded-xl text-[10px] text-center uppercase tracking-[0.2em] text-white/80 font-black border border-white/5">
-                        {role || t('common.loading')}
+                    {/* User Profile Section in Sidebar */}
+                    <div className="mt-8 px-6 flex flex-col items-center">
+                        <div className="text-center">
+                            <h3 className="font-extrabold text-white uppercase tracking-tight text-sm truncate max-w-[200px]">{fullName || role || 'Admin'}</h3>
+                            <p className="text-[10px] text-white/40 font-bold truncate lowercase mt-1 max-w-[200px]">{userEmail}</p>
+                        </div>
                     </div>
 
                     {/* Navigation */}
@@ -327,23 +367,47 @@ export default function DashboardLayout() {
                         <div className="relative">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); setNotificationsOpen(false); }}
-                                className={`flex items-center gap-3 pl-2 pr-4 py-2 rounded-2xl transition-all group ${profileOpen ? 'bg-white/10 ring-2 ring-primary/20' : 'hover:bg-white/5'}`}
+                                className={`flex items-center gap-4 px-4 py-2 rounded-2xl transition-all group ${profileOpen ? 'bg-white/10 ring-2 ring-primary/20' : 'hover:bg-white/5 shadow-premium bg-white/[0.02]'}`}
                             >
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
-                                    {role?.[0]?.toUpperCase() || 'A'}
-                                </div>
-                                <div className="hidden sm:block text-left text-sm">
-                                    <p className="font-extrabold text-white tracking-wide uppercase">{role?.replace('_', ' ') || 'ADMIN'}</p>
-                                    <p className="text-[10px] text-white/50 font-black uppercase tracking-widest flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        {t('common.online') || 'ONLINE'}
+                                <div className="text-right text-sm">
+                                    <p className={`text-[10px] ${userStatus === 'online' ? 'text-emerald-400' : 'text-orange-400'} font-black uppercase tracking-[0.3em] flex items-center justify-end gap-2.5`}>
+                                        <span className={`w-2 h-2 rounded-full ${userStatus === 'online' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]'} animate-pulse`}></span>
+                                        {userStatus.toUpperCase()}
                                     </p>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-black text-xs">
+                                            {(fullName || role)?.[0]?.toUpperCase() || 'A'}
+                                        </div>
+                                    )}
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-white/30 group-hover:text-white transition-all ${profileOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {profileOpen && (
                                 <div className={`absolute top-full mt-4 ${isRtl ? 'left-0' : 'right-0'} w-64 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in slide-in-from-top-4 duration-300`}>
+                                    <div className="p-6 space-y-2 border-b border-white/5">
+                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] px-4 mb-4">Set Status</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => handleStatusChange('online')}
+                                                className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${userStatus === 'online' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
+                                            >
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                                Online
+                                            </button>
+                                            <button
+                                                onClick={() => handleStatusChange('busy')}
+                                                className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${userStatus === 'busy' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
+                                            >
+                                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                                Busy
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="p-6 space-y-2">
                                         <button
                                             onClick={() => navigate('/settings')}
@@ -369,7 +433,9 @@ export default function DashboardLayout() {
 
                 {/* Page Content */}
                 <main className="flex-1 p-4 sm:p-8 overflow-x-hidden">
-                    <Outlet context={{ role }} />
+                    <Outlet context={{ role, fullName }} />
+                    {/* Floating Chat */}
+                    <FloatingChat />
                 </main>
             </div>
         </div>
