@@ -202,6 +202,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                             <option value="" disabled>Select Specialty</option>
                             <option value="Artistic Gymnastics (Boys)">Artistic Gymnastics (Boys)</option>
                             <option value="Artistic Gymnastics (Girls)">Artistic Gymnastics (Girls)</option>
+                            <option value="Artistic Gymnastics (Mixed)">Artistic Gymnastics (Boys & Girls)</option>
                             <option value="Rhythmic Gymnastics">Rhythmic Gymnastics</option>
                         </select>
                     </div>
