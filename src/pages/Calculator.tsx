@@ -95,7 +95,7 @@ function StandardCalculator() {
         <div className="max-w-xs mx-auto">
             <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl mb-4 text-right">
                 <div className="text-sm text-gray-500 min-h-[20px]">{equation}</div>
-                <div className="text-3xl font-bold font-mono text-gray-900 dark:text-white truncate">{display}</div>
+                <div className="text-3xl font-bold font-mono text-gray-900 dark:text-white truncate tracking-widest">{display}</div>
             </div>
             <div className="grid grid-cols-4 gap-3">
                 <button onClick={clear} className="col-span-3 bg-red-100 text-red-600 p-4 rounded-xl font-bold hover:bg-red-200">AC</button>
@@ -153,7 +153,7 @@ function BMICalculator() {
                         type="number"
                         value={weight}
                         onChange={e => setWeight(e.target.value)}
-                        className="w-full text-center text-2xl font-bold p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-transparent focus:border-primary focus:ring-0 outline-none"
+                        className="w-full text-center text-2xl font-bold p-4 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl border border-transparent focus:border-primary focus:ring-0 outline-none placeholder:text-gray-400"
                         placeholder="0"
                     />
                 </div>
@@ -163,7 +163,7 @@ function BMICalculator() {
                         type="number"
                         value={height}
                         onChange={e => setHeight(e.target.value)}
-                        className="w-full text-center text-2xl font-bold p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-transparent focus:border-primary focus:ring-0 outline-none"
+                        className="w-full text-center text-2xl font-bold p-4 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl border border-transparent focus:border-primary focus:ring-0 outline-none placeholder:text-gray-400"
                         placeholder="0"
                     />
                 </div>
@@ -233,22 +233,22 @@ function CalorieCalculator() {
 
                 <div className="space-y-1">
                     <label className="text-xs font-medium opacity-70">Age</label>
-                    <input type="number" value={data.age} onChange={e => setData({ ...data, age: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input type="number" value={data.age} onChange={e => setData({ ...data, age: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400" />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-medium opacity-70">Weight (kg)</label>
-                    <input type="number" value={data.weight} onChange={e => setData({ ...data, weight: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input type="number" value={data.weight} onChange={e => setData({ ...data, weight: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400" />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-medium opacity-70">Height (cm)</label>
-                    <input type="number" value={data.height} onChange={e => setData({ ...data, height: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input type="number" value={data.height} onChange={e => setData({ ...data, height: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400" />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-medium opacity-70">Activity</label>
                     <select
                         value={data.activity}
                         onChange={e => setData({ ...data, activity: e.target.value })}
-                        className="w-full p-3 bg-gray-50 dark:bg-white/5 rounded-xl outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 [&>option]:text-gray-900"
                     >
                         <option value="1.2">Sedentary</option>
                         <option value="1.375">Light Exercise</option>
