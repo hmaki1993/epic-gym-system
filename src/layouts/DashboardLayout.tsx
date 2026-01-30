@@ -46,9 +46,28 @@ export default function DashboardLayout() {
         }
     };
 
+    const [gymProfile, setGymProfile] = useState(() => {
+        const saved = localStorage.getItem('gymProfile');
+        return saved ? JSON.parse(saved) : {
+            name: 'Epic Gym Academy',
+            phone: '+20 123 456 7890',
+            address: 'Cairo, Egypt',
+        };
+    });
+
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchRole();
+
+        const handleProfileUpdate = () => {
+            const saved = localStorage.getItem('gymProfile');
+            if (saved) {
+                setGymProfile(JSON.parse(saved));
+            }
+        };
+
+        window.addEventListener('gymProfileUpdated', handleProfileUpdate);
+        return () => window.removeEventListener('gymProfileUpdated', handleProfileUpdate);
     }, []);
 
     const toggleLanguage = () => {
@@ -79,16 +98,25 @@ export default function DashboardLayout() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-row">
             {/* FORCE VISIBLE SIDEBAR */}
-            <aside className="w-64 bg-secondary text-white flex-shrink-0 h-screen overflow-y-auto fixed left-0 top-0 z-50">
-                <div className="flex items-center justify-center h-20 bg-secondary/80 border-b border-white/10 px-4">
-                    <img src="/logo.png" alt="Epic Gym Logo" className="h-14 w-auto object-contain drop-shadow-lg" />
+            <aside className="w-64 bg-secondary text-white flex-shrink-0 h-screen overflow-y-auto fixed left-0 top-0 z-50 flex flex-col">
+                <div className="flex flex-col items-center justify-center pt-8 pb-6 bg-secondary/80 border-b border-white/10 px-4">
+                    <img src="/logo.png" alt="Epic Gym Logo" className="h-24 w-auto object-contain drop-shadow-xl mb-4 transition-transform hover:scale-105" />
+
+                    {/* INSTAGRAM STYLE BIO */}
+                    <div className="text-center w-fullanimate-in fade-in slide-in-from-top-2">
+                        <h2 className="font-bold text-lg tracking-wide">{gymProfile.name}</h2>
+                        <div className="text-xs text-gray-300 mt-1 font-medium space-y-0.5">
+                            <p>{gymProfile.address}</p>
+                            <p dir="ltr" className="opacity-80">{gymProfile.phone}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="px-4 py-2 bg-white/5 mx-4 mt-4 rounded text-xs text-center uppercase tracking-wider text-gray-400">
-                    User Role: {role || 'Loading...'}
+                <div className="px-4 py-2 bg-white/5 mx-4 mt-6 rounded text-xs text-center uppercase tracking-wider text-gray-400">
+                    {role || 'Loading...'}
                 </div>
 
-                <nav className="mt-4 px-4 space-y-2">
+                <nav className="mt-4 px-4 space-y-2 flex-grow">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.to;
@@ -109,7 +137,7 @@ export default function DashboardLayout() {
                     })}
                 </nav>
 
-                <div className="p-4 mt-auto border-t border-white/10 space-y-2">
+                <div className="p-4 border-t border-white/10 space-y-2">
                     <button
                         onClick={handleLogout}
                         className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-400 rounded-lg hover:bg-white/5 hover:text-red-300"
@@ -122,9 +150,9 @@ export default function DashboardLayout() {
 
             {/* Main Content with Left Padding for Sidebar */}
             <div className="flex-1 min-w-0 ml-64 p-8">
-                <header className="mb-8 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-800">Epic Gym Academy</h1>
-                    <div className="text-sm text-gray-500">v1.0.0</div>
+                {/* Header Title REMOVED as per request */}
+                <header className="mb-8 flex justify-end items-center">
+                    <div className="text-xs font-mono opacity-30">v1.0.0</div>
                 </header>
 
                 <main>

@@ -4,13 +4,16 @@ import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
     const { t } = useTranslation();
-    const [gymProfile, setGymProfile] = useState({
-        name: 'Epic Gymnastic Academy',
-        phone: '+20 123 456 7890',
-        address: 'Cairo, Egypt',
+    const [gymProfile, setGymProfile] = useState(() => {
+        const saved = localStorage.getItem('gymProfile');
+        return saved ? JSON.parse(saved) : {
+            name: 'Epic Gym Academy',
+            phone: '+20 123 456 7890',
+            address: 'Cairo, Egypt',
+        };
     });
-    const [loading, setLoading] = useState(false);
 
+    const [loading, setLoading] = useState(false);
 
     const themes = [
         { id: 'default', name: 'Epic Default', primary: '#FF7F50', secondary: '#4A5D85' },
@@ -88,7 +91,15 @@ export default function Settings() {
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Save to LocalStorage
+        localStorage.setItem('gymProfile', JSON.stringify(gymProfile));
+
+        // Dispatch a custom event so DashboardLayout knows to update immediately
+        window.dispatchEvent(new Event('gymProfileUpdated'));
+
         alert(t('common.saveSuccess'));
         setLoading(false);
     };
