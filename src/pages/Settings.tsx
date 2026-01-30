@@ -5,14 +5,29 @@ import toast from 'react-hot-toast';
 import { applyThemeStyles } from '../utils/theme';
 
 export default function Settings() {
+    interface GymProfile {
+        name: string;
+        phone: string;
+        address: string;
+    }
+
     const { t } = useTranslation();
-    const [gymProfile, setGymProfile] = useState(() => {
-        const saved = localStorage.getItem('gymProfile');
-        return saved ? JSON.parse(saved) : {
-            name: 'Epic Gym Academy',
-            phone: '+20 123 456 7890',
-            address: 'Cairo, Egypt',
-        };
+    const [gymProfile, setGymProfile] = useState<GymProfile>(() => {
+        try {
+            const saved = localStorage.getItem('gymProfile');
+            return saved ? JSON.parse(saved) : {
+                name: 'Epic Gym Academy',
+                phone: '+20 123 456 7890',
+                address: 'Cairo, Egypt',
+            };
+        } catch (e) {
+            console.error('Failed to parse gym profile:', e);
+            return {
+                name: 'Epic Gym Academy',
+                phone: '+20 123 456 7890',
+                address: 'Cairo, Egypt',
+            };
+        }
     });
 
     const [loading, setLoading] = useState(false);
