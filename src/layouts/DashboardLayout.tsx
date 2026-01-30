@@ -23,6 +23,7 @@ export default function DashboardLayout() {
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [role, setRole] = useState<string | null>(null);
+    const [roleLoading, setRoleLoading] = useState(true);
 
     useEffect(() => {
         document.dir = i18n.dir();
@@ -43,6 +44,8 @@ export default function DashboardLayout() {
         } catch (error) {
             console.error('Error fetching role:', error);
             setRole('admin'); // Fallback to ensure UI renders
+        } finally {
+            setRoleLoading(false);
         }
     };
 
@@ -96,6 +99,18 @@ export default function DashboardLayout() {
     const navItems = allNavItems.filter(item => role && item.roles.includes(role));
 
     const isRtl = i18n.dir() === 'rtl';
+
+    // Show loading spinner while role is being fetched
+    if (roleLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600">{t('common.loading')}...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
