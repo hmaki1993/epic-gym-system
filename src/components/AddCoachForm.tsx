@@ -36,8 +36,8 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
 
     // Common Input Styles to match Settings.tsx theme system
     const inputStyle = {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        color: 'inherit',
+        backgroundColor: '#FFFFFF',
+        color: '#1F2937',
         borderColor: 'rgba(128, 128, 128, 0.3)'
     };
 
@@ -117,155 +117,161 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
             <div
-                className="rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
-                style={{ backgroundColor: 'var(--color-surface)', color: 'inherit' }}
+                className="glass-card rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-in zoom-in-95 duration-300"
             >
                 {/* Header */}
-                <div className="px-6 py-4 flex items-center justify-between border-b border-white/10" style={{ backgroundColor: 'var(--color-primary)' }}>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <UserPlus className="w-5 h-5" />
-                        {initialData ? 'Edit Coach' : 'Add New Coach'}
-                    </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-white/5">
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-primary/20 rounded-xl text-primary">
+                                <UserPlus className="w-6 h-6" />
+                            </div>
+                            {initialData ? 'Edit Coach' : 'Add New Coach'}
+                        </h2>
+                    </div>
+                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">Full Name</label>
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Full Name</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.full_name}
                                 onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium opacity-80">Profile Image</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Profile Image</label>
 
                             {/* Preview Area */}
                             <div className="flex gap-4 items-center">
-                                <div className="relative w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                                <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/10 flex-shrink-0 bg-white/5 group/img shadow-inner">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 opacity-0 group-hover/img:opacity-100 transition-opacity"></div>
                                     {formData.avatar_url ? (
                                         <img
                                             src={formData.avatar_url}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover relative z-10"
                                             style={{ objectPosition: `${formData.image_pos_x}% ${formData.image_pos_y}%` }}
                                             alt="Preview"
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center opacity-40">?</div>
+                                        <div className="w-full h-full flex items-center justify-center text-white/20 font-black">?</div>
                                     )}
                                 </div>
 
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileUpload}
-                                    className="w-full text-sm opacity-70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
-                                    disabled={uploading}
-                                />
+                                <label className="flex-1">
+                                    <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/60 hover:bg-white/10 hover:text-white cursor-pointer transition-all text-center">
+                                        {uploading ? 'Uploading...' : 'Browse Image'}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileUpload}
+                                        className="hidden"
+                                        disabled={uploading}
+                                    />
+                                </label>
                             </div>
 
                             {/* Position Controls */}
                             {formData.avatar_url && (
-                                <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border border-white/5 mt-2" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
-                                    <div className="space-y-1">
-                                        <label className="text-xs opacity-60">Horizontal (X)</label>
+                                <div className="grid grid-cols-2 gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 mt-3 shadow-inner">
+                                    <div className="space-y-2">
+                                        <label className="text-[8px] font-black uppercase tracking-widest text-white/30">Horizontal (X)</label>
                                         <input
                                             type="range"
                                             min="0"
                                             max="100"
                                             value={formData.image_pos_x}
                                             onChange={(e) => setFormData(prev => ({ ...prev, image_pos_x: parseInt(e.target.value) }))}
-                                            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs opacity-60">Vertical (Y)</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[8px] font-black uppercase tracking-widest text-white/30">Vertical (Y)</label>
                                         <input
                                             type="range"
                                             min="0"
                                             max="100"
                                             value={formData.image_pos_y}
                                             onChange={(e) => setFormData(prev => ({ ...prev, image_pos_y: parseInt(e.target.value) }))}
-                                            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
                                 </div>
                             )}
-
-                            {uploading && <p className="text-xs text-primary animate-pulse">Uploading...</p>}
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium opacity-80">Specialty</label>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Specialty</label>
                         <select
                             required
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none"
+                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
                             value={formData.specialty}
                             onChange={e => setFormData({ ...formData, specialty: e.target.value })}
-                            style={inputStyle}
                         >
-                            <option value="" disabled className="text-gray-500">Select Specialty</option>
-                            <option value="Artistic Gymnastics (Boys)" className="text-black dark:text-gray-900">Artistic Gymnastics (Boys)</option>
-                            <option value="Artistic Gymnastics (Girls)" className="text-black dark:text-gray-900">Artistic Gymnastics (Girls)</option>
-                            <option value="Artistic Gymnastics (Mixed)" className="text-black dark:text-gray-900">Artistic Gymnastics (Boys & Girls)</option>
-                            <option value="Rhythmic Gymnastics" className="text-black dark:text-gray-900">Rhythmic Gymnastics</option>
+                            <option value="" disabled className="bg-slate-900">Select Specialty</option>
+                            <option value="Artistic Gymnastics (Boys)" className="bg-slate-900">Artistic Gymnastics (Boys)</option>
+                            <option value="Artistic Gymnastics (Girls)" className="bg-slate-900">Artistic Gymnastics (Girls)</option>
+                            <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
+                            <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">PT Rate (per session)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">PT Rate (per session)</label>
                             <input
                                 required
                                 type="number"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.pt_rate}
                                 onChange={e => setFormData({ ...formData, pt_rate: e.target.value })}
                                 placeholder="0.00"
-                                style={inputStyle}
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">Monthly Salary</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Monthly Salary</label>
                             <input
                                 required
                                 type="number"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.salary}
                                 onChange={e => setFormData({ ...formData, salary: e.target.value })}
                                 placeholder="0.00"
-                                style={inputStyle}
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-6">
+                    <div className="flex justify-end gap-4 pt-8 border-t border-white/5 mt-8">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 opacity-70 hover:opacity-100 font-medium hover:bg-black/5 rounded-lg transition-colors"
+                            className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-2xl"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-primary text-white font-medium rounded-lg shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-10 py-4 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
                         >
-                            {loading ? 'Saving...' : (
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                            {loading ? (
+                                <span className="animate-pulse">Saving...</span>
+                            ) : (
                                 <>
-                                    <Save className="w-5 h-5" />
-                                    {initialData ? 'Update Coach' : 'Save Coach'}
+                                    <Save className="w-4 h-4 relative z-10" />
+                                    <span className="relative z-10">{initialData ? 'Update Coach' : 'Save Coach'}</span>
                                 </>
                             )}
                         </button>

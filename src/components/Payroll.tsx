@@ -105,58 +105,82 @@ export default function Payroll({ refreshTrigger, onViewAttendance }: PayrollPro
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-8">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Banknote className="w-5 h-5 text-green-600" />
+        <div className="glass-card rounded-[3rem] overflow-hidden border border-white/10 shadow-premium mt-12 bg-white/[0.01] animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="p-10 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between bg-white/[0.02] gap-6">
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                    <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+                        <Banknote className="w-6 h-6" />
+                    </div>
                     {t('coaches.payrollTitle')}
                 </h3>
-                <input
-                    type="month"
-                    value={month}
-                    onChange={(e) => setMonth(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+                <div className="relative group w-full sm:w-auto">
+                    <input
+                        type="month"
+                        value={month}
+                        onChange={(e) => setMonth(e.target.value)}
+                        className="w-full sm:w-auto bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-black uppercase tracking-widest text-xs appearance-none cursor-pointer hover:bg-white/10"
+                    />
+                </div>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-gray-700 font-medium">
+                <table className="w-full text-left">
+                    <thead className="bg-white/[0.01] text-white/30 font-black text-[10px] uppercase tracking-[0.3em] border-b border-white/5">
                         <tr>
-                            <th className="px-6 py-4">{t('common.name')}</th>
-                            <th className="px-6 py-4 text-center">{t('coaches.workHours')}</th>
-                            <th className="px-6 py-4 text-center">{t('coaches.sessionCount')}</th>
-                            <th className="px-6 py-4 text-center">{t('coaches.rate')}</th>
-                            <th className="px-6 py-4 text-center">{t('coaches.baseSalary')}</th>
-                            <th className="px-6 py-4 text-right">{t('coaches.totalEarnings')}</th>
+                            <th className="px-10 py-8">{t('common.name')}</th>
+                            <th className="px-10 py-8 text-center">{t('coaches.workHours')}</th>
+                            <th className="px-10 py-8 text-center">{t('coaches.sessionCount')}</th>
+                            <th className="px-10 py-8 text-center">{t('coaches.rate')}</th>
+                            <th className="px-10 py-8 text-center">{t('coaches.baseSalary')}</th>
+                            <th className="px-10 py-8 text-right">{t('coaches.totalEarnings')}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-white/5">
                         {loading ? (
-                            <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">{t('common.loading')}</td></tr>
+                            <tr><td colSpan={6} className="px-10 py-32 text-center text-white/20 font-black uppercase tracking-[0.2em] italic">{t('common.loading')}</td></tr>
                         ) : payrollData.length === 0 ? (
-                            <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">{t('common.noResults')}</td></tr>
+                            <tr><td colSpan={6} className="px-10 py-32 text-center text-white/20 font-black uppercase tracking-[0.2em] italic">{t('common.noResults')}</td></tr>
                         ) : (
                             payrollData.map((row) => (
-                                <tr key={row.coach_id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 font-medium text-gray-900 flex items-center justify-between group">
-                                        <span>{row.coach_name}</span>
-                                        {onViewAttendance && (
-                                            <button
-                                                onClick={() => onViewAttendance(row.coach_id)}
-                                                className="p-1 hover:bg-gray-100 rounded-md text-gray-400 hover:text-primary transition-all opacity-0 group-hover:opacity-100"
-                                                title="View Logs"
-                                            >
-                                                <Clock className="w-4 h-4" />
-                                            </button>
-                                        )}
+                                <tr key={row.coach_id} className="hover:bg-white/[0.02] transition-all duration-500 group border-l-2 border-transparent hover:border-primary">
+                                    <td className="px-10 py-8">
+                                        <div className="flex items-center justify-between group/name">
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-xs font-black text-white/40 group-hover:bg-primary/20 group-hover:text-primary transition-all duration-500 shadow-inner">
+                                                    {row.coach_name?.[0] || '?'}
+                                                </div>
+                                                <span className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors">{row.coach_name}</span>
+                                            </div>
+                                            {onViewAttendance && (
+                                                <button
+                                                    onClick={() => onViewAttendance(row.coach_id)}
+                                                    className="p-3 hover:bg-white/10 rounded-2xl text-white/20 hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+                                                    title="View Logs"
+                                                >
+                                                    <Clock className="w-5 h-5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-700 text-center font-mono">{row.total_hours}h</td>
-                                    <td className="px-6 py-4 text-gray-700 text-center">{row.total_pt_sessions}</td>
-                                    <td className="px-6 py-4 text-gray-700 text-center">{row.pt_rate}</td>
-                                    <td className="px-6 py-4 text-gray-700 text-center">{row.salary?.toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-right font-bold text-green-600">
-                                        {row.total_earnings.toLocaleString()}
+                                    <td className="px-10 py-8 text-center">
+                                        <span className="text-white/60 font-black text-sm tracking-widest uppercase bg-white/5 px-4 py-2 rounded-xl group-hover:text-white transition-colors">{row.total_hours}h</span>
+                                    </td>
+                                    <td className="px-10 py-8 text-center">
+                                        <span className="text-white/40 font-black text-lg group-hover:text-white transition-colors">{row.total_pt_sessions}</span>
+                                    </td>
+                                    <td className="px-10 py-8 text-center">
+                                        <span className="text-white/40 font-bold text-sm">{row.pt_rate}</span>
+                                    </td>
+                                    <td className="px-10 py-8 text-center">
+                                        <span className="text-white/40 font-bold text-sm tracking-tight">{row.salary?.toLocaleString()}</span>
+                                    </td>
+                                    <td className="px-10 py-8 text-right">
+                                        <div className="flex flex-col items-end group-hover:scale-110 transition-transform duration-500 origin-right">
+                                            <span className="text-3xl font-black text-emerald-400 tracking-tighter">
+                                                {row.total_earnings.toLocaleString()}
+                                            </span>
+                                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">EGP</span>
+                                        </div>
                                     </td>
                                 </tr>
                             ))

@@ -32,6 +32,13 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
         fetchStudents();
     }, []);
 
+    // Theme-aware styles to ensure visibility
+    const inputStyle = {
+        backgroundColor: '#FFFFFF',
+        color: '#1F2937',
+        borderColor: 'rgb(209, 213, 219)'
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -59,68 +66,76 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-                <div className="bg-secondary px-6 py-4 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <DollarSign className="w-5 h-5" />
-                        Record Payment
-                    </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
+            <div
+                className="glass-card rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-in zoom-in-95 duration-300"
+            >
+                {/* Header */}
+                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-white/5">
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-primary/20 rounded-xl text-primary">
+                                <DollarSign className="w-6 h-6" />
+                            </div>
+                            Record Payment
+                        </h2>
+                    </div>
+                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">Student</label>
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Student</label>
                         <select
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
                             value={formData.student_id}
                             onChange={e => setFormData({ ...formData, student_id: e.target.value })}
                         >
-                            <option value="">Select Student</option>
+                            <option value="" className="bg-slate-900">Select Student</option>
                             {students.map(s => (
-                                <option key={s.id} value={s.id}>{s.full_name}</option>
+                                <option key={s.id} value={s.id} className="bg-slate-900">{s.full_name}</option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Amount (EGP)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Amount (EGP)</label>
                             <input
                                 required
                                 type="number"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.amount}
                                 onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                                placeholder="0.00"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Date</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Date</label>
                             <input
                                 required
                                 type="date"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.date}
                                 onChange={e => setFormData({ ...formData, date: e.target.value })}
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">Payment Method</label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Payment Method</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {['cash', 'bank_transfer', 'card'].map(method => (
                                 <button
                                     key={method}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, payment_method: method })}
-                                    className={`py-2 px-2 text-sm rounded-lg border capitalized ${formData.payment_method === method
-                                        ? 'bg-primary text-white border-primary'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                    className={`py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all ${formData.payment_method === method
+                                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105'
+                                        : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white'
                                         }`}
                                 >
                                     {method.replace('_', ' ')}
@@ -129,32 +144,36 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">Notes</label>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Notes</label>
                         <textarea
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all h-20 resize-none"
+                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all h-24 resize-none text-white placeholder:text-white/20"
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="Add payment details..."
                         ></textarea>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-4 pt-8 border-t border-white/5 mt-8">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                            className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-2xl"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-primary text-white font-medium rounded-lg shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-10 py-4 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
                         >
-                            {loading ? 'Processing...' : (
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                            {loading ? (
+                                <span className="animate-pulse">Processing...</span>
+                            ) : (
                                 <>
-                                    <Save className="w-5 h-5" />
-                                    Save Payment
+                                    <Save className="w-4 h-4 relative z-10" />
+                                    <span className="relative z-10">Save Payment</span>
                                 </>
                             )}
                         </button>

@@ -4,69 +4,71 @@ export const applyThemeStyles = (themeId: string) => {
         const root = document.documentElement;
 
         if (themeId === 'midnight') {
-            // Deep Dark Blue - Professional & Elegant
-            root.style.setProperty('--color-primary', '#818cf8');
+            // Refined Midnight Blue - Deep & Elegant
+            root.style.setProperty('--color-primary', '#818cf8'); // Indigo 400
             root.style.setProperty('--color-primary-foreground', '#ffffff');
-            root.style.setProperty('--color-secondary', '#1e293b');
-            root.style.setProperty('--color-background', '#0f172a');
-            root.style.setProperty('--color-surface', '#1e293b');
+            root.style.setProperty('--color-secondary', '#1e293b'); // Slate 800
+            root.style.setProperty('--color-background', '#0f172a'); // Slate 900
+            root.style.setProperty('--color-surface', 'rgba(30, 41, 59, 0.7)');
+            root.style.setProperty('--color-accent', '#c084fc'); // Purple 400
             root.style.setProperty('color', '#f1f5f9');
         } else if (themeId === 'obsidian') {
-            // Pure Black - OLED Friendly
-            root.style.setProperty('--color-primary', '#a78bfa');
+            // Polished Obsidian - Sleek Black
+            root.style.setProperty('--color-primary', '#f472b6'); // Pink 400
             root.style.setProperty('--color-primary-foreground', '#ffffff');
-            root.style.setProperty('--color-secondary', '#18181b');
-            root.style.setProperty('--color-background', '#000000');
-            root.style.setProperty('--color-surface', '#18181b');
+            root.style.setProperty('--color-secondary', '#18181b'); // Zinc 900
+            root.style.setProperty('--color-background', '#09090b'); // Zinc 950
+            root.style.setProperty('--color-surface', 'rgba(24, 24, 27, 0.7)');
+            root.style.setProperty('--color-accent', '#fb7185'); // Rose 400
             root.style.setProperty('color', '#fafafa');
         } else if (themeId === 'emerald') {
-            // Dark Green - Modern & Fresh
-            root.style.setProperty('--color-primary', '#34d399');
+            // Deep Emerald - Professional Green
+            root.style.setProperty('--color-primary', '#34d399'); // Emerald 400
             root.style.setProperty('--color-primary-foreground', '#ffffff');
-            root.style.setProperty('--color-secondary', '#1e3a2f');
-            root.style.setProperty('--color-background', '#0a1f1a');
-            root.style.setProperty('--color-surface', '#1e3a2f');
-            root.style.setProperty('color', '#d1fae5');
+            root.style.setProperty('--color-secondary', '#064e3b'); // Emerald 900
+            root.style.setProperty('--color-background', '#022c22'); // Emerald 950
+            root.style.setProperty('--color-surface', 'rgba(6, 78, 59, 0.7)');
+            root.style.setProperty('--color-accent', '#2dd4bf'); // Teal 400
+            root.style.setProperty('color', '#ecfdf5');
         } else if (themeId === 'crimson') {
-            // Dark Red - Bold & Powerful
-            root.style.setProperty('--color-primary', '#fb7185');
+            // Rich Crimson - Sophisticated Red
+            root.style.setProperty('--color-primary', '#fb7185'); // Rose 400
             root.style.setProperty('--color-primary-foreground', '#ffffff');
-            root.style.setProperty('--color-secondary', '#3f1d28');
-            root.style.setProperty('--color-background', '#1a0a0f');
-            root.style.setProperty('--color-surface', '#3f1d28');
-            root.style.setProperty('color', '#fecdd3');
+            root.style.setProperty('--color-secondary', '#4c0519'); // Rose 900
+            root.style.setProperty('--color-background', '#190a0f'); // Darker
+            root.style.setProperty('--color-surface', 'rgba(76, 5, 25, 0.7)');
+            root.style.setProperty('--color-accent', '#f43f5e'); // Rose 500
+            root.style.setProperty('color', '#fff1f2');
         } else if (themeId === 'amber') {
-            // Dark Orange - Warm & Inviting
-            root.style.setProperty('--color-primary', '#fbbf24');
-            root.style.setProperty('--color-primary-foreground', '#000000');
-            root.style.setProperty('--color-secondary', '#3f2f1d');
+            // Warm Amber - Golden Premium
+            root.style.setProperty('--color-primary', '#fbbf24'); // Amber 400
+            root.style.setProperty('--color-primary-foreground', '#18181b');
+            root.style.setProperty('--color-secondary', '#451a03'); // Amber 950
             root.style.setProperty('--color-background', '#1a140a');
-            root.style.setProperty('--color-surface', '#3f2f1d');
-            root.style.setProperty('color', '#fef3c7');
+            root.style.setProperty('--color-surface', 'rgba(69, 26, 3, 0.7)');
+            root.style.setProperty('--color-accent', '#f59e0b'); // Amber 500
+            root.style.setProperty('color', '#fffbeb');
         } else if (themeId === 'ocean') {
-            // Dark Cyan - Cool & Calm
-            root.style.setProperty('--color-primary', '#22d3ee');
-            root.style.setProperty('--color-primary-foreground', '#000000');
-            root.style.setProperty('--color-secondary', '#1e3a3f');
-            root.style.setProperty('--color-background', '#0a1a1f');
-            root.style.setProperty('--color-surface', '#1e3a3f');
-            root.style.setProperty('color', '#cffafe');
+            // Deep Ocean - Royal Teal
+            root.style.setProperty('--color-primary', '#22d3ee'); // Cyan 400
+            root.style.setProperty('--color-primary-foreground', '#0f172a');
+            root.style.setProperty('--color-secondary', '#164e63'); // Cyan 900
+            root.style.setProperty('--color-background', '#082f49'); // Cyan 950
+            root.style.setProperty('--color-surface', 'rgba(22, 78, 99, 0.7)');
+            root.style.setProperty('--color-accent', '#06b6d4'); // Cyan 500
+            root.style.setProperty('color', '#ecfeff');
         } else if (themeId === 'royal') {
-            // Dark Purple - Luxurious & Premium
-            root.style.setProperty('--color-primary', '#c084fc');
+            // Royal Velvet - Regal Purple
+            root.style.setProperty('--color-primary', '#c084fc'); // Purple 400
             root.style.setProperty('--color-primary-foreground', '#ffffff');
-            root.style.setProperty('--color-secondary', '#2e1f3f');
+            root.style.setProperty('--color-secondary', '#3b0764'); // Purple 950
             root.style.setProperty('--color-background', '#14091a');
-            root.style.setProperty('--color-surface', '#2e1f3f');
-            root.style.setProperty('color', '#f3e8ff');
+            root.style.setProperty('--color-surface', 'rgba(59, 7, 100, 0.7)');
+            root.style.setProperty('--color-accent', '#a855f7'); // Purple 500
+            root.style.setProperty('color', '#faf5ff');
         } else {
-            // Default Midnight
-            root.style.setProperty('--color-primary', '#818cf8');
-            root.style.setProperty('--color-primary-foreground', '#ffffff');
-            root.style.setProperty('--color-secondary', '#1e293b');
-            root.style.setProperty('--color-background', '#0f172a');
-            root.style.setProperty('--color-surface', '#1e293b');
-            root.style.setProperty('color', '#f1f5f9');
+            // Refined Default
+            applyThemeStyles('midnight');
         }
     } catch (e) {
         console.error('Error applying theme:', e);

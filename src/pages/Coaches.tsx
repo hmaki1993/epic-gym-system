@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, Clock } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, Clock, Edit, Trash2, X } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
 import ConfirmModal from '../components/ConfirmModal';
 import Payroll from '../components/Payroll';
@@ -77,41 +77,45 @@ export default function Coaches() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-secondary">{t('coaches.title')}</h1>
-                    <p className="text-gray-500 mt-1">{t('coaches.subtitle')}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-8">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold premium-gradient-text tracking-tight uppercase">{t('coaches.title')}</h1>
+                    <p className="text-white/60 mt-2 text-sm sm:text-base font-bold tracking-wide uppercase opacity-100">{t('coaches.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => {
                         setEditingCoach(null);
                         setShowAddModal(true);
                     }}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105"
+                    className="group flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-8 py-4 rounded-[1.5rem] shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto overflow-hidden relative"
                 >
-                    <Plus className="w-5 h-5" />
-                    <span className="font-semibold">{t('dashboard.addCoach')}</span>
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <Plus className="w-5 h-5 relative z-10" />
+                    <span className="font-extrabold uppercase tracking-widest text-sm relative z-10">{t('dashboard.addCoach')}</span>
                 </button>
             </div>
 
             {/* Coach List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
-                    <p className="text-gray-500 col-span-full text-center py-10">{t('common.loading')}</p>
+                    <p className="text-white/40 col-span-full text-center py-20 font-bold italic">{t('common.loading')}</p>
                 ) : coaches.map(coach => {
                     return (
-                        <div key={coach.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative">
+                        <div key={coach.id} className="glass-card rounded-[2.5rem] p-8 border border-white/10 shadow-premium group hover:scale-[1.02] transition-all duration-500 relative overflow-hidden">
+                            {/* Decorative Background Glow */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+
                             {/* Edit/Delete Actions */}
-                            <div className="absolute top-4 right-4 flex gap-2">
+                            <div className="absolute top-6 right-6 flex gap-2 z-10">
                                 <button
                                     onClick={() => {
                                         setSelectedCoachForAttendance(coach);
                                         setShowAttendanceModal(true);
                                         fetchAttendance(coach.id);
                                     }}
-                                    className="text-gray-400 hover:text-primary transition-colors p-1"
+                                    className="p-3 bg-white/5 text-white/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
                                     title="View Attendance"
                                 >
                                     <Clock className="w-4 h-4" />
@@ -121,54 +125,58 @@ export default function Coaches() {
                                         setEditingCoach(coach);
                                         setShowAddModal(true);
                                     }}
-                                    className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                                    className="p-3 bg-white/5 text-white/40 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                                    <Edit className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => confirmDelete(coach.id)}
-                                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                                    className="p-3 bg-white/5 text-white/40 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
 
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-start justify-between mb-6">
                                 {coach.avatar_url ? (
-                                    <img
-                                        src={coach.avatar_url}
-                                        alt={coach.full_name}
-                                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                                        style={{ objectPosition: `${coach.image_pos_x ?? 50}% ${coach.image_pos_y ?? 50}%` }}
-                                    />
+                                    <div className="relative">
+                                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-full blur opacity-25 group-hover:opacity-50 transition-all"></div>
+                                        <img
+                                            src={coach.avatar_url}
+                                            alt={coach.full_name}
+                                            className="relative w-16 h-16 rounded-3xl object-cover border-2 border-white/10"
+                                            style={{ objectPosition: `${coach.image_pos_x ?? 50}% ${coach.image_pos_y ?? 50}%` }}
+                                        />
+                                    </div>
                                 ) : (
-                                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-secondary">
-                                        <Medal className="w-6 h-6" />
+                                    <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center text-primary shadow-inner">
+                                        <Medal className="w-8 h-8" />
                                     </div>
                                 )}
                             </div>
 
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-gray-900">{coach.full_name}</h3>
+                                <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors">{coach.full_name}</h3>
                                 {(coach as any).attendance_status && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${(coach as any).attendance_status === 'working' ? 'bg-green-100 text-green-700' :
-                                        (coach as any).attendance_status === 'done' ? 'bg-blue-100 text-blue-700' :
-                                            'bg-gray-100 text-gray-500'
+                                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border ${(coach as any).attendance_status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]' :
+                                        (coach as any).attendance_status === 'done' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]' :
+                                            'bg-white/5 text-white/40 border-white/10'
                                         }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${(coach as any).attendance_status === 'working' ? 'bg-emerald-400 animate-pulse' : (coach as any).attendance_status === 'done' ? 'bg-blue-400' : 'bg-white/20'}`}></span>
                                         {(coach as any).attendance_status === 'working' ? t('coaches.workingNow') :
                                             (coach as any).attendance_status === 'done' ? t('coaches.done') :
                                                 t('coaches.away')}
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center text-gray-700">
-                                <Medal className="w-4 h-4 mr-2 opacity-100 text-primary" />
-                                <span className="text-sm font-medium">{coach.specialty}</span>
+                            <div className="flex items-center text-white/60 mt-2 font-bold uppercase tracking-wider text-xs">
+                                <Medal className="w-4 h-4 mr-2 text-primary" />
+                                <span>{coach.specialty}</span>
                             </div>
 
                             {/* Today's Times */}
                             {(coach as any).check_in_time && (
-                                <div className="mt-2 text-[10px] flex items-center gap-2 text-gray-500 font-mono">
+                                <div className="mt-2 text-[11px] flex items-center gap-2 text-gray-900 font-bold font-mono opacity-80">
                                     <Clock className="w-3 h-3" />
                                     <span>
                                         {new Date((coach as any).check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -177,21 +185,21 @@ export default function Coaches() {
                                 </div>
                             )}
 
-                            <div className="mt-4 pt-4 border-t border-gray-50 space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600 font-medium">PT Rate:</span>
-                                    <span className="font-bold text-primary">{coach.pt_rate} EGP/hr</span>
+                            <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">PT Rate:</span>
+                                    <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[10px] opacity-40">EGP/hr</span></span>
                                 </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600 font-medium">PT Sessions Today:</span>
-                                    <span className="font-bold text-green-600">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Sessions:</span>
+                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-black">
                                         {(coach as any).pt_sessions_today || 0} 💪
                                     </span>
                                 </div>
                                 {(coach as any).pt_student_name && (
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-gray-400">Student:</span>
-                                        <span className="font-medium text-gray-500 italic">
+                                    <div className="flex items-center justify-between pt-2">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Active Player:</span>
+                                        <span className="text-xs font-bold text-white italic truncate ml-4">
                                             {(coach as any).pt_student_name}
                                         </span>
                                     </div>
@@ -202,7 +210,13 @@ export default function Coaches() {
                 })}
             </div>
 
-            {/* Payroll Section */}
+            {/* Attendance History Section Title */}
+            <div className="pt-12 pb-6">
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                    <span className="w-2 h-8 bg-primary rounded-full"></span>
+                    Payroll Management
+                </h2>
+            </div>
             <Payroll
                 refreshTrigger={refreshTrigger}
                 onViewAttendance={(coachId: string) => {
@@ -229,45 +243,47 @@ export default function Coaches() {
 
             {/* Attendance Modal */}
             {showAttendanceModal && selectedCoachForAttendance && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-in fade-in duration-300">
+                    <div className="glass-card rounded-[3rem] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden">
+                        <div className="p-10 border-b border-white/5 flex justify-between items-center bg-white/5">
                             <div>
-                                <h2 className="text-xl font-bold">{selectedCoachForAttendance.full_name}</h2>
-                                <p className="text-gray-500 text-sm">Attendance History</p>
+                                <h2 className="text-3xl font-black text-white uppercase tracking-tight">{selectedCoachForAttendance.full_name}</h2>
+                                <p className="text-primary text-xs font-black uppercase tracking-[0.2em] mt-1">Attendance History</p>
                             </div>
-                            <button onClick={() => setShowAttendanceModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            <button onClick={() => setShowAttendanceModal(false)} className="p-4 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6">
+                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
                             {loadingAttendance ? (
-                                <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>
+                                <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest animate-pulse">{t('common.loading')}</div>
                             ) : attendanceLogs.length === 0 ? (
-                                <div className="text-center py-8 text-gray-400">{t('common.noResults')}</div>
+                                <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest italic">
+                                    {t('common.noResults')}
+                                </div>
                             ) : (
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-gray-500 sticky top-0">
+                                <table className="w-full text-left">
+                                    <thead className="bg-white/5 text-white/30 font-black text-[10px] uppercase tracking-[0.2em]">
                                         <tr>
-                                            <th className="px-4 py-3 rounded-l-lg">{t('common.date')}</th>
-                                            <th className="px-4 py-3">{t('coaches.checkIn')}</th>
-                                            <th className="px-4 py-3">{t('coaches.checkOut')}</th>
-                                            <th className="px-4 py-3 rounded-r-lg">{t('coaches.duration')}</th>
+                                            <th className="px-6 py-4 rounded-l-2xl">{t('common.date')}</th>
+                                            <th className="px-6 py-4">{t('coaches.checkIn')}</th>
+                                            <th className="px-6 py-4">{t('coaches.checkOut')}</th>
+                                            <th className="px-6 py-4 rounded-r-2xl text-right">{t('coaches.duration')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody className="divide-y divide-white/5">
                                         {attendanceLogs.map((log: any) => {
                                             const start = new Date(log.check_in_time);
                                             const end = log.check_out_time ? new Date(log.check_out_time) : null;
-                                            const duration = end ? ((end.getTime() - start.getTime()) / 1000 / 3600).toFixed(2) + ' hrs' : '-';
+                                            const duration = end ? ((end.getTime() - start.getTime()) / 1000 / 3600).toFixed(2) + ' HR' : '-';
 
                                             return (
-                                                <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-gray-900">{log.date}</td>
-                                                    <td className="px-4 py-3 font-mono text-gray-500">{start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                                    <td className="px-4 py-3 font-mono text-gray-500">{end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                                                    <td className={`px-4 py-3 font-bold ${end ? 'text-green-600' : 'text-orange-400'}`}>
+                                                <tr key={log.id} className="hover:bg-white/5 transition-colors group">
+                                                    <td className="px-6 py-6 font-bold text-white/70">{log.date}</td>
+                                                    <td className="px-6 py-6 font-black font-mono text-sm text-white/50">{start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                                    <td className="px-6 py-6 font-black font-mono text-sm text-white/50">{end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                                                    <td className={`px-6 py-6 font-black text-right text-sm ${end ? 'text-emerald-400' : 'text-orange-400'}`}>
                                                         {duration}
                                                     </td>
                                                 </tr>

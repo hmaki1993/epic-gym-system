@@ -81,154 +81,164 @@ export default function Settings() {
 
     // Helper to get input styles that work in both light and dark modes
     const inputStyle = {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)', // Slight white tint for dark mode, subtle for light
-        color: 'inherit',
+        backgroundColor: '#FFFFFF',
+        color: '#1F2937',
         borderColor: 'rgba(128, 128, 128, 0.3)'
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-            <div>
-                <h1 className="text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>{t('settings.title')}</h1>
-                <p className="opacity-70 mt-1">{t('settings.subtitle')}</p>
+        <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="border-b border-white/5 pb-8">
+                <h1 className="text-3xl sm:text-4xl font-extrabold premium-gradient-text tracking-tight uppercase">{t('settings.title')}</h1>
+                <p className="text-white/60 mt-2 text-sm sm:text-base font-bold tracking-wide uppercase opacity-100">{t('settings.subtitle')}</p>
             </div>
 
-            {/* Theme Customization */}
-            <div
-                className="rounded-2xl p-6 shadow-sm border border-gray-100/10 transition-colors duration-300"
-                style={{ backgroundColor: 'var(--color-surface)' }}
-            >
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-secondary)' }}>
-                    <Palette className="w-5 h-5" />
-                    {t('settings.theme')}
-                </h2>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    {themes.map(theme => (
-                        <button
-                            key={theme.id}
-                            onClick={() => applyTheme(theme.id)}
-                            className={`group relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${currentTheme === theme.id
-                                ? 'border-primary ring-2 ring-primary/20'
-                                : 'border-transparent bg-black/5 hover:bg-black/10'
-                                }`}
-                        >
-                            <div className="h-24 rounded-lg mb-3 shadow-lg overflow-hidden border border-white/10">
-                                <div className="h-full flex flex-col">
-                                    <div className="h-8" style={{ backgroundColor: theme.bg }}></div>
-                                    <div className="h-8" style={{ backgroundColor: theme.secondary }}></div>
-                                    <div className="h-8" style={{ backgroundColor: theme.primary }}></div>
-                                </div>
+            <div className="grid grid-cols-1 gap-8">
+                {/* Theme Customization */}
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+                    <div className="relative z-10">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                            <div className="p-3 bg-primary/20 rounded-2xl text-primary">
+                                <Palette className="w-6 h-6" />
                             </div>
-                            <span className={`block text-center font-medium text-sm ${currentTheme === theme.id ? 'text-primary' : 'opacity-70'}`}>
-                                {theme.name}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-            {/* Language Settings */}
-            <div
-                className="rounded-2xl p-6 shadow-sm border border-gray-100/10 transition-colors duration-300"
-                style={{ backgroundColor: 'var(--color-surface)' }}
-            >
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-secondary)' }}>
-                    <Globe className="w-5 h-5" />
-                    {t('settings.language')}
-                </h2>
-
-                <div className="flex gap-4">
-                    <button
-                        onClick={() => {
-                            i18n.changeLanguage('ar');
-                            document.dir = 'rtl';
-                        }}
-                        className={`flex-1 p-4 rounded-xl border-2 transition-all ${i18n.language === 'ar'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-transparent bg-black/5 hover:bg-black/10'
-                            }`}
-                    >
-                        <span className="block text-center font-bold">العربية</span>
-                    </button>
-                    <button
-                        onClick={() => {
-                            i18n.changeLanguage('en');
-                            document.dir = 'ltr';
-                        }}
-                        className={`flex-1 p-4 rounded-xl border-2 transition-all ${i18n.language === 'en'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-transparent bg-black/5 hover:bg-black/10'
-                            }`}
-                    >
-                        <span className="block text-center font-bold">English</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Gym Profile - Only for Admin/Head Coach */}
-            {
-                role && ['admin', 'head_coach'].includes(role) && (
-                    <div
-                        className="rounded-2xl p-6 shadow-sm border border-gray-100/10 transition-colors duration-300"
-                        style={{ backgroundColor: 'var(--color-surface)' }}
-                    >
-                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--color-secondary)' }}>
-                            <Building2 className="w-5 h-5" />
-                            {t('settings.gymProfile')}
+                            {t('settings.theme')}
                         </h2>
 
-                        <form onSubmit={handleSaveProfile} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium opacity-80">{t('settings.gymName')}</label>
-                                    <input
-                                        type="text"
-                                        value={gymProfile.name}
-                                        onChange={e => setGymProfile({ ...gymProfile, name: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                        style={inputStyle}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium opacity-80">{t('common.phone')}</label>
-                                    <input
-                                        type="text"
-                                        value={gymProfile.phone}
-                                        onChange={e => setGymProfile({ ...gymProfile, phone: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                        style={inputStyle}
-                                    />
-                                </div>
-                                <div className="col-span-full space-y-1">
-                                    <label className="text-sm font-medium opacity-80">{t('settings.address')}</label>
-                                    <input
-                                        type="text"
-                                        value={gymProfile.address}
-                                        onChange={e => setGymProfile({ ...gymProfile, address: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                        style={inputStyle}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-4 flex justify-end">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {themes.map(theme => (
                                 <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 font-medium"
+                                    key={theme.id}
+                                    onClick={() => applyTheme(theme.id)}
+                                    className={`group relative p-6 rounded-[2rem] border-2 transition-all duration-500 hover:scale-[1.05] active:scale-95 ${currentTheme === theme.id
+                                        ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                                        : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                                        }`}
                                 >
-                                    {loading ? t('common.loading') : (
-                                        <>
-                                            <Save className="w-4 h-4" />
-                                            {t('common.save')}
-                                        </>
+                                    <div className="h-32 rounded-2xl mb-4 shadow-2xl overflow-hidden border border-white/10 group-hover:rotate-2 transition-transform duration-500">
+                                        <div className="h-full flex flex-col">
+                                            <div className="h-1/3" style={{ backgroundColor: theme.bg }}></div>
+                                            <div className="h-1/3" style={{ backgroundColor: theme.secondary }}></div>
+                                            <div className="h-1/3" style={{ backgroundColor: theme.primary }}></div>
+                                        </div>
+                                    </div>
+                                    <span className={`block text-center font-black text-[10px] uppercase tracking-[0.2em] transition-colors ${currentTheme === theme.id ? 'text-white' : 'text-white/40 group-hover:text-white'}`}>
+                                        {theme.name}
+                                    </span>
+                                    {currentTheme === theme.id && (
+                                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg animate-in zoom-in duration-300">
+                                            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                                        </div>
                                     )}
                                 </button>
-                            </div>
-                        </form>
+                            ))}
+                        </div>
                     </div>
-                )
-            }
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Language Settings */}
+                    <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium flex flex-col">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                            <div className="p-3 bg-accent/20 rounded-2xl text-accent">
+                                <Globe className="w-6 h-6" />
+                            </div>
+                            {t('settings.language')}
+                        </h2>
+
+                        <div className="flex gap-6 mt-auto">
+                            <button
+                                onClick={() => {
+                                    i18n.changeLanguage('ar');
+                                    document.dir = 'rtl';
+                                }}
+                                className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-500 hover:scale-105 active:scale-95 flex flex-col items-center gap-2 ${i18n.language === 'ar'
+                                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                                    : 'border-white/5 bg-white/5 hover:bg-white/10'
+                                    }`}
+                            >
+                                <span className={`text-2xl font-black ${i18n.language === 'ar' ? 'text-white' : 'text-white/40'}`}>العربية</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Arabic</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    i18n.changeLanguage('en');
+                                    document.dir = 'ltr';
+                                }}
+                                className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-500 hover:scale-105 active:scale-95 flex flex-col items-center gap-2 ${i18n.language === 'en'
+                                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                                    : 'border-white/5 bg-white/5 hover:bg-white/10'
+                                    }`}
+                            >
+                                <span className={`text-2xl font-black ${i18n.language === 'en' ? 'text-white' : 'text-white/40'}`}>English</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/20">English</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Gym Profile - Only for Admin/Head Coach */}
+                    {role && ['admin', 'head_coach'].includes(role) && (
+                        <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium lg:col-span-1">
+                            <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                                <div className="p-3 bg-primary/20 rounded-2xl text-primary">
+                                    <Building2 className="w-6 h-6" />
+                                </div>
+                                {t('settings.gymProfile')}
+                            </h2>
+
+                            <form onSubmit={handleSaveProfile} className="space-y-6">
+                                <div className="space-y-6">
+                                    <div className="space-y-2 group">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2 group-focus-within:text-primary transition-colors">{t('settings.gymName')}</label>
+                                        <input
+                                            type="text"
+                                            value={gymProfile.name}
+                                            onChange={e => setGymProfile({ ...gymProfile, name: e.target.value })}
+                                            className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 transition-all focus:ring-4 focus:ring-primary/10 outline-none font-bold"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 group">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2 group-focus-within:text-primary transition-colors">{t('common.phone')}</label>
+                                        <input
+                                            type="text"
+                                            value={gymProfile.phone}
+                                            onChange={e => setGymProfile({ ...gymProfile, phone: e.target.value })}
+                                            className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 transition-all focus:ring-4 focus:ring-primary/10 outline-none font-bold"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 group">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2 group-focus-within:text-primary transition-colors">{t('settings.address')}</label>
+                                        <input
+                                            type="text"
+                                            value={gymProfile.address}
+                                            onChange={e => setGymProfile({ ...gymProfile, address: e.target.value })}
+                                            className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 transition-all focus:ring-4 focus:ring-primary/10 outline-none font-bold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="bg-primary hover:bg-primary/90 text-white px-10 py-4 rounded-2xl shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs min-w-[180px] group/btn overflow-hidden relative"
+                                    >
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                                        {loading ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <>
+                                                <Save className="w-5 h-5 relative z-10" />
+                                                <span className="relative z-10">{t('common.save')}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div >
     );
 }

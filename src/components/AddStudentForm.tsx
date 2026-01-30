@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
-import { X, Save, Upload } from 'lucide-react';
+import { X, Save, Upload, UserPlus } from 'lucide-react';
 import { parseISO, addMonths, format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -29,8 +29,8 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
 
     // Theme-aware styles
     const inputStyle = {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        color: 'inherit',
+        backgroundColor: '#FFFFFF',
+        color: '#1F2937',
         borderColor: 'rgba(128, 128, 128, 0.3)'
     };
 
@@ -85,122 +85,124 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
             <div
-                className="rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-                style={{ backgroundColor: 'var(--color-surface)', color: 'inherit' }}
+                className="glass-card rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] border border-white/20"
             >
-
                 {/* Header */}
-                <div className="px-6 py-4 flex items-center justify-between border-b border-white/10" style={{ backgroundColor: 'var(--color-primary)' }}>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        {initialData ? 'Edit Student' : t('common.addStudent', 'Add New Student')}
-                    </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-white/5">
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-primary/20 rounded-xl text-primary">
+                                <UserPlus className="w-6 h-6" />
+                            </div>
+                            {initialData ? 'Edit Student' : t('common.addStudent', 'Add New Student')}
+                        </h2>
+                    </div>
+                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('common.fullName', 'Full Name')}</label>
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.fullName', 'Full Name')}</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.full_name}
                                 onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('common.age', 'Age')}</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.age', 'Age')}</label>
                             <input
                                 required
                                 type="number"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.age}
                                 onChange={e => setFormData({ ...formData, age: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('common.phone', 'Phone Number')}</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.phone', 'Phone Number')}</label>
                             <input
                                 required
                                 type="tel"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.contact_number}
                                 onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('common.parentPhone', 'Parent Phone')}</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.parentPhone', 'Parent Phone')}</label>
                             <input
                                 type="tel"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.parent_contact}
                                 onChange={e => setFormData({ ...formData, parent_contact: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
                     </div>
 
-                    <div className="border-t border-white/10 pt-4">
-                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 opacity-90">
-                            <Upload className="w-4 h-4 text-primary" />
+                    <div className="border-t border-white/5 pt-8">
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6 flex items-center gap-3">
+                            <div className="p-1.5 bg-primary/20 rounded-lg">
+                                <Upload className="w-3.5 h-3.5" />
+                            </div>
                             Subscription Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium opacity-80">Type</label>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Type</label>
                                 <select
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
                                     value={formData.subscription_type}
                                     onChange={e => setFormData({ ...formData, subscription_type: e.target.value })}
-                                    style={inputStyle}
                                 >
-                                    <option value="monthly" style={{ color: 'black' }}>Monthly (1 Month)</option>
-                                    <option value="quarterly" style={{ color: 'black' }}>Quarterly (3 Months)</option>
-                                    <option value="annual" style={{ color: 'black' }}>Annual (1 Year)</option>
+                                    <option value="monthly" className="bg-slate-900">Monthly (1 Month)</option>
+                                    <option value="quarterly" className="bg-slate-900">Quarterly (3 Months)</option>
+                                    <option value="annual" className="bg-slate-900">Annual (1 Year)</option>
                                 </select>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium opacity-80">Start Date</label>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Start Date</label>
                                 <input
                                     type="date"
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                     value={formData.subscription_start}
                                     onChange={e => setFormData({ ...formData, subscription_start: e.target.value })}
-                                    style={inputStyle}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-6">
+                    <div className="flex justify-end gap-4 pt-8 border-t border-white/5 mt-8">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 opacity-70 hover:opacity-100 font-medium hover:bg-black/5 rounded-lg transition-colors"
+                            className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-2xl"
                         >
                             {t('common.cancel', 'Cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-primary text-white font-medium rounded-lg shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-10 py-4 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
                         >
-                            {loading ? 'Saving...' : (
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                            {loading ? (
+                                <span className="animate-pulse">Saving...</span>
+                            ) : (
                                 <>
-                                    <Save className="w-5 h-5" />
-                                    {t('common.save', 'Save Student')}
+                                    <Save className="w-4 h-4 relative z-10" />
+                                    <span className="relative z-10">{t('common.save', 'Save Student')}</span>
                                 </>
                             )}
                         </button>

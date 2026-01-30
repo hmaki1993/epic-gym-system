@@ -41,8 +41,8 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
 
     // Theme-aware styles
     const inputStyle = {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        color: 'inherit',
+        backgroundColor: '#FFFFFF',
+        color: '#1F2937',
         borderColor: 'rgba(128, 128, 128, 0.3)'
     };
 
@@ -135,133 +135,133 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
             <div
-                className="rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-                style={{ backgroundColor: 'var(--color-surface)', color: 'inherit' }}
+                className="glass-card rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-in zoom-in-95 duration-300"
             >
-                <div className="px-6 py-4 flex items-center justify-between border-b border-white/10" style={{ backgroundColor: 'var(--color-primary)' }}>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Calendar className="w-5 h-5" />
-                        {initialData ? 'Edit Class' : 'Add New Class'}
-                    </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
+                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-white/5">
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-primary/20 rounded-xl text-primary">
+                                <Calendar className="w-6 h-6" />
+                            </div>
+                            {initialData ? 'Edit Class' : 'Add New Class'}
+                        </h2>
+                    </div>
+                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium opacity-80">Class Title</label>
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Class Title</label>
                         <input
                             required
                             placeholder="e.g. Gymnastics Level 1"
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
-                            style={inputStyle}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">Coach</label>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Coach</label>
                             <select
                                 required
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
                                 value={formData.coach_id}
                                 onChange={e => setFormData({ ...formData, coach_id: e.target.value })}
-                                style={inputStyle}
                             >
-                                <option value="" style={{ color: 'black' }}>Select Coach</option>
+                                <option value="" className="bg-slate-900">Select Coach</option>
                                 {coaches.map(c => (
-                                    <option key={c.id} value={c.id} style={{ color: 'black' }}>{c.full_name}</option>
+                                    <option key={c.id} value={c.id} className="bg-slate-900">{c.full_name}</option>
                                 ))}
                             </select>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">Day</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Day</label>
                             <select
                                 required
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
                                 value={formData.day_of_week}
                                 onChange={e => setFormData({ ...formData, day_of_week: e.target.value })}
-                                style={inputStyle}
                             >
                                 {daysOfWeek.map(day => (
-                                    <option key={day} value={day} style={{ color: 'black' }}>{day}</option>
+                                    <option key={day} value={day} className="bg-slate-900">{day}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">Start Time</label>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Start Time</label>
                             <input
                                 required
                                 type="time"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.start_time}
                                 onChange={e => setFormData({ ...formData, start_time: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">End Time</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">End Time</label>
                             <input
                                 required
                                 type="time"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.end_time}
                                 onChange={e => setFormData({ ...formData, end_time: e.target.value })}
-                                style={inputStyle}
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium opacity-80">Capacity</label>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Capacity</label>
                         <input
                             required
                             type="number"
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                             value={formData.capacity}
                             onChange={e => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                            style={inputStyle}
                         />
                     </div>
 
-                    <div className="flex justify-between items-center pt-4 border-t border-white/10 mt-6">
+                    <div className="flex justify-between items-center pt-8 border-t border-white/5 mt-8">
                         {initialData ? (
                             <button
                                 type="button"
                                 onClick={handleDelete}
-                                className="px-4 py-2 text-red-500 font-medium hover:bg-red-50/10 rounded-lg transition-colors flex items-center gap-2"
+                                className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-400 transition-all bg-red-500/5 hover:bg-red-500/10 rounded-2xl flex items-center gap-3"
                             >
-                                <Trash2 className="w-5 h-5" />
-                                Delete
+                                <Trash2 className="w-4 h-4" />
+                                Delete Class
                             </button>
                         ) : (
                             <div></div> // Spacer
                         )}
-                        <div className="flex gap-3">
+                        <div className="flex gap-4">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-6 py-2 opacity-70 hover:opacity-100 font-medium hover:bg-black/5 rounded-lg transition-colors"
+                                className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-2xl"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-6 py-2 bg-primary text-white font-medium rounded-lg shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                className="px-10 py-4 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
                             >
-                                {loading ? 'Processing...' : (
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                                {loading ? (
+                                    <span className="animate-pulse">Processing...</span>
+                                ) : (
                                     <>
-                                        <Save className="w-5 h-5" />
-                                        Save Class
+                                        <Save className="w-4 h-4 relative z-10" />
+                                        <span className="relative z-10">Save Class</span>
                                     </>
                                 )}
                             </button>

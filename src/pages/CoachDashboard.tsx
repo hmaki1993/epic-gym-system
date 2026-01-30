@@ -256,45 +256,53 @@ export default function CoachDashboard() {
     ];
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Welcome Section */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
                         {t('coach.welcome')}
                     </h1>
-                    <p className="opacity-70 mt-1 text-xs">
-                        {format(currentTime, 'EEEE, MMMM dd, yyyy')}
+                    <p className="text-white/60 mt-4 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
+                        {format(currentTime, 'EEEE, dd MMMM yyyy')}
                     </p>
+                </div>
+                <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 shadow-inner group">
+                    <Clock className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">{format(currentTime, 'HH:mm:ss')}</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {/* Attendance Card */}
-                <div
-                    className="rounded-2xl p-6 shadow-sm border border-gray-100/10"
-                    style={{ backgroundColor: 'var(--color-surface)' }}
-                >
-                    <div className="flex items-center justify-between mb-6">
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group">
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700"></div>
+
+                    <div className="flex items-center justify-between mb-10 relative z-10">
                         <div>
-                            <h2 className="text-base font-bold">{t('coach.attendance')}</h2>
-                            <p className="text-[10px] opacity-70 mt-1">
-                                {isCheckedIn ? t('coaches.workingNow') : t('coaches.away')}
+                            <h2 className="text-xl font-black text-white uppercase tracking-tight">{t('coach.attendance')}</h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${isCheckedIn ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></span>
+                                <span className={isCheckedIn ? 'text-emerald-400' : 'text-white/40'}>
+                                    {isCheckedIn ? t('coaches.workingNow') : t('coaches.away')}
+                                </span>
                             </p>
                         </div>
-                        <Clock className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+                        <div className="p-4 bg-primary/20 rounded-2xl text-primary shadow-inner">
+                            <Clock className="w-6 h-6" />
+                        </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-4">
+                    <div className="flex flex-col items-center gap-8 relative z-10">
                         {syncLoading ? (
-                            <div className="flex items-center gap-2 text-sm opacity-50 animate-pulse py-4">
-                                <Clock className="w-4 h-4" />
-                                {t('common.loading')}...
+                            <div className="flex flex-col items-center gap-4 py-10">
+                                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{t('common.loading')}...</span>
                             </div>
                         ) : (
                             <>
                                 {isCheckedIn && (
-                                    <div className="text-3xl font-mono font-bold tracking-wider animate-in fade-in" style={{ color: 'var(--color-primary)' }}>
+                                    <div className="text-6xl font-black text-white tracking-widest animate-in zoom-in-95 duration-500 font-mono">
                                         {formatTimer(elapsedTime)}
                                     </div>
                                 )}
@@ -302,19 +310,20 @@ export default function CoachDashboard() {
                                 {!isCheckedIn ? (
                                     <button
                                         onClick={handleCheckIn}
-                                        className="px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm w-full justify-center"
-                                        style={{ backgroundColor: 'var(--color-primary)' }}
+                                        className="group/btn bg-primary hover:bg-primary/90 text-white px-12 py-6 rounded-[2rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-4 font-black uppercase tracking-widest text-sm relative overflow-hidden w-full justify-center"
                                     >
-                                        <CheckCircle className="w-5 h-5" />
-                                        {t('coach.checkIn')}
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500"></div>
+                                        <CheckCircle className="w-6 h-6 relative z-10" />
+                                        <span className="relative z-10">{t('coach.checkIn')}</span>
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleCheckOut}
-                                        className="px-6 py-3 bg-red-500 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm w-full justify-center"
+                                        className="group/btn bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-500 hover:text-white px-12 py-6 rounded-[2rem] shadow-premium transition-all hover:scale-105 active:scale-95 flex items-center gap-4 font-black uppercase tracking-widest text-sm relative overflow-hidden w-full justify-center"
                                     >
-                                        <XCircle className="w-5 h-5" />
-                                        {t('coach.checkOut')}
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500"></div>
+                                        <XCircle className="w-6 h-6 relative z-10" />
+                                        <span className="relative z-10">{t('coach.checkOut')}</span>
                                     </button>
                                 )}
                             </>
@@ -323,208 +332,196 @@ export default function CoachDashboard() {
                 </div>
 
                 {/* Daily Work Summary Card */}
-                <div
-                    className="rounded-2xl p-6 shadow-sm border border-gray-100/10 flex flex-col justify-between"
-                    style={{ backgroundColor: 'var(--color-surface)' }}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-base font-bold">
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group flex flex-col justify-between">
+                    <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/10 transition-all duration-700"></div>
+
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight">
                             {t('coach.dailySummary')}
                         </h2>
-                        <Clock className="w-5 h-5 opacity-50" />
+                        <div className="p-4 bg-white/5 rounded-2xl text-white/20 group-hover:text-primary transition-colors">
+                            <Clock className="w-6 h-6" />
+                        </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-center items-center py-4">
-                        <div className="text-4xl font-mono font-black" style={{ color: 'var(--color-primary)' }}>
+                    <div className="flex-1 flex flex-col justify-center items-center py-10 relative z-10">
+                        <div className="text-6xl font-black text-primary tracking-tighter group-hover:scale-110 transition-transform duration-500 font-mono">
                             {formatTimer(isCheckedIn ? elapsedTime : dailyTotalSeconds)}
                         </div>
-                        <p className="text-[10px] opacity-40 mt-2 uppercase tracking-widest font-bold">
+                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mt-4">
                             {isCheckedIn ? t('coach.inProgress') : t('coach.totalToday')}
                         </p>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[10px] opacity-50">
-                        <span>{t('coach.status')}:</span>
-                        <span className={`font-bold ${isCheckedIn ? 'text-green-500' : 'text-gray-400'}`}>
+                    <div className="pt-8 border-t border-white/5 flex justify-between items-center relative z-10">
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('coach.status')}:</span>
+                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${isCheckedIn ? 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20 shadow-lg shadow-emerald-400/5' : 'bg-white/5 text-white/30 border-white/10'}`}>
                             {isCheckedIn ? t('coach.active') : t('coach.completed')}
-                        </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* PT Sessions Card */}
-            <div
-                className="rounded-2xl p-6 shadow-sm border border-gray-100/10"
-                style={{ backgroundColor: 'var(--color-surface)' }}
-            >
-                <h2 className="text-base font-bold mb-3">
-                    {t('coach.ptSessions')}
-                </h2>
-                <p className="text-[10px] opacity-70 mb-4">
-                    {t('coach.ptNote')}
-                </p>
+            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative overflow-hidden bg-white/[0.01]">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-                <div className="flex flex-col md:flex-row gap-4 items-end">
-                    <div className="flex-1 w-full">
-                        <label className="text-xs font-medium opacity-70 mb-1.5 block">
-                            {t('coach.playerName')}
-                        </label>
-                        <input
-                            type="text"
-                            value={ptStudentName}
-                            onChange={(e) => setPtStudentName(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-1 transition-all text-sm"
-                            style={{
-                                backgroundColor: 'rgba(255,255,255,0.05)',
-                                borderColor: 'var(--color-primary)',
-                                color: 'inherit'
-                            }}
-                            placeholder={i18n.language.startsWith('ar') ? 'مثال: أحمد محمد' : 'e.g. John Doe'}
-                        />
-                    </div>
-                    <button
-                        onClick={async () => {
-                            if (!ptStudentName.trim()) {
-                                toast.error(t('coach.enterNameError'));
-                                return;
-                            }
-                            try {
-                                const { data: { user } } = await supabase.auth.getUser();
-                                if (!user) {
-                                    toast.error(t('common.login'));
+                <div className="relative z-10">
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-4">
+                        <div className="p-3 bg-primary/20 rounded-2xl text-primary">
+                            <User className="w-6 h-6" />
+                        </div>
+                        {t('coach.ptSessions')}
+                    </h2>
+                    <p className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] mb-10 ml-16">
+                        {t('coach.ptNote')}
+                    </p>
+
+                    <div className="flex flex-col md:flex-row gap-6 items-end mb-12">
+                        <div className="flex-1 w-full group">
+                            <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors">
+                                {t('coach.playerName')}
+                            </label>
+                            <input
+                                type="text"
+                                value={ptStudentName}
+                                onChange={(e) => setPtStudentName(e.target.value)}
+                                className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/10 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                                placeholder={i18n.language.startsWith('ar') ? 'مثال: أحمد محمد' : 'e.g. John Doe'}
+                            />
+                        </div>
+                        <button
+                            onClick={async () => {
+                                if (!ptStudentName.trim()) {
+                                    toast.error(t('coach.enterNameError'));
                                     return;
                                 }
-
-                                const today = format(new Date(), 'yyyy-MM-dd');
-
-                                // 1. Ensure coach record exists in the coaches table
-                                // (In case they signed up before we added the auto-create logic in Register)
-                                const { data: coachRecord } = await supabase
-                                    .from('coaches')
-                                    .select('id')
-                                    .eq('id', user.id)
-                                    .single();
-
-                                if (!coachRecord) {
-                                    // Create a basic coach record for them
-                                    await supabase.from('coaches').insert({
-                                        id: user.id,
-                                        full_name: user.user_metadata?.full_name || 'Coach',
-                                        specialty: 'Gymnastics Coach',
-                                        pt_rate: 0
-                                    });
-                                }
-
-                                // 2. Save to PT Sessions table
-                                const { error } = await supabase
-                                    .from('pt_sessions')
-                                    .insert({
-                                        coach_id: user.id,
-                                        date: today,
-                                        sessions_count: 1, // Fixed to 1
-                                        student_name: ptStudentName,
-                                    });
-
-                                if (error) throw error;
-
-                                // Clear inputs
-                                setPtStudentName('');
-
-                                // Refresh list
-                                fetchTodaySessions();
-
-                                toast.success(t('common.saveSuccess'), {
-                                    style: {
-                                        background: 'var(--color-surface)',
-                                        color: 'var(--color-primary)',
-                                        border: '1px solid var(--color-primary)',
+                                try {
+                                    const { data: { user } } = await supabase.auth.getUser();
+                                    if (!user) {
+                                        toast.error(t('common.login'));
+                                        return;
                                     }
-                                });
-                            } catch (error: any) {
-                                console.error('Error saving PT sessions:', error);
-                                toast.error(t('common.unknown') + ': ' + (error.message || ''));
-                            }
-                        }}
-                        className="px-5 py-2.5 rounded-lg font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 text-sm"
-                        style={{ backgroundColor: 'var(--color-primary)' }}
-                    >
-                        {t('coach.add')}
-                    </button>
-                </div>
 
-                {/* Saved Sessions List */}
-                {savedSessions.length > 0 && (
-                    <div className="mt-6 space-y-3 pt-4 border-t border-gray-100/5">
-                        <h3 className="text-xs font-bold opacity-50 uppercase tracking-wider">{t('coach.savedSessions')}</h3>
-                        <div className="grid gap-2">
-                            {savedSessions.map((session) => (
-                                <div
-                                    key={session.id}
-                                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-sm">{session.student_name}</p>
-                                            <p className="text-[10px] opacity-50">
-                                                {session.created_at ? format(new Date(session.created_at), 'hh:mm a') : '--:--'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => handleDeleteSession(session.id)}
-                                        className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                    >
-                                        <XCircle className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                                    const today = format(new Date(), 'yyyy-MM-dd');
+
+                                    // 1. Ensure coach record exists
+                                    const { data: coachRecord } = await supabase
+                                        .from('coaches')
+                                        .select('id')
+                                        .eq('id', user.id)
+                                        .single();
+
+                                    if (!coachRecord) {
+                                        await supabase.from('coaches').insert({
+                                            id: user.id,
+                                            full_name: user.user_metadata?.full_name || 'Coach',
+                                            specialty: 'Gymnastics Coach',
+                                            pt_rate: 0
+                                        });
+                                    }
+
+                                    // 2. Save session
+                                    const { error } = await supabase
+                                        .from('pt_sessions')
+                                        .insert({
+                                            coach_id: user.id,
+                                            date: today,
+                                            sessions_count: 1,
+                                            student_name: ptStudentName,
+                                        });
+
+                                    if (error) throw error;
+                                    setPtStudentName('');
+                                    fetchTodaySessions();
+                                    toast.success(t('common.saveSuccess'));
+                                } catch (error: any) {
+                                    console.error('Error saving PT sessions:', error);
+                                    toast.error(t('common.unknown'));
+                                }
+                            }}
+                            className="group/add bg-primary hover:bg-primary/90 text-white px-12 py-5 rounded-[2rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-xs min-w-[180px] h-[72px] relative overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/add:translate-y-0 transition-transform duration-500"></div>
+                            <span className="relative z-10">{t('coach.add')}</span>
+                        </button>
                     </div>
-                )}
+
+                    {/* Saved Sessions List */}
+                    {savedSessions.length > 0 && (
+                        <div className="space-y-6 pt-10 border-t border-white/5 animate-in fade-in duration-700">
+                            <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-4">{t('coach.savedSessions')}</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {savedSessions.map((session) => (
+                                    <div
+                                        key={session.id}
+                                        className="flex items-center justify-between p-6 rounded-[2rem] bg-white/[0.02] border border-white/10 group hover:border-primary/50 transition-all duration-500 hover:scale-[1.02] shadow-premium"
+                                    >
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                                <User className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors">{session.student_name}</p>
+                                                <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">
+                                                    {session.created_at ? format(new Date(session.created_at), 'hh:mm a') : '--:--'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteSession(session.id)}
+                                            className="p-3 text-white/10 hover:text-rose-500 hover:bg-rose-500/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <XCircle className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Today's Schedule */}
-            <div
-                className="rounded-2xl p-6 shadow-sm border border-gray-100/10"
-                style={{ backgroundColor: 'var(--color-surface)' }}
-            >
-                <h2 className="text-base font-bold mb-4 flex items-center gap-2">
-                    <Calendar className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative overflow-hidden">
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4 relative z-10">
+                    <div className="p-3 bg-accent/20 rounded-2xl text-accent">
+                        <Calendar className="w-6 h-6" />
+                    </div>
                     {t('coach.schedule')}
                 </h2>
 
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
                     {todaySchedule.map((session, index) => (
                         <div
                             key={index}
-                            className="p-3 rounded-xl border border-gray-100/10 transition-all hover:scale-[1.01]"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+                            className="p-8 rounded-[2.5rem] border border-white/5 bg-white/[0.02] transition-all hover:scale-[1.02] hover:bg-white/[0.05] hover:border-white/10 group shadow-premium"
                         >
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className="w-12 h-12 rounded-lg flex items-center justify-center font-bold text-white text-xs"
-                                        style={{ backgroundColor: 'var(--color-primary)' }}
-                                    >
-                                        {session.time.split(' ')[0]}
+                                <div className="flex items-center gap-6">
+                                    <div className="w-16 h-16 rounded-[1.5rem] bg-primary text-white flex flex-col items-center justify-center shadow-lg shadow-primary/20 group-hover:rotate-6 transition-all duration-500">
+                                        <span className="text-xl font-black leading-none">{session.time.split(' ')[0].split(':')[0]}</span>
+                                        <span className="text-[10px] font-black uppercase opacity-60">{session.time.split(' ')[1]}</span>
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-sm">
+                                        <h3 className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors">
                                             {session.class === 'Beginners Class' ? (i18n.language.startsWith('ar') ? 'كورس المبتدئين' : 'Beginners Class') :
                                                 session.class === 'Intermediate Training' ? (i18n.language.startsWith('ar') ? 'تدريب متوسط' : 'Intermediate Training') :
                                                     session.class === 'Advanced Gymnastics' ? (i18n.language.startsWith('ar') ? 'جمباز متقدم' : 'Advanced Gymnastics') :
                                                         (i18n.language.startsWith('ar') ? 'كورس أطفال' : 'Kids Fun Class')}
                                         </h3>
-                                        <p className="text-[10px] opacity-70">
-                                            {session.students} {t('common.students')} • {session.duration}
-                                        </p>
+                                        <div className="flex items-center gap-3 mt-2">
+                                            <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] bg-white/5 px-3 py-1 rounded-lg">
+                                                {session.students} {t('common.students')}
+                                            </span>
+                                            <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                                            <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
+                                                {session.duration}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] opacity-50">{session.time.split(' ')[1]}</span>
                                 </div>
                             </div>
                         </div>
