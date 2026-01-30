@@ -17,11 +17,7 @@ export default function CoachDashboard() {
     const [syncLoading, setSyncLoading] = useState(true);
     const [dailyTotalSeconds, setDailyTotalSeconds] = useState(0);
 
-    const toggleLanguage = () => {
-        const newLang = i18n.language.startsWith('en') ? 'ar' : 'en';
-        i18n.changeLanguage(newLang);
-        document.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-    };
+    // Removed redundant toggleLanguage - handled by DashboardLayout
 
     useEffect(() => {
         // Update clock every second
@@ -157,6 +153,7 @@ export default function CoachDashboard() {
     };
 
     const formatTimer = (seconds: number) => {
+        if (isNaN(seconds) || seconds < 0) return '00:00:00';
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
@@ -270,13 +267,6 @@ export default function CoachDashboard() {
                         {format(currentTime, 'EEEE, MMMM dd, yyyy')}
                     </p>
                 </div>
-                <button
-                    onClick={toggleLanguage}
-                    className="p-2 rounded-xl border border-gray-100/10 hover:bg-white/5 transition-all text-sm flex items-center gap-2"
-                >
-                    <Globe className="w-4 h-4" />
-                    {i18n.language.startsWith('en') ? 'Arabic' : 'English'}
-                </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -478,7 +468,9 @@ export default function CoachDashboard() {
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm">{session.student_name}</p>
-                                            <p className="text-[10px] opacity-50">{format(new Date(session.created_at), 'hh:mm a')}</p>
+                                            <p className="text-[10px] opacity-50">
+                                                {session.created_at ? format(new Date(session.created_at), 'hh:mm a') : '--:--'}
+                                            </p>
                                         </div>
                                     </div>
                                     <button
