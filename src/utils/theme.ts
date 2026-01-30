@@ -3,50 +3,70 @@ export const applyThemeStyles = (themeId: string) => {
     try {
         const root = document.documentElement;
 
-        if (themeId === 'dark') {
-            root.style.setProperty('--color-primary', '#6366f1');
+        if (themeId === 'midnight') {
+            // Deep Dark Blue - Professional & Elegant
+            root.style.setProperty('--color-primary', '#818cf8');
             root.style.setProperty('--color-primary-foreground', '#ffffff');
             root.style.setProperty('--color-secondary', '#1e293b');
             root.style.setProperty('--color-background', '#0f172a');
             root.style.setProperty('--color-surface', '#1e293b');
-            root.style.setProperty('color', '#f8fafc');
-        } else if (themeId === 'forest') {
-            root.style.setProperty('--color-primary', '#10b981');
-            root.style.setProperty('--color-secondary', '#064e3b');
-            root.style.setProperty('--color-background', '#ecfdf5');
-            root.style.setProperty('--color-surface', '#ffffff');
-            root.style.setProperty('color', '#1f2937');
+            root.style.setProperty('color', '#f1f5f9');
+        } else if (themeId === 'obsidian') {
+            // Pure Black - OLED Friendly
+            root.style.setProperty('--color-primary', '#a78bfa');
+            root.style.setProperty('--color-primary-foreground', '#ffffff');
+            root.style.setProperty('--color-secondary', '#18181b');
+            root.style.setProperty('--color-background', '#000000');
+            root.style.setProperty('--color-surface', '#18181b');
+            root.style.setProperty('color', '#fafafa');
+        } else if (themeId === 'emerald') {
+            // Dark Green - Modern & Fresh
+            root.style.setProperty('--color-primary', '#34d399');
+            root.style.setProperty('--color-primary-foreground', '#ffffff');
+            root.style.setProperty('--color-secondary', '#1e3a2f');
+            root.style.setProperty('--color-background', '#0a1f1a');
+            root.style.setProperty('--color-surface', '#1e3a2f');
+            root.style.setProperty('color', '#d1fae5');
+        } else if (themeId === 'crimson') {
+            // Dark Red - Bold & Powerful
+            root.style.setProperty('--color-primary', '#fb7185');
+            root.style.setProperty('--color-primary-foreground', '#ffffff');
+            root.style.setProperty('--color-secondary', '#3f1d28');
+            root.style.setProperty('--color-background', '#1a0a0f');
+            root.style.setProperty('--color-surface', '#3f1d28');
+            root.style.setProperty('color', '#fecdd3');
+        } else if (themeId === 'amber') {
+            // Dark Orange - Warm & Inviting
+            root.style.setProperty('--color-primary', '#fbbf24');
+            root.style.setProperty('--color-primary-foreground', '#000000');
+            root.style.setProperty('--color-secondary', '#3f2f1d');
+            root.style.setProperty('--color-background', '#1a140a');
+            root.style.setProperty('--color-surface', '#3f2f1d');
+            root.style.setProperty('color', '#fef3c7');
+        } else if (themeId === 'ocean') {
+            // Dark Cyan - Cool & Calm
+            root.style.setProperty('--color-primary', '#22d3ee');
+            root.style.setProperty('--color-primary-foreground', '#000000');
+            root.style.setProperty('--color-secondary', '#1e3a3f');
+            root.style.setProperty('--color-background', '#0a1a1f');
+            root.style.setProperty('--color-surface', '#1e3a3f');
+            root.style.setProperty('color', '#cffafe');
         } else if (themeId === 'royal') {
-            root.style.setProperty('--color-primary', '#d97706');
-            root.style.setProperty('--color-secondary', '#581c87');
-            root.style.setProperty('--color-background', '#faf5ff');
-            root.style.setProperty('--color-surface', '#ffffff');
-            root.style.setProperty('color', '#1f2937');
-        } else if (themeId === 'berry') {
-            root.style.setProperty('--color-primary', '#db2777');
-            root.style.setProperty('--color-secondary', '#881337');
-            root.style.setProperty('--color-background', '#fdf2f8');
-            root.style.setProperty('--color-surface', '#ffffff');
-            root.style.setProperty('color', '#1f2937');
-        } else if (themeId === 'nature') {
-            root.style.setProperty('--color-primary', '#65a30d');
-            root.style.setProperty('--color-secondary', '#1a2e05');
-            root.style.setProperty('--color-background', '#f7fee7');
-            root.style.setProperty('--color-surface', '#ffffff');
-            root.style.setProperty('color', '#1f2937');
-        } else if (themeId === 'ember') {
-            root.style.setProperty('--color-primary', '#ea580c');
-            root.style.setProperty('--color-secondary', '#431407');
-            root.style.setProperty('--color-background', '#fff7ed');
-            root.style.setProperty('--color-surface', '#ffffff');
-            root.style.setProperty('color', '#1f2937');
+            // Dark Purple - Luxurious & Premium
+            root.style.setProperty('--color-primary', '#c084fc');
+            root.style.setProperty('--color-primary-foreground', '#ffffff');
+            root.style.setProperty('--color-secondary', '#2e1f3f');
+            root.style.setProperty('--color-background', '#14091a');
+            root.style.setProperty('--color-surface', '#2e1f3f');
+            root.style.setProperty('color', '#f3e8ff');
         } else {
-            // Default (Reset)
-            root.style.removeProperty('--color-primary');
-            root.style.removeProperty('--color-secondary');
-            root.style.removeProperty('--color-background');
-            root.style.removeProperty('--color-surface');
-            root.style.removeProperty('color');
+            // Default Midnight
+            root.style.setProperty('--color-primary', '#818cf8');
+            root.style.setProperty('--color-primary-foreground', '#ffffff');
+            root.style.setProperty('--color-secondary', '#1e293b');
+            root.style.setProperty('--color-background', '#0f172a');
+            root.style.setProperty('--color-surface', '#1e293b');
+            root.style.setProperty('color', '#f1f5f9');
         }
     } catch (e) {
         console.error('Error applying theme:', e);
@@ -55,10 +75,10 @@ export const applyThemeStyles = (themeId: string) => {
 
 export const initializeTheme = () => {
     try {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'midnight';
         applyThemeStyles(savedTheme);
     } catch (error) {
         console.error('Failed to load theme:', error);
-        applyThemeStyles('dark');
+        applyThemeStyles('midnight');
     }
 };

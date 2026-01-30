@@ -8,6 +8,7 @@ export default function Register() {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState<'admin' | 'coach'>('coach'); // Default to coach
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -19,25 +20,45 @@ export default function Register() {
         setError(null);
 
         try {
-            // 1. Sign up data
-            const { error: signUpError } = await supabase.auth.signUp({
+            // 1. Sign up with auto-confirm (no email verification needed)
+            const { data, error: signUpError } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: {
                         full_name: fullName,
+                        role: role, // Add role to metadata
                     },
+                    emailRedirectTo: undefined, // Disable email confirmation
                 },
             });
 
             if (signUpError) throw signUpError;
 
-            // 2. Optional: Create public profile if needed manually, 
-            // but usually a trigger handles this. For now we rely on Auth.
+            // 2. If signup successful, automatically sign in
+            if (data.user) {
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
 
-            alert('Account created! You can now sign in.');
-            navigate('/login');
-        } catch (err: unknown) { // Use unknown instead of any
+                if (signInError) throw signInError;
+
+                // 3. If role is coach, create a record in the coaches table
+                if (role === 'coach') {
+                    const { error: coachError } = await supabase.from('coaches').insert({
+                        id: data.user.id,
+                        full_name: fullName,
+                        specialty: 'Gymnastics Coach', // Default
+                        pt_rate: 0,
+                    });
+                    if (coachError) console.error('Error creating coach record:', coachError);
+                }
+
+                // Navigate to dashboard
+                navigate('/');
+            }
+        } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
@@ -84,7 +105,7 @@ export default function Register() {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white text-gray-900"
                                     placeholder="John Doe"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
@@ -99,7 +120,7 @@ export default function Register() {
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white text-gray-900"
                                     placeholder="admin@epicgym.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -114,12 +135,24 @@ export default function Register() {
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white text-gray-900"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-gray-700 ml-1">Account Type</label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value as 'admin' | 'coach')}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 focus:bg-white text-gray-900"
+                            >
+                                <option value="coach">Coach</option>
+                                <option value="admin">Admin</option>
+                            </select>
                         </div>
 
                         <button

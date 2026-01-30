@@ -15,6 +15,7 @@ import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminCameras from './pages/AdminCameras';
 
+
 import { initializeTheme } from './utils/theme';
 
 function App() {
@@ -74,6 +75,7 @@ function App() {
             <Route path="coaches" element={<Coaches />} />
             <Route path="finance" element={<Finance />} />
             <Route path="calculator" element={<Calculator />} />
+
             <Route path="schedule" element={<Schedule />} />
             <Route path="settings" element={<Settings />} />
             <Route path="admin/cameras" element={<AdminCameras />} />

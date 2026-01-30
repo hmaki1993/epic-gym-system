@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Save, Building2, Palette } from 'lucide-react';
+import { Save, Building2, Palette, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { applyThemeStyles } from '../utils/theme';
 
@@ -11,7 +12,8 @@ export default function Settings() {
         address: string;
     }
 
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { role } = useOutletContext<{ role: string }>() || { role: null };
     const [gymProfile, setGymProfile] = useState<GymProfile>(() => {
         try {
             const saved = localStorage.getItem('gymProfile');
@@ -33,18 +35,18 @@ export default function Settings() {
     const [loading, setLoading] = useState(false);
 
     const themes = [
-        { id: 'default', name: 'Epic Default', primary: '#FF7F50', secondary: '#4A5D85' },
-        { id: 'dark', name: 'Midnight Pro', primary: '#6366f1', secondary: '#1e293b' },
-        { id: 'forest', name: 'Forest Elite', primary: '#10b981', secondary: '#064e3b' },
-        { id: 'royal', name: 'Royal Gold', primary: '#d97706', secondary: '#581c87' },
-        { id: 'berry', name: 'Berry Blast', primary: '#db2777', secondary: '#881337' },
-        { id: 'nature', name: 'Nature Calm', primary: '#65a30d', secondary: '#1a2e05' },
-        { id: 'ember', name: 'Ember Glow', primary: '#ea580c', secondary: '#431407' },
+        { id: 'midnight', name: 'Midnight Blue', primary: '#818cf8', secondary: '#1e293b', bg: '#0f172a' },
+        { id: 'obsidian', name: 'Pure Black', primary: '#a78bfa', secondary: '#18181b', bg: '#000000' },
+        { id: 'emerald', name: 'Dark Emerald', primary: '#34d399', secondary: '#1e3a2f', bg: '#0a1f1a' },
+        { id: 'crimson', name: 'Dark Crimson', primary: '#fb7185', secondary: '#3f1d28', bg: '#1a0a0f' },
+        { id: 'amber', name: 'Dark Amber', primary: '#fbbf24', secondary: '#3f2f1d', bg: '#1a140a' },
+        { id: 'ocean', name: 'Deep Ocean', primary: '#22d3ee', secondary: '#1e3a3f', bg: '#0a1a1f' },
+        { id: 'royal', name: 'Royal Purple', primary: '#c084fc', secondary: '#2e1f3f', bg: '#14091a' },
     ];
 
 
 
-    const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+    const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'midnight');
 
     useEffect(() => {
         // Apply theme on mount (in case it wasn't applied by a previous visit in this session)
@@ -111,78 +113,122 @@ export default function Settings() {
                                 : 'border-transparent bg-black/5 hover:bg-black/10'
                                 }`}
                         >
-                            <div className="h-20 rounded-lg mb-3 shadow-sm flex flex-col overflow-hidden">
-                                <div className="h-full flex-1" style={{ backgroundColor: theme.secondary }}></div>
-                                <div className="h-1/3" style={{ backgroundColor: theme.primary }}></div>
+                            <div className="h-24 rounded-lg mb-3 shadow-lg overflow-hidden border border-white/10">
+                                <div className="h-full flex flex-col">
+                                    <div className="h-8" style={{ backgroundColor: theme.bg }}></div>
+                                    <div className="h-8" style={{ backgroundColor: theme.secondary }}></div>
+                                    <div className="h-8" style={{ backgroundColor: theme.primary }}></div>
+                                </div>
                             </div>
-                            <span className={`block text-center font-medium ${currentTheme === theme.id ? 'text-primary' : 'opacity-70'}`}>
-                                {t(`settings.themes.${theme.id}`, theme.name)}
+                            <span className={`block text-center font-medium text-sm ${currentTheme === theme.id ? 'text-primary' : 'opacity-70'}`}>
+                                {theme.name}
                             </span>
                         </button>
                     ))}
                 </div>
             </div>
-
-            {/* Gym Profile */}
+            {/* Language Settings */}
             <div
                 className="rounded-2xl p-6 shadow-sm border border-gray-100/10 transition-colors duration-300"
                 style={{ backgroundColor: 'var(--color-surface)' }}
             >
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--color-secondary)' }}>
-                    <Building2 className="w-5 h-5" />
-                    {t('settings.gymProfile')}
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-secondary)' }}>
+                    <Globe className="w-5 h-5" />
+                    {t('settings.language')}
                 </h2>
 
-                <form onSubmit={handleSaveProfile} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('settings.gymName')}</label>
-                            <input
-                                type="text"
-                                value={gymProfile.name}
-                                onChange={e => setGymProfile({ ...gymProfile, name: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                style={inputStyle}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('common.phone')}</label>
-                            <input
-                                type="text"
-                                value={gymProfile.phone}
-                                onChange={e => setGymProfile({ ...gymProfile, phone: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                style={inputStyle}
-                            />
-                        </div>
-                        <div className="col-span-full space-y-1">
-                            <label className="text-sm font-medium opacity-80">{t('settings.address')}</label>
-                            <input
-                                type="text"
-                                value={gymProfile.address}
-                                onChange={e => setGymProfile({ ...gymProfile, address: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                style={inputStyle}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 font-medium"
-                        >
-                            {loading ? t('common.loading') : (
-                                <>
-                                    <Save className="w-4 h-4" />
-                                    {t('common.save')}
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </form>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => {
+                            i18n.changeLanguage('ar');
+                            document.dir = 'rtl';
+                        }}
+                        className={`flex-1 p-4 rounded-xl border-2 transition-all ${i18n.language === 'ar'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-transparent bg-black/5 hover:bg-black/10'
+                            }`}
+                    >
+                        <span className="block text-center font-bold">العربية</span>
+                    </button>
+                    <button
+                        onClick={() => {
+                            i18n.changeLanguage('en');
+                            document.dir = 'ltr';
+                        }}
+                        className={`flex-1 p-4 rounded-xl border-2 transition-all ${i18n.language === 'en'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-transparent bg-black/5 hover:bg-black/10'
+                            }`}
+                    >
+                        <span className="block text-center font-bold">English</span>
+                    </button>
+                </div>
             </div>
-        </div>
+
+            {/* Gym Profile - Only for Admin/Head Coach */}
+            {
+                role && ['admin', 'head_coach'].includes(role) && (
+                    <div
+                        className="rounded-2xl p-6 shadow-sm border border-gray-100/10 transition-colors duration-300"
+                        style={{ backgroundColor: 'var(--color-surface)' }}
+                    >
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--color-secondary)' }}>
+                            <Building2 className="w-5 h-5" />
+                            {t('settings.gymProfile')}
+                        </h2>
+
+                        <form onSubmit={handleSaveProfile} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium opacity-80">{t('settings.gymName')}</label>
+                                    <input
+                                        type="text"
+                                        value={gymProfile.name}
+                                        onChange={e => setGymProfile({ ...gymProfile, name: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                        style={inputStyle}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium opacity-80">{t('common.phone')}</label>
+                                    <input
+                                        type="text"
+                                        value={gymProfile.phone}
+                                        onChange={e => setGymProfile({ ...gymProfile, phone: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                        style={inputStyle}
+                                    />
+                                </div>
+                                <div className="col-span-full space-y-1">
+                                    <label className="text-sm font-medium opacity-80">{t('settings.address')}</label>
+                                    <input
+                                        type="text"
+                                        value={gymProfile.address}
+                                        onChange={e => setGymProfile({ ...gymProfile, address: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                        style={inputStyle}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 font-medium"
+                                >
+                                    {loading ? t('common.loading') : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            {t('common.save')}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )
+            }
+        </div >
     );
 }

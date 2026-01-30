@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, UserCheck, UserMinus } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, Clock } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
 import ConfirmModal from '../components/ConfirmModal';
 import Payroll from '../components/Payroll';
@@ -26,81 +26,35 @@ export default function Coaches() {
     const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
 
+    // Attendance Modal State
+    const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+    const [selectedCoachForAttendance, setSelectedCoachForAttendance] = useState<Coach | null>(null);
+    const [attendanceLogs, setAttendanceLogs] = useState<any[]>([]);
+    const [loadingAttendance, setLoadingAttendance] = useState(false);
+
     // Delete Modal State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [coachToDelete, setCoachToDelete] = useState<string | null>(null);
 
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [attendanceMap, setAttendanceMap] = useState<Record<string, any>>({});
-    const [currentTime, setCurrentTime] = useState(new Date());
 
-    const fetchAttendance = async () => {
-        const today = new Date().toISOString().slice(0, 10);
-        const { data } = await supabase
-            .from('coach_attendance')
-            .select('*')
-            .eq('date', today);
+    const fetchAttendance = async (coachId: string) => {
+        setLoadingAttendance(true);
+        try {
+            const { data, error } = await supabase
+                .from('coach_attendance')
+                .select('*')
+                .eq('coach_id', coachId)
+                .order('created_at', { ascending: false })
+                .limit(20);
 
-        const map: Record<string, any> = {};
-        if (data) {
-            data.forEach((record: any) => {
-                map[record.coach_id] = record;
-            });
-        }
-        setAttendanceMap(map);
-    };
-
-    useEffect(() => {
-        fetchAttendance();
-        const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(interval);
-    }, [refreshTrigger]);
-
-    const getDuration = (checkInTime: string) => {
-        const start = new Date(checkInTime).getTime();
-        const now = currentTime.getTime();
-        const diff = Math.max(0, now - start);
-
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
-
-    const handleAttendance = async (coachId: string, type: 'check-in' | 'check-out') => {
-        const today = new Date().toISOString().slice(0, 10);
-
-        if (type === 'check-in') {
-            const { error } = await supabase.from('coach_attendance').insert([{
-                coach_id: coachId,
-                date: today,
-                check_in_time: new Date().toISOString()
-            }]);
-
-            if (error) {
-                toast.error('Error checking in: ' + error.message);
-            } else {
-                toast.success(t('coaches.checkInSuccess', 'Checked in successfully!'));
-                setRefreshTrigger(prev => prev + 1);
-            }
-        } else {
-            const sessions = prompt(t('coaches.enterSessions'), '0');
-            if (sessions === null) return;
-
-            const { error } = await supabase.from('coach_attendance').upsert([{
-                coach_id: coachId,
-                date: today,
-                check_out_time: new Date().toISOString(),
-                pt_sessions_count: parseInt(sessions)
-            }], { onConflict: 'coach_id,date' });
-
-            if (error) {
-                toast.error('Error checking out: ' + error.message);
-            } else {
-                toast.success(t('coaches.checkOutSuccess', 'Checked out successfully!'));
-                setRefreshTrigger(prev => prev + 1);
-            }
+            if (error) throw error;
+            setAttendanceLogs(data || []);
+        } catch (error) {
+            console.error('Error fetching attendance:', error);
+            toast.error(t('common.error'));
+        } finally {
+            setLoadingAttendance(false);
         }
     };
 
@@ -147,14 +101,21 @@ export default function Coaches() {
                 {loading ? (
                     <p className="text-gray-500 col-span-full text-center py-10">{t('common.loading')}</p>
                 ) : coaches.map(coach => {
-                    const attendance = attendanceMap[coach.id];
-                    const isCheckedIn = attendance && attendance.check_in_time && !attendance.check_out_time;
-                    const isDone = attendance && attendance.check_out_time;
-
                     return (
-                        <div key={coach.id} className={`bg-white rounded-2xl p-6 shadow-sm border transition-shadow relative ${isCheckedIn ? 'border-green-200 ring-1 ring-green-100' : 'border-gray-100 hover:shadow-md'}`}>
+                        <div key={coach.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative">
                             {/* Edit/Delete Actions */}
                             <div className="absolute top-4 right-4 flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setSelectedCoachForAttendance(coach);
+                                        setShowAttendanceModal(true);
+                                        fetchAttendance(coach.id);
+                                    }}
+                                    className="text-gray-400 hover:text-primary transition-colors p-1"
+                                    title="View Attendance"
+                                >
+                                    <Clock className="w-4 h-4" />
+                                </button>
                                 <button
                                     onClick={() => {
                                         setEditingCoach(coach);
@@ -185,47 +146,55 @@ export default function Coaches() {
                                         <Medal className="w-6 h-6" />
                                     </div>
                                 )}
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium mr-16 ${isCheckedIn ? 'bg-green-100 text-green-700 animate-pulse' : 'bg-gray-100 text-gray-500'}`}>
-                                    {isCheckedIn ? t('coaches.workingNow') : isDone ? t('coaches.done') : t('coaches.away')}
-                                </span>
                             </div>
 
-                            <h3 className="text-lg font-bold text-gray-900">{coach.full_name}</h3>
-                            <div className="flex items-center text-gray-600 dark:text-gray-300">
-                                <Medal className="w-4 h-4 mr-2 opacity-70" />
-                                <span className="text-sm">{coach.specialty}</span>
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-gray-900">{coach.full_name}</h3>
+                                {(coach as any).attendance_status && (
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${(coach as any).attendance_status === 'working' ? 'bg-green-100 text-green-700' :
+                                        (coach as any).attendance_status === 'done' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-gray-100 text-gray-500'
+                                        }`}>
+                                        {(coach as any).attendance_status === 'working' ? t('coaches.workingNow') :
+                                            (coach as any).attendance_status === 'done' ? t('coaches.done') :
+                                                t('coaches.away')}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center text-gray-700">
+                                <Medal className="w-4 h-4 mr-2 opacity-100 text-primary" />
+                                <span className="text-sm font-medium">{coach.specialty}</span>
                             </div>
 
-                            <div className="mt-4 pt-4 border-t border-gray-50">
-                                {isCheckedIn ? (
-                                    <div className="flex flex-col gap-2">
-                                        <div className="text-center bg-green-50 rounded-lg py-2 border border-green-100">
-                                            <p className="text-xs text-green-600 font-medium">{t('coaches.duration')}</p>
-                                            <p className="text-xl font-mono font-bold text-green-700">{getDuration(attendance.check_in_time)}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleAttendance(coach.id, 'check-out')}
-                                            className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-                                        >
-                                            <UserMinus className="w-4 h-4" />
-                                            {t('coaches.checkOut')}
-                                        </button>
+                            {/* Today's Times */}
+                            {(coach as any).check_in_time && (
+                                <div className="mt-2 text-[10px] flex items-center gap-2 text-gray-500 font-mono">
+                                    <Clock className="w-3 h-3" />
+                                    <span>
+                                        {new Date((coach as any).check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {(coach as any).check_out_time && ` - ${new Date((coach as any).check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="mt-4 pt-4 border-t border-gray-50 space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600 font-medium">PT Rate:</span>
+                                    <span className="font-bold text-primary">{coach.pt_rate} EGP/hr</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600 font-medium">PT Sessions Today:</span>
+                                    <span className="font-bold text-green-600">
+                                        {(coach as any).pt_sessions_today || 0} 💪
+                                    </span>
+                                </div>
+                                {(coach as any).pt_student_name && (
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-gray-400">Student:</span>
+                                        <span className="font-medium text-gray-500 italic">
+                                            {(coach as any).pt_student_name}
+                                        </span>
                                     </div>
-                                ) : isDone ? (
-                                    <div className="text-center py-2 text-gray-400 bg-gray-50 rounded-lg border border-gray-100">
-                                        <p className="text-sm font-medium">{t('coaches.checkedOutStatus')}</p>
-                                        <p className="text-xs">
-                                            {new Date(attendance.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(attendance.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => handleAttendance(coach.id, 'check-in')}
-                                        className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-                                    >
-                                        <UserCheck className="w-4 h-4" />
-                                        {t('coaches.checkIn')}
-                                    </button>
                                 )}
                             </div>
                         </div>
@@ -234,7 +203,17 @@ export default function Coaches() {
             </div>
 
             {/* Payroll Section */}
-            <Payroll refreshTrigger={refreshTrigger} />
+            <Payroll
+                refreshTrigger={refreshTrigger}
+                onViewAttendance={(coachId: string) => {
+                    const coach = coaches.find(c => c.id === coachId);
+                    if (coach) {
+                        setSelectedCoachForAttendance(coach);
+                        setShowAttendanceModal(true);
+                        fetchAttendance(coachId);
+                    }
+                }}
+            />
 
             {/* Add/Edit Modal */}
             {showAddModal && (
@@ -246,6 +225,60 @@ export default function Coaches() {
                     }}
                     onSuccess={refetch}
                 />
+            )}
+
+            {/* Attendance Modal */}
+            {showAttendanceModal && selectedCoachForAttendance && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-xl font-bold">{selectedCoachForAttendance.full_name}</h2>
+                                <p className="text-gray-500 text-sm">Attendance History</p>
+                            </div>
+                            <button onClick={() => setShowAttendanceModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {loadingAttendance ? (
+                                <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>
+                            ) : attendanceLogs.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400">{t('common.noResults')}</div>
+                            ) : (
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-gray-50 text-gray-500 sticky top-0">
+                                        <tr>
+                                            <th className="px-4 py-3 rounded-l-lg">{t('common.date')}</th>
+                                            <th className="px-4 py-3">{t('coaches.checkIn')}</th>
+                                            <th className="px-4 py-3">{t('coaches.checkOut')}</th>
+                                            <th className="px-4 py-3 rounded-r-lg">{t('coaches.duration')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {attendanceLogs.map((log: any) => {
+                                            const start = new Date(log.check_in_time);
+                                            const end = log.check_out_time ? new Date(log.check_out_time) : null;
+                                            const duration = end ? ((end.getTime() - start.getTime()) / 1000 / 3600).toFixed(2) + ' hrs' : '-';
+
+                                            return (
+                                                <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="px-4 py-3 font-medium text-gray-900">{log.date}</td>
+                                                    <td className="px-4 py-3 font-mono text-gray-500">{start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                                    <td className="px-4 py-3 font-mono text-gray-500">{end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                                                    <td className={`px-4 py-3 font-bold ${end ? 'text-green-600' : 'text-orange-400'}`}>
+                                                        {duration}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Confirm Delete Modal */}

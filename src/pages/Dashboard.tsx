@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useOutletContext, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDashboardStats } from '../hooks/useData';
+import CoachDashboard from './CoachDashboard';
 
 export default function Dashboard() {
     const { t } = useTranslation(); // Init hook
@@ -10,9 +11,10 @@ export default function Dashboard() {
 
     const { data: stats, isLoading: loading } = useDashboardStats();
 
-    // if (role === 'coach') {
-    //     return <Navigate to="/schedule" replace />;
-    // }
+    // Show Coach Dashboard for coaches
+    if (role === 'coach') {
+        return <CoachDashboard />;
+    }
 
     // Default stats to avoid undefined errors during loading
     const displayStats = stats || {
@@ -117,7 +119,7 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h4 className="font-bold text-lg">Gymnastics Level 1</h4>
-                                    <p className="text-white/70 text-sm">{t('dashboard.coach')} Ahmed • 4:00 PM</p>
+                                    <p className="text-white/70 text-sm">{t('dashboard.coachName')} Ahmed • 4:00 PM</p>
                                 </div>
                                 <span className="bg-primary text-white text-xs font-bold px-2 py-1 rounded">{t('dashboard.today')}</span>
                             </div>
@@ -126,7 +128,7 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h4 className="font-bold text-lg">Advanced Training</h4>
-                                    <p className="text-white/70 text-sm">{t('dashboard.coach')} Sarah • 6:30 PM</p>
+                                    <p className="text-white/70 text-sm">{t('dashboard.coachName')} Sarah • 6:30 PM</p>
                                 </div>
                                 <span className="bg-white/20 text-white text-xs font-bold px-2 py-1 rounded">{t('dashboard.tomorrow')}</span>
                             </div>

@@ -7,6 +7,7 @@ i18n
     .use(initReactI18next)
     .init({
         fallbackLng: 'en',
+        supportedLngs: ['en', 'ar'],
         interpolation: {
             escapeValue: false,
         },
@@ -36,7 +37,6 @@ i18n
                         status: 'Status',
                         unknown: 'Unknown',
                         invalid: 'Invalid',
-
                         date: 'Date',
                         role: 'Role',
                         saveSuccess: 'Saved successfully!',
@@ -44,7 +44,8 @@ i18n
                         deleteError: 'Error occurred while deleting',
                         noResults: 'No results found',
                         daysLeft: '{{count}} days left',
-                        cameras: 'Live Cameras'
+                        cameras: 'Live Cameras',
+                        confirm: 'OK'
                     },
                     cameras: {
                         subtitle: 'Monitor gym activities in real-time',
@@ -72,7 +73,7 @@ i18n
                         upcomingSessions: 'Upcoming Sessions',
                         today: 'Today',
                         tomorrow: 'Tomorrow',
-                        coach: 'Coach'
+                        coachName: 'Coach'
                     },
                     students: {
                         title: 'Student Management',
@@ -97,8 +98,12 @@ i18n
                         time: 'Time',
                         duration: 'Duration',
                         sessionCount: 'Sessions',
-                        enterSessions: 'Enter number of PT sessions completed today:',
-                        checkedOutStatus: 'Checked Out'
+                        enterSessions: 'Enter completed sessions:',
+                        checkedOutStatus: 'Checked Out',
+                        payrollTitle: 'Monthly Payroll',
+                        workHours: 'Work Hours',
+                        baseSalary: 'Base Salary',
+                        totalEarnings: 'Total Earnings'
                     },
                     settings: {
                         title: 'System Settings',
@@ -110,24 +115,45 @@ i18n
                         language: 'Language',
                         selectTheme: 'Select Theme',
                         themes: {
-                            default: 'Epic Default',
-                            dark: 'Midnight Pro',
-                            forest: 'Forest Elite',
-                            royal: 'Royal Gold',
-                            berry: 'Berry Blast',
-                            nature: 'Nature Calm',
-                            ember: 'Ember Glow'
+                            midnight: 'Midnight Pro',
+                            obsidian: 'Obsidian Black',
+                            emerald: 'Emerald Night',
+                            crimson: 'Crimson Ember',
+                            amber: 'Amber Gold',
+                            ocean: 'Ocean Deep',
+                            royal: 'Royal Purple'
                         }
+                    },
+                    coach: {
+                        welcome: 'Welcome, Coach! 👋',
+                        attendance: 'Daily Attendance',
+                        checkIn: 'Check In',
+                        checkOut: 'Check Out',
+                        checkInSuccess: 'Check-in successful! ✅',
+                        checkOutSuccess: 'Check-out successful! 👋',
+                        ptSessions: 'Today\'s PT Sessions 💪',
+                        ptNote: 'Record student names for private training sessions today',
+                        playerName: 'Player Name',
+                        add: 'Add',
+                        savedSessions: 'Today\'s Recorded Sessions',
+                        noSessions: 'No sessions recorded yet',
+                        schedule: 'Schedule',
+                        enterNameError: 'Please enter student name',
+                        dailySummary: 'Daily Work Hours',
+                        totalToday: 'TOTAL TODAY',
+                        inProgress: 'IN PROGRESS',
+                        status: 'Status',
+                        active: 'Active',
+                        completed: 'Completed'
                     },
                     roles: {
                         admin: 'Administrator',
                         head_coach: 'Head Coach',
                         coach: 'Coach',
                         reception: 'Receptionist'
-                    },
+                    }
                 }
             },
-
             ar: {
                 translation: {
                     common: {
@@ -153,7 +179,6 @@ i18n
                         status: 'الحالة',
                         unknown: 'غير معروف',
                         invalid: 'غير صالح',
-
                         date: 'التاريخ',
                         role: 'الدور',
                         saveSuccess: 'تم الحفظ بنجاح!',
@@ -161,7 +186,8 @@ i18n
                         deleteError: 'حدث خطأ أثناء الحذف',
                         noResults: 'لا توجد نتائج',
                         daysLeft: 'متبقي {{count}} يوم',
-                        cameras: 'كاميرات المراقبة'
+                        cameras: 'كاميرات المراقبة',
+                        confirm: 'تأكيد'
                     },
                     cameras: {
                         subtitle: 'مراقبة أنشطة الجيم في الوقت الفعلي',
@@ -189,7 +215,7 @@ i18n
                         upcomingSessions: 'الجلسات القادمة',
                         today: 'اليوم',
                         tomorrow: 'غداً',
-                        coach: 'المدرب'
+                        coachName: 'المدرب'
                     },
                     students: {
                         title: 'إدارة الطلاب',
@@ -200,7 +226,7 @@ i18n
                         expiry: 'ينتهي في',
                         active: 'نشط',
                         expired: 'منتهي',
-                        expiringSoon: 'ينتهي قريباً'
+                        expiringSoon: 'ينتهي قريبا'
                     },
                     coaches: {
                         title: 'إدارة المدربين',
@@ -215,7 +241,11 @@ i18n
                         duration: 'المدة',
                         sessionCount: 'الجلسات',
                         enterSessions: 'أدخل عدد الجلسات المكتملة اليوم:',
-                        checkedOutStatus: 'تم تسجيل الخروج'
+                        checkedOutStatus: 'تم تسجيل الخروج',
+                        payrollTitle: 'كشف الرواتب الشهري',
+                        workHours: 'ساعات العمل',
+                        baseSalary: 'الراتب الأساسي',
+                        totalEarnings: 'إجمالي المستحقات'
                     },
                     settings: {
                         title: 'إعدادات النظام',
@@ -227,14 +257,36 @@ i18n
                         language: 'اللغة',
                         selectTheme: 'اختر المظهر',
                         themes: {
-                            default: 'الافتراضي',
-                            dark: 'الوضع الليلي',
-                            forest: 'الغابة',
-                            royal: 'الملكي',
-                            berry: 'التوت',
-                            nature: 'الطبيعة',
-                            ember: 'الجمر'
+                            midnight: 'الوضع الليلي الأزرق',
+                            obsidian: 'الأسود القاتم',
+                            emerald: 'زمردي داكن',
+                            crimson: 'قرمزي داكن',
+                            amber: 'كهرماني داكن',
+                            ocean: 'المحيط العميق',
+                            royal: 'الملكي الأرجواني'
                         }
+                    },
+                    coach: {
+                        welcome: 'مرحباً، كوتش! 👋',
+                        attendance: 'تسجيل الحضور اليومي',
+                        checkIn: 'تسجيل حضور',
+                        checkOut: 'تسجيل انصراف',
+                        checkInSuccess: 'تم تسجيل الحضور بنجاح! ✅',
+                        checkOutSuccess: 'تم تسجيل الانصراف بنجاح! 👋',
+                        ptSessions: 'جلسات PT اليوم 💪',
+                        ptNote: 'سجّل اسم اللاعب للجلسات الخاصة اللي عملتها النهاردة',
+                        playerName: 'اسم اللاعب',
+                        add: 'إضافة',
+                        savedSessions: 'الجلسات المسجلة اليوم',
+                        noSessions: 'لا توجد جلسات مسجلة بعد',
+                        schedule: 'جدول اليوم',
+                        enterNameError: 'يرجى كتابة اسم اللاعب',
+                        dailySummary: 'ساعات العمل اليوم',
+                        totalToday: 'إجمالي اليوم',
+                        inProgress: 'جاري الحساب...',
+                        status: 'الحالة',
+                        active: 'نشط',
+                        completed: 'انتهى'
                     },
                     roles: {
                         admin: 'مدير النظام',
@@ -248,3 +300,4 @@ i18n
     });
 
 export default i18n;
+

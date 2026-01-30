@@ -22,14 +22,66 @@ export function useCoaches() {
     return useQuery({
         queryKey: ['coaches'],
         queryFn: async () => {
-            const { data, error } = await supabase
+            const today = new Date().toISOString().split('T')[0];
+
+            // Get coaches
+            const { data: coaches, error: coachesError } = await supabase
                 .from('coaches')
                 .select('*')
                 .order('created_at', { ascending: false });
-            if (error) throw error;
-            return data;
+
+            if (coachesError) throw coachesError;
+
+            // Get today's attendance for status
+            const { data: attendanceData, error: attendanceError } = await supabase
+                .from('coach_attendance')
+                .select('coach_id, check_in_time, check_out_time, pt_sessions_count')
+                .eq('date', today);
+
+            if (attendanceError) console.error('Error fetching attendance status:', attendanceError);
+
+            // Get today's PT sessions
+            const { data: ptSessionsData, error: ptError } = await supabase
+                .from('pt_sessions')
+                .select('coach_id, sessions_count, student_name')
+                .eq('date', today);
+
+            if (ptError) console.error('Error fetching PT sessions:', ptError);
+
+            // Merge everything
+            const enrichedCoaches = coaches?.map(coach => {
+                const dayAttendance = attendanceData?.find(a => a.coach_id === coach.id);
+                const coachPTs = ptSessionsData?.filter(s => s.coach_id === coach.id) || [];
+
+                // Aggregated PT Sessions (from both tables)
+                const totalSessions = (dayAttendance?.pt_sessions_count || 0) +
+                    coachPTs.reduce((acc, curr) => acc + (curr.sessions_count || 0), 0);
+
+                const studentNames = coachPTs.map(s => s.student_name).join(', ');
+
+                // Determine Status
+                let status = 'away';
+                if (dayAttendance) {
+                    if (dayAttendance.check_in_time && !dayAttendance.check_out_time) {
+                        status = 'working';
+                    } else if (dayAttendance.check_out_time) {
+                        status = 'done';
+                    }
+                }
+
+                return {
+                    ...coach,
+                    pt_sessions_today: totalSessions,
+                    pt_student_name: studentNames,
+                    attendance_status: status,
+                    check_in_time: dayAttendance?.check_in_time,
+                    check_out_time: dayAttendance?.check_out_time
+                };
+            });
+
+            return enrichedCoaches;
         },
-        staleTime: 1000 * 60 * 10,
+        staleTime: 1000 * 30, // 30 seconds for live status
     });
 }
 
