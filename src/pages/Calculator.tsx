@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator as CalculatorIcon, Scale, Activity, RotateCcw } from 'lucide-react';
+import { Calculator as CalculatorIcon, Scale, Activity, Trash2, Delete } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Calculator() {
@@ -7,54 +7,56 @@ export default function Calculator() {
     const [activeTab, setActiveTab] = useState<'standard' | 'bmi' | 'calories'>('standard');
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
             <div>
                 <h1 className="text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>Gym Tools</h1>
-                <p className="opacity-70 mt-1">Calculators for fitness and daily needs</p>
+                <p className="opacity-70 mt-1">Professional calculators for your daily needs.</p>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 p-1 bg-black/5 rounded-xl w-fit">
-                <button
-                    onClick={() => setActiveTab('standard')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'standard' ? 'bg-primary text-white shadow-md' : 'hover:bg-black/5 opacity-70'
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <CalculatorIcon className="w-4 h-4" />
-                        Standard
-                    </div>
-                </button>
-                <button
-                    onClick={() => setActiveTab('bmi')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'bmi' ? 'bg-primary text-white shadow-md' : 'hover:bg-black/5 opacity-70'
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Scale className="w-4 h-4" />
-                        BMI
-                    </div>
-                </button>
-                <button
-                    onClick={() => setActiveTab('calories')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'calories' ? 'bg-primary text-white shadow-md' : 'hover:bg-black/5 opacity-70'
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4" />
-                        Calories
-                    </div>
-                </button>
-            </div>
-
-            {/* Content Area */}
+            {/* Premium segmented control */}
             <div
-                className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 min-h-[400px]"
+                className="flex p-1.5 rounded-2xl w-fit relative backdrop-blur-md border border-white/5 shadow-inner"
+                style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
+            >
+                {['standard', 'bmi', 'calories'].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as any)}
+                        className={`
+                            relative px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 z-10
+                            flex items-center gap-2
+                        `}
+                        style={{
+                            backgroundColor: activeTab === tab ? 'var(--color-primary)' : 'transparent',
+                            color: activeTab === tab ? '#ffffff' : 'rgba(255,255,255,0.7)',
+                            boxShadow: activeTab === tab ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
+                            textShadow: activeTab === tab ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                        }}
+                    >
+                        {tab === 'standard' && <CalculatorIcon className="w-4 h-4" />}
+                        {tab === 'bmi' && <Scale className="w-4 h-4" />}
+                        {tab === 'calories' && <Activity className="w-4 h-4" />}
+                        <span className="capitalize">{tab}</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* Main Content Area - Glass Card */}
+            <div
+                className="rounded-3xl p-8 shadow-2xl border border-white/5 relative overflow-hidden transition-all duration-300"
                 style={{ backgroundColor: 'var(--color-surface)' }}
             >
-                {activeTab === 'standard' && <StandardCalculator />}
-                {activeTab === 'bmi' && <BMICalculator />}
-                {activeTab === 'calories' && <CalorieCalculator />}
+                {/* Decorative background element */}
+                <div
+                    className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[100px] opacity-10 pointer-events-none"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                ></div>
+
+                <div className="relative z-10 min-h-[400px]">
+                    {activeTab === 'standard' && <StandardCalculator />}
+                    {activeTab === 'bmi' && <BMICalculator />}
+                    {activeTab === 'calories' && <CalorieCalculator />}
+                </div>
             </div>
         </div>
     );
@@ -91,34 +93,113 @@ function StandardCalculator() {
         setEquation('');
     };
 
+    // Button styles helper
+    const btnBase = "h-16 rounded-2xl font-bold text-xl transition-all duration-200 active:scale-95 flex items-center justify-center shadow-lg border border-white/5";
+
     return (
-        <div className="max-w-xs mx-auto">
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl mb-4 text-right">
-                <div className="text-sm text-gray-500 min-h-[20px]">{equation}</div>
-                <div className="text-3xl font-bold font-mono text-gray-900 dark:text-white truncate tracking-widest">{display}</div>
+        <div className="max-w-[320px] mx-auto">
+            {/* Screen */}
+            <div className="mb-6 p-6 rounded-2xl bg-black/80 shadow-inner border border-white/10 text-right">
+                <div className="text-sm text-gray-400 font-mono min-h-[20px] mb-1 opacity-70">{equation}</div>
+                <div className="text-4xl font-mono text-white tracking-wider overflow-hidden">{display}</div>
             </div>
+
+            {/* Keypad */}
             <div className="grid grid-cols-4 gap-3">
-                <button onClick={clear} className="col-span-3 bg-red-100 text-red-600 p-4 rounded-xl font-bold hover:bg-red-200">AC</button>
-                <button onClick={() => handleOperator('/')} className="bg-primary/10 text-primary p-4 rounded-xl font-bold hover:bg-primary/20">÷</button>
+                <button
+                    onClick={clear}
+                    className={`${btnBase} col-span-3 text-white`}
+                    style={{ backgroundColor: '#ef4444' }} // Red for Clear
+                >
+                    AC
+                </button>
+                <button
+                    onClick={() => handleOperator('/')}
+                    className={`${btnBase} text-white`}
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                    ÷
+                </button>
 
                 {['7', '8', '9'].map(n => (
-                    <button key={n} onClick={() => handleNumber(n)} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl font-bold hover:bg-gray-100">{n}</button>
+                    <button
+                        key={n}
+                        onClick={() => handleNumber(n)}
+                        className={`${btnBase}`}
+                        style={{
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                            color: 'inherit'
+                            // Inherit color allows it to work in both dark/light modes on the 'surface' background
+                        }}
+                    >
+                        {n}
+                    </button>
                 ))}
-                <button onClick={() => handleOperator('*')} className="bg-primary/10 text-primary p-4 rounded-xl font-bold hover:bg-primary/20">x</button>
+                <button
+                    onClick={() => handleOperator('*')}
+                    className={`${btnBase} text-white`}
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                    ×
+                </button>
 
                 {['4', '5', '6'].map(n => (
-                    <button key={n} onClick={() => handleNumber(n)} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl font-bold hover:bg-gray-100">{n}</button>
+                    <button
+                        key={n}
+                        onClick={() => handleNumber(n)}
+                        className={`${btnBase}`}
+                        style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: 'inherit' }}
+                    >
+                        {n}
+                    </button>
                 ))}
-                <button onClick={() => handleOperator('-')} className="bg-primary/10 text-primary p-4 rounded-xl font-bold hover:bg-primary/20">-</button>
+                <button
+                    onClick={() => handleOperator('-')}
+                    className={`${btnBase} text-white`}
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                    -
+                </button>
 
                 {['1', '2', '3'].map(n => (
-                    <button key={n} onClick={() => handleNumber(n)} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl font-bold hover:bg-gray-100">{n}</button>
+                    <button
+                        key={n}
+                        onClick={() => handleNumber(n)}
+                        className={`${btnBase}`}
+                        style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: 'inherit' }}
+                    >
+                        {n}
+                    </button>
                 ))}
-                <button onClick={() => handleOperator('+')} className="bg-primary/10 text-primary p-4 rounded-xl font-bold hover:bg-primary/20">+</button>
+                <button
+                    onClick={() => handleOperator('+')}
+                    className={`${btnBase} text-white`}
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                >
+                    +
+                </button>
 
-                <button onClick={() => handleNumber('0')} className="col-span-2 bg-gray-50 dark:bg-white/5 p-4 rounded-xl font-bold hover:bg-gray-100">0</button>
-                <button onClick={() => handleNumber('.')} className="bg-gray-50 dark:bg-white/5 p-4 rounded-xl font-bold hover:bg-gray-100">.</button>
-                <button onClick={calculate} className="bg-primary text-white p-4 rounded-xl font-bold hover:bg-primary/90 shadow-lg shadow-primary/30">=</button>
+                <button
+                    onClick={() => handleNumber('0')}
+                    className={`${btnBase} col-span-2`}
+                    style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: 'inherit' }}
+                >
+                    0
+                </button>
+                <button
+                    onClick={() => handleNumber('.')}
+                    className={`${btnBase}`}
+                    style={{ backgroundColor: 'rgba(0,0,0,0.05)', color: 'inherit' }}
+                >
+                    .
+                </button>
+                <button
+                    onClick={calculate}
+                    className={`${btnBase} text-white`}
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                    =
+                </button>
             </div>
         </div>
     );
@@ -130,7 +211,7 @@ function BMICalculator() {
     const [bmi, setBmi] = useState<number | null>(null);
 
     const calculateBMI = () => {
-        const h = parseFloat(height) / 100; // cm to m
+        const h = parseFloat(height) / 100;
         const w = parseFloat(weight);
         if (h > 0 && w > 0) {
             setBmi(Math.round((w / (h * h)) * 10) / 10);
@@ -138,32 +219,40 @@ function BMICalculator() {
     };
 
     const getCategory = (bmi: number) => {
-        if (bmi < 18.5) return { label: 'Underweight', color: 'text-blue-500' };
-        if (bmi < 25) return { label: 'Normal weight', color: 'text-green-500' };
-        if (bmi < 30) return { label: 'Overweight', color: 'text-orange-500' };
-        return { label: 'Obese', color: 'text-red-500' };
+        if (bmi < 18.5) return { label: 'Underweight', color: '#3b82f6' };
+        if (bmi < 25) return { label: 'Normal weight', color: '#10b981' };
+        if (bmi < 30) return { label: 'Overweight', color: '#f59e0b' };
+        return { label: 'Obese', color: '#ef4444' };
+    };
+
+    const inputStyle = {
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        color: 'inherit'
     };
 
     return (
-        <div className="max-w-md mx-auto space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+        <div className="max-w-md mx-auto space-y-8">
+            <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium opacity-80">Weight (kg)</label>
+                    <label className="text-sm font-medium opacity-70 uppercase tracking-widest pl-1">Weight (kg)</label>
                     <input
                         type="number"
                         value={weight}
                         onChange={e => setWeight(e.target.value)}
-                        className="w-full text-center text-2xl font-bold p-4 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl border border-transparent focus:border-primary focus:ring-0 outline-none placeholder:text-gray-400"
+                        className="w-full text-center text-3xl font-bold p-6 rounded-2xl outline-none focus:ring-2 focus:ring-primary/50 transition-all border"
+                        style={inputStyle}
                         placeholder="0"
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-medium opacity-80">Height (cm)</label>
+                    <label className="text-sm font-medium opacity-70 uppercase tracking-widest pl-1">Height (cm)</label>
                     <input
                         type="number"
                         value={height}
                         onChange={e => setHeight(e.target.value)}
-                        className="w-full text-center text-2xl font-bold p-4 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl border border-transparent focus:border-primary focus:ring-0 outline-none placeholder:text-gray-400"
+                        className="w-full text-center text-3xl font-bold p-6 rounded-2xl outline-none focus:ring-2 focus:ring-primary/50 transition-all border"
+                        style={inputStyle}
                         placeholder="0"
                     />
                 </div>
@@ -171,16 +260,17 @@ function BMICalculator() {
 
             <button
                 onClick={calculateBMI}
-                className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/30 hover:bg-primary/90 transition-transform active:scale-95"
+                className="w-full py-4 rounded-xl font-bold text-lg shadow-lg text-white transition-transform active:scale-95 hover:shadow-xl hover:brightness-110"
+                style={{ backgroundColor: 'var(--color-primary)' }}
             >
                 Calculate BMI
             </button>
 
             {bmi && (
-                <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl text-center space-y-2 animate-in slide-in-from-bottom-5">
-                    <div className="text-sm opacity-60">Your BMI is</div>
-                    <div className="text-5xl font-black text-primary">{bmi}</div>
-                    <div className={`text-xl font-medium ${getCategory(bmi).color}`}>
+                <div className="p-8 rounded-3xl text-center space-y-2 animate-in slide-in-from-bottom-5 border border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+                    <div className="text-sm opacity-60 uppercase tracking-widest">Your Result</div>
+                    <div className="text-6xl font-black py-2" style={{ color: 'var(--color-primary)' }}>{bmi}</div>
+                    <div className="text-xl font-bold px-4 py-1 rounded-full inline-block" style={{ color: getCategory(bmi).color, backgroundColor: `${getCategory(bmi).color}20` }}>
                         {getCategory(bmi).label}
                     </div>
                 </div>
@@ -206,71 +296,83 @@ function CalorieCalculator() {
 
         if (!w || !h || !a) return;
 
-        // Mifflin-St Jeor Equation
         let bmr = (10 * w) + (6.25 * h) - (5 * a);
         bmr += data.gender === 'male' ? 5 : -161;
 
         setResult(Math.round(bmr * parseFloat(data.activity)));
     };
 
+    const inputStyle = {
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        color: 'inherit'
+    };
+
     return (
         <div className="max-w-md mx-auto space-y-6">
             <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 grid grid-cols-2 gap-2 bg-gray-100 dark:bg-white/5 p-1 rounded-lg">
-                    <button
-                        onClick={() => setData({ ...data, gender: 'male' })}
-                        className={`py-2 rounded-md font-medium transition-colors ${data.gender === 'male' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'opacity-60'}`}
-                    >
-                        Male
-                    </button>
-                    <button
-                        onClick={() => setData({ ...data, gender: 'female' })}
-                        className={`py-2 rounded-md font-medium transition-colors ${data.gender === 'female' ? 'bg-white dark:bg-gray-700 text-pink-500 shadow-sm' : 'opacity-60'}`}
-                    >
-                        Female
-                    </button>
+                <div className="col-span-2 grid grid-cols-2 gap-2 p-1.5 rounded-xl border border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+                    {['male', 'female'].map(g => (
+                        <button
+                            key={g}
+                            onClick={() => setData({ ...data, gender: g })}
+                            className={`py-3 rounded-lg font-bold capitalize transition-all ${data.gender === g ? 'shadow-md scale-[1.02]' : 'opacity-50 hover:opacity-80'}`}
+                            style={{
+                                backgroundColor: data.gender === g ? 'var(--color-background)' : 'transparent',
+                                color: data.gender === g ? 'var(--color-primary)' : 'inherit'
+                            }}
+                        >
+                            {g}
+                        </button>
+                    ))}
                 </div>
 
+                {['Age', 'Weight (kg)', 'Height (cm)'].map((label, i) => {
+                    const field = label.toLowerCase().split(' ')[0] as keyof typeof data;
+                    return (
+                        <div key={label} className="space-y-1">
+                            <label className="text-xs font-bold opacity-60 uppercase tracking-wider pl-1">{label}</label>
+                            <input
+                                type="number"
+                                value={data[field]}
+                                onChange={e => setData({ ...data, [field]: e.target.value })}
+                                className="w-full p-4 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 transition-all border"
+                                style={inputStyle}
+                            />
+                        </div>
+                    );
+                })}
+
                 <div className="space-y-1">
-                    <label className="text-xs font-medium opacity-70">Age</label>
-                    <input type="number" value={data.age} onChange={e => setData({ ...data, age: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400" />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-medium opacity-70">Weight (kg)</label>
-                    <input type="number" value={data.weight} onChange={e => setData({ ...data, weight: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400" />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-medium opacity-70">Height (cm)</label>
-                    <input type="number" value={data.height} onChange={e => setData({ ...data, height: e.target.value })} className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400" />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-medium opacity-70">Activity</label>
+                    <label className="text-xs font-bold opacity-60 uppercase tracking-wider pl-1">Activity</label>
                     <select
                         value={data.activity}
                         onChange={e => setData({ ...data, activity: e.target.value })}
-                        className="w-full p-3 bg-gray-50 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-primary/20 [&>option]:text-gray-900"
+                        className="w-full p-4 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 transition-all border appearance-none"
+                        style={inputStyle}
                     >
-                        <option value="1.2">Sedentary</option>
-                        <option value="1.375">Light Exercise</option>
-                        <option value="1.55">Moderate Exercise</option>
-                        <option value="1.725">Heavy Exercise</option>
-                        <option value="1.9">Athlete</option>
+                        <option style={{ color: '#000' }} value="1.2">Sedentary (Office job)</option>
+                        <option style={{ color: '#000' }} value="1.375">Light Exercise (1-2 days)</option>
+                        <option style={{ color: '#000' }} value="1.55">Moderate Exercise (3-5 days)</option>
+                        <option style={{ color: '#000' }} value="1.725">Heavy Exercise (6-7 days)</option>
+                        <option style={{ color: '#000' }} value="1.9">Athlete (2x per day)</option>
                     </select>
                 </div>
             </div>
 
             <button
                 onClick={calculateCalories}
-                className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/30 hover:bg-primary/90 transition-transform active:scale-95"
+                className="w-full py-4 rounded-xl font-bold text-lg shadow-lg text-white transition-transform active:scale-95 hover:shadow-xl hover:brightness-110"
+                style={{ backgroundColor: 'var(--color-primary)' }}
             >
                 Calculate Daily Calories
             </button>
 
             {result && (
-                <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl text-center space-y-2 animate-in slide-in-from-bottom-5">
-                    <div className="text-sm opacity-60">Maintenance Calories</div>
-                    <div className="text-5xl font-black text-primary">{result} <span className="text-lg text-gray-400 font-normal">kcal</span></div>
-                    <div className="text-xs opacity-50">To maintain current weight</div>
+                <div className="p-8 rounded-3xl text-center space-y-2 animate-in slide-in-from-bottom-5 border border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+                    <div className="text-sm opacity-60 uppercase tracking-widest">Maintenance Calories</div>
+                    <div className="text-5xl font-black py-2" style={{ color: 'var(--color-primary)' }}>{result} <span className="text-xl opacity-50 font-medium">kcal</span></div>
+                    <div className="text-xs opacity-50">Calories/day to maintain weight</div>
                 </div>
             )}
         </div>
