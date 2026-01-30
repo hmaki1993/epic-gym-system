@@ -70,7 +70,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
         } catch (error) {
             console.error('Error saving student:', error);
             console.error('Error saving student:', error);
-            alert(`Error saving student: ${error.message || JSON.stringify(error)}`);
+            alert(`Error saving student: ${(error as any).message || JSON.stringify(error)}`);
         } finally {
             setLoading(false);
         }
