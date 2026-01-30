@@ -81,7 +81,7 @@ export default function DashboardLayout() {
             {/* FORCE VISIBLE SIDEBAR */}
             <aside className="w-64 bg-secondary text-white flex-shrink-0 h-screen overflow-y-auto fixed left-0 top-0 z-50">
                 <div className="flex items-center justify-center h-20 bg-secondary/80 border-b border-white/10 px-4">
-                    <img src="/logo_epic.png" alt="Epic Gym Logo" className="h-14 w-auto object-contain drop-shadow-lg" />
+                    <img src="/logo.png" alt="Epic Gym Logo" className="h-14 w-auto object-contain drop-shadow-lg" />
                 </div>
 
                 <div className="px-4 py-2 bg-white/5 mx-4 mt-4 rounded text-xs text-center uppercase tracking-wider text-gray-400">
