@@ -18,7 +18,8 @@ import {
     Search,
     Bell,
     ChevronDown,
-    MessageSquare
+    MessageSquare,
+    Globe
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -27,6 +28,7 @@ export default function DashboardLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
     const [role, setRole] = useState<string | null>(null);
     const [fullName, setFullName] = useState<string | null>(null);
     const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -67,6 +69,7 @@ export default function DashboardLayout() {
         const fetchUserRole = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
+                setUserId(user.id);
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('role, full_name, avatar_url')
@@ -228,7 +231,20 @@ export default function DashboardLayout() {
                     </nav>
 
                     {/* Sidebar Footer */}
-                    <div className="p-8 mt-auto border-t border-white/10">
+                    <div className="p-8 mt-auto border-t border-white/10 space-y-2">
+                        {/* Language Toggle - Sidebar */}
+                        <button
+                            onClick={() => {
+                                const newLang = i18n.language === 'en' ? 'ar' : 'en';
+                                i18n.changeLanguage(newLang);
+                                document.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+                            }}
+                            className="flex items-center w-full px-4 py-3.5 text-sm font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-2xl transition-all duration-300 group"
+                        >
+                            <Globe className={`w-5 h-5 transition-transform group-hover:scale-110 ${isRtl ? 'ml-3' : 'mr-3'}`} />
+                            <span className="tracking-wide">{i18n.language === 'en' ? 'العربية' : 'English'}</span>
+                            <span className="ml-auto text-[10px] bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 uppercase tracking-wider">{i18n.language.toUpperCase()}</span>
+                        </button>
                         <button
                             onClick={handleLogout}
                             className="flex items-center w-full px-4 py-3.5 text-sm font-bold text-red-400 hover:text-red-300 hover:bg-white/5 rounded-2xl transition-all duration-300 group"
@@ -321,6 +337,9 @@ export default function DashboardLayout() {
                     </div>
 
                     <div className="flex items-center gap-3">
+
+                        <div className="h-10 w-[1px] bg-white/10 mx-2 hidden sm:block"></div>
+
                         {/* Notifications Dropdown */}
                         <div className="relative">
                             <button
@@ -435,7 +454,12 @@ export default function DashboardLayout() {
                 <main className="flex-1 p-4 sm:p-8 overflow-x-hidden">
                     <Outlet context={{ role, fullName }} />
                     {/* Floating Chat */}
-                    <FloatingChat />
+                    <FloatingChat
+                        userStatus={userStatus}
+                        currentUserId={userId}
+                        currentUserRole={role}
+                        currentUserName={fullName}
+                    />
                 </main>
             </div>
         </div>

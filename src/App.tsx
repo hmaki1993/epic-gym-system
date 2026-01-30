@@ -14,7 +14,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminCameras from './pages/AdminCameras';
-import Chat from './pages/Chat';
 
 
 import { initializeTheme } from './utils/theme';
@@ -80,7 +79,6 @@ function App() {
             <Route path="schedule" element={<Schedule />} />
             <Route path="settings" element={<Settings />} />
             <Route path="admin/cameras" element={<AdminCameras />} />
-            <Route path="chat" element={<Chat />} />
           </Route>
         </Route>
 

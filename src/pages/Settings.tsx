@@ -209,46 +209,8 @@ export default function Settings() {
                     </div>
                 </div>
 
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Language Settings */}
-                    <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium flex flex-col">
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
-                            <div className="p-3 bg-accent/20 rounded-2xl text-accent">
-                                <Globe className="w-6 h-6" />
-                            </div>
-                            {t('settings.language')}
-                        </h2>
-
-                        <div className="flex gap-6 mt-auto">
-                            <button
-                                onClick={() => {
-                                    i18n.changeLanguage('ar');
-                                    document.dir = 'rtl';
-                                }}
-                                className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-500 hover:scale-105 active:scale-95 flex flex-col items-center gap-2 ${i18n.language === 'ar'
-                                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                                    : 'border-white/5 bg-white/5 hover:bg-white/10'
-                                    }`}
-                            >
-                                <span className={`text-2xl font-black ${i18n.language === 'ar' ? 'text-white' : 'text-white/40'}`}>العربية</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Arabic</span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    i18n.changeLanguage('en');
-                                    document.dir = 'ltr';
-                                }}
-                                className={`flex-1 p-6 rounded-[2rem] border-2 transition-all duration-500 hover:scale-105 active:scale-95 flex flex-col items-center gap-2 ${i18n.language === 'en'
-                                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                                    : 'border-white/5 bg-white/5 hover:bg-white/10'
-                                    }`}
-                            >
-                                <span className={`text-2xl font-black ${i18n.language === 'en' ? 'text-white' : 'text-white/40'}`}>English</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/20">English</span>
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Gym Profile - Only for Admin/Head Coach */}
                     {role && ['admin', 'head_coach'].includes(role) && (
                         <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium lg:col-span-1">
