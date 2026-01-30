@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, UserCheck, UserMinus } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
+import ConfirmModal from '../components/ConfirmModal';
 import Payroll from '../components/Payroll';
 import { useTranslation } from 'react-i18next';
 import { useCoaches } from '../hooks/useData';
+import toast from 'react-hot-toast';
 
 interface Coach {
     id: string;
@@ -23,6 +25,11 @@ export default function Coaches() {
 
     const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [coachToDelete, setCoachToDelete] = useState<string | null>(null);
+
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [attendanceMap, setAttendanceMap] = useState<Record<string, any>>({});
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -44,10 +51,7 @@ export default function Coaches() {
     };
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchAttendance();
-
-        // Update timer every second
         const interval = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(interval);
     }, [refreshTrigger]);
@@ -75,8 +79,9 @@ export default function Coaches() {
             }]);
 
             if (error) {
-                alert('Error checking in: ' + error.message);
+                toast.error('Error checking in: ' + error.message);
             } else {
+                toast.success(t('coaches.checkInSuccess', 'Checked in successfully!'));
                 setRefreshTrigger(prev => prev + 1);
             }
         } else {
@@ -91,21 +96,28 @@ export default function Coaches() {
             }], { onConflict: 'coach_id,date' });
 
             if (error) {
-                alert('Error checking out: ' + error.message);
+                toast.error('Error checking out: ' + error.message);
             } else {
+                toast.success(t('coaches.checkOutSuccess', 'Checked out successfully!'));
                 setRefreshTrigger(prev => prev + 1);
             }
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm(t('common.deleteConfirm'))) return;
+    const confirmDelete = (id: string) => {
+        setCoachToDelete(id);
+        setShowDeleteModal(true);
+    };
 
-        const { error } = await supabase.from('coaches').delete().eq('id', id);
+    const handleDelete = async () => {
+        if (!coachToDelete) return;
+
+        const { error } = await supabase.from('coaches').delete().eq('id', coachToDelete);
         if (error) {
             console.error('Error deleting:', error);
-            alert(t('common.deleteError'));
+            toast.error(t('common.deleteError'));
         } else {
+            toast.success(t('common.deleteSuccess', 'Coach deleted successfully'));
             refetch();
         }
     };
@@ -153,7 +165,7 @@ export default function Coaches() {
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
                                 </button>
                                 <button
-                                    onClick={() => handleDelete(coach.id)}
+                                    onClick={() => confirmDelete(coach.id)}
                                     className="text-gray-400 hover:text-red-500 transition-colors p-1"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
@@ -224,7 +236,7 @@ export default function Coaches() {
             {/* Payroll Section */}
             <Payroll refreshTrigger={refreshTrigger} />
 
-            {/* Modal */}
+            {/* Add/Edit Modal */}
             {showAddModal && (
                 <AddCoachForm
                     initialData={editingCoach}
@@ -235,6 +247,16 @@ export default function Coaches() {
                     onSuccess={refetch}
                 />
             )}
+
+            {/* Confirm Delete Modal */}
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                title={t('common.deleteConfirmTitle', 'Delete Coach')}
+                message={t('common.deleteConfirm', 'Are you sure to delete this coach? This action cannot be undone.')}
+            />
         </div>
     );
 }
+

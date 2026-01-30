@@ -2,6 +2,7 @@ import { useState } from 'react';
 // import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { X, Save, UserPlus } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface AddCoachFormProps {
     onClose: () => void;
@@ -33,6 +34,13 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
     });
     const [uploading, setUploading] = useState(false);
 
+    // Common Input Styles to match Settings.tsx theme system
+    const inputStyle = {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        color: 'inherit',
+        borderColor: 'rgba(128, 128, 128, 0.3)'
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
             setUploading(true);
@@ -58,7 +66,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             setFormData(prev => ({ ...prev, avatar_url: data.publicUrl }));
         } catch (error) {
             console.error('Error uploading image:', error);
-            alert('Error uploading image');
+            toast.error('Error uploading image');
         } finally {
             setUploading(false);
         }
@@ -97,20 +105,25 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             }
 
             if (error) throw error;
+            toast.success(initialData ? 'Coach updated successfully' : 'Coach added successfully');
             onSuccess();
             onClose();
         } catch (error) {
             console.error('Error saving coach:', error);
-            alert('Error saving coach');
+            toast.error('Error saving coach');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 h-[90vh] flex flex-col">
-                <div className="bg-secondary px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+            <div
+                className="rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+                style={{ backgroundColor: 'var(--color-surface)', color: 'inherit' }}
+            >
+                {/* Header */}
+                <div className="px-6 py-4 flex items-center justify-between border-b border-white/10" style={{ backgroundColor: 'var(--color-primary)' }}>
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <UserPlus className="w-5 h-5" />
                         {initialData ? 'Edit Coach' : 'Add New Coach'}
@@ -120,24 +133,25 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Full Name</label>
+                            <label className="text-sm font-medium opacity-80">Full Name</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 value={formData.full_name}
                                 onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                                style={inputStyle}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Profile Image</label>
+                            <label className="text-sm font-medium opacity-80">Profile Image</label>
 
                             {/* Preview Area */}
                             <div className="flex gap-4 items-center">
-                                <div className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0">
+                                <div className="relative w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}>
                                     {formData.avatar_url ? (
                                         <img
                                             src={formData.avatar_url}
@@ -146,7 +160,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                             alt="Preview"
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400">?</div>
+                                        <div className="w-full h-full flex items-center justify-center opacity-40">?</div>
                                     )}
                                 </div>
 
@@ -154,34 +168,34 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                     type="file"
                                     accept="image/*"
                                     onChange={handleFileUpload}
-                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    className="w-full text-sm opacity-70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
                                     disabled={uploading}
                                 />
                             </div>
 
                             {/* Position Controls */}
                             {formData.avatar_url && (
-                                <div className="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
+                                <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border border-white/5 mt-2" style={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-gray-500">Horizontal (X)</label>
+                                        <label className="text-xs opacity-60">Horizontal (X)</label>
                                         <input
                                             type="range"
                                             min="0"
                                             max="100"
                                             value={formData.image_pos_x}
                                             onChange={(e) => setFormData(prev => ({ ...prev, image_pos_x: parseInt(e.target.value) }))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-gray-500">Vertical (Y)</label>
+                                        <label className="text-xs opacity-60">Vertical (Y)</label>
                                         <input
                                             type="range"
                                             min="0"
                                             max="100"
                                             value={formData.image_pos_y}
                                             onChange={(e) => setFormData(prev => ({ ...prev, image_pos_y: parseInt(e.target.value) }))}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                     </div>
                                 </div>
@@ -192,51 +206,54 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700">Specialty</label>
+                        <label className="text-sm font-medium opacity-80">Specialty</label>
                         <select
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 appearance-none bg-white"
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none"
                             value={formData.specialty}
                             onChange={e => setFormData({ ...formData, specialty: e.target.value })}
+                            style={inputStyle}
                         >
-                            <option value="" disabled>Select Specialty</option>
-                            <option value="Artistic Gymnastics (Boys)">Artistic Gymnastics (Boys)</option>
-                            <option value="Artistic Gymnastics (Girls)">Artistic Gymnastics (Girls)</option>
-                            <option value="Artistic Gymnastics (Mixed)">Artistic Gymnastics (Boys & Girls)</option>
-                            <option value="Rhythmic Gymnastics">Rhythmic Gymnastics</option>
+                            <option value="" disabled className="text-gray-500">Select Specialty</option>
+                            <option value="Artistic Gymnastics (Boys)" className="text-black dark:text-gray-900">Artistic Gymnastics (Boys)</option>
+                            <option value="Artistic Gymnastics (Girls)" className="text-black dark:text-gray-900">Artistic Gymnastics (Girls)</option>
+                            <option value="Artistic Gymnastics (Mixed)" className="text-black dark:text-gray-900">Artistic Gymnastics (Boys & Girls)</option>
+                            <option value="Rhythmic Gymnastics" className="text-black dark:text-gray-900">Rhythmic Gymnastics</option>
                         </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">PT Rate (per session)</label>
+                            <label className="text-sm font-medium opacity-80">PT Rate (per session)</label>
                             <input
                                 required
                                 type="number"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 value={formData.pt_rate}
                                 onChange={e => setFormData({ ...formData, pt_rate: e.target.value })}
                                 placeholder="0.00"
+                                style={inputStyle}
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Monthly Salary</label>
+                            <label className="text-sm font-medium opacity-80">Monthly Salary</label>
                             <input
                                 required
                                 type="number"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900"
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 value={formData.salary}
                                 onChange={e => setFormData({ ...formData, salary: e.target.value })}
                                 placeholder="0.00"
+                                style={inputStyle}
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-6">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                            className="px-6 py-2 opacity-70 hover:opacity-100 font-medium hover:bg-black/5 rounded-lg transition-colors"
                         >
                             Cancel
                         </button>
@@ -258,3 +275,4 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
         </div>
     );
 }
+
