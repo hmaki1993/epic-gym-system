@@ -11,7 +11,8 @@ import {
     Video,
     LogOut,
     Menu,
-    Globe
+    Globe,
+    Calculator
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -66,6 +67,7 @@ export default function DashboardLayout() {
         { to: '/coaches', icon: GraduationCap, label: t('common.coaches'), roles: ['admin', 'head_coach'] },
         { to: '/schedule', icon: Calendar, label: t('common.schedule'), roles: ['admin', 'head_coach', 'coach', 'reception'] },
         { to: '/finance', icon: Wallet, label: t('common.finance'), roles: ['admin'] },
+        { to: '/calculator', icon: Calculator, label: t('common.calculator'), roles: ['admin', 'head_coach', 'coach', 'reception'] },
         { to: '/settings', icon: Settings, label: t('common.settings'), roles: ['admin'] },
         { to: '/admin/cameras', icon: Video, label: t('common.cameras'), roles: ['admin'] },
     ];

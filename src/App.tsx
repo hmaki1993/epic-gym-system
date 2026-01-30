@@ -8,6 +8,7 @@ import Finance from './pages/Finance';
 import Dashboard from './pages/Dashboard';
 import Schedule from './pages/Schedule';
 import Settings from './pages/Settings';
+import Calculator from './pages/Calculator';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -34,6 +35,7 @@ function App() {
             <Route path="students" element={<Students />} />
             <Route path="coaches" element={<Coaches />} />
             <Route path="finance" element={<Finance />} />
+            <Route path="calculator" element={<Calculator />} />
             <Route path="schedule" element={<Schedule />} />
             <Route path="settings" element={<Settings />} />
             <Route path="admin/cameras" element={<AdminCameras />} />

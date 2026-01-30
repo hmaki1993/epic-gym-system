@@ -72,7 +72,7 @@ export default function Settings() {
         }
     };
 
-    const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'default');
+    const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
     useEffect(() => {
         // Apply theme on mount (in case it wasn't applied by a previous visit in this session)
