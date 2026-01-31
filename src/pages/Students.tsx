@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Filter, Smile, Edit, Trash2 } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { Plus, Search, Filter, Smile, Edit, Trash2, TrendingUp, User as UserIcon, Calendar, RefreshCw } from 'lucide-react';
+import { differenceInDays, format } from 'date-fns';
 import AddStudentForm from '../components/AddStudentForm';
+import AddPTSubscriptionForm from '../components/AddPTSubscriptionForm';
+import RenewSubscriptionForm from '../components/RenewSubscriptionForm';
 import ConfirmModal from '../components/ConfirmModal';
 import { useTranslation } from 'react-i18next';
 import { useStudents } from '../hooks/useData';
+
 
 
 interface Student {
@@ -15,6 +18,7 @@ interface Student {
     contact_number: string;
     parent_contact: string;
     subscription_expiry: string;
+    is_active: boolean;
     created_at: string;
     coaches?: {
         full_name: string;
@@ -36,6 +40,10 @@ export default function Students() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [idToDelete, setIdToDelete] = useState<number | null>(null);
+    const [showPTModal, setShowPTModal] = useState(false);
+    const [ptSubscriptions, setPtSubscriptions] = useState<any[]>([]);
+    const [showRenewModal, setShowRenewModal] = useState(false);
+    const [studentToRenew, setStudentToRenew] = useState<Student | null>(null);
 
     // Group View State
     // const [viewMode, setViewMode] = useState<'list' | 'groups'>('list'); // Removed
@@ -44,6 +52,50 @@ export default function Students() {
     // const [selectedGroup, setSelectedGroup] = useState<any>(null); // Removed
 
     // Fetch Groups logic removed
+
+    useEffect(() => {
+        fetchPTSubscriptions();
+
+        // Real-time subscription for PT subscriptions
+        const ptSubscription = supabase
+            .channel('pt_subscriptions_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'pt_subscriptions'
+                },
+                () => {
+                    console.log('PT subscriptions changed');
+                    fetchPTSubscriptions();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            ptSubscription.unsubscribe();
+        };
+    }, []);
+
+    const fetchPTSubscriptions = async () => {
+        const { data, error } = await supabase
+            .from('pt_subscriptions')
+            .select(`
+                *,
+                students(id, full_name),
+                coaches(id, full_name)
+            `)
+            // Removed .eq('status', 'active') to show all subscriptions
+            .order('status', { ascending: true }) // Active first, then expired
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching PT subscriptions:', error);
+        } else {
+            setPtSubscriptions(data || []);
+        }
+    };
 
 
     const getSubscriptionStatus = (expiryDate: string | null) => {
@@ -77,6 +129,20 @@ export default function Students() {
         } else {
             refetch();
             setIdToDelete(null);
+        }
+    };
+
+    const toggleStudentStatus = async (studentId: number, currentStatus: boolean) => {
+        try {
+            const { error } = await supabase
+                .from('students')
+                .update({ is_active: !currentStatus })
+                .eq('id', studentId);
+
+            if (error) throw error;
+            refetch();
+        } catch (error) {
+            console.error('Error toggling student status:', error);
         }
     };
 
@@ -116,6 +182,142 @@ export default function Students() {
                     <div className="relative z-10 w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
                         <Smile className="w-8 h-8" />
                     </div>
+                </div>
+            </div>
+
+            {/* PT Subscriptions Section - PREMIUM */}
+            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent">
+                {/* Gradient Background Effects */}
+                <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-accent/5 to-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div className="relative z-10">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-10">
+                        <div className="flex items-center gap-5">
+                            <div className="p-5 bg-gradient-to-br from-primary via-primary/80 to-accent rounded-[1.5rem] shadow-lg shadow-primary/30 relative group">
+                                <div className="absolute inset-0 bg-white/20 rounded-[1.5rem] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <TrendingUp className="w-8 h-8 text-white relative z-10" />
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                                    Personal Training
+                                    <span className="px-3 py-1 bg-accent/20 text-accent text-xs rounded-full border border-accent/30 font-black uppercase tracking-wider">
+                                        Premium
+                                    </span>
+                                </h2>
+                                <p className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] mt-2">
+                                    Professional 1-on-1 Training Sessions
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowPTModal(true)}
+                            className="group/btn bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white px-8 py-4 rounded-[1.5rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3 font-black uppercase tracking-widest text-sm relative overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500"></div>
+                            <Plus className="w-5 h-5 relative z-10" />
+                            <span className="relative z-10">Add PT Subscription</span>
+                        </button>
+                    </div>
+
+                    {/* Active PT Subscriptions */}
+                    {ptSubscriptions.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {ptSubscriptions.map((subscription) => (
+                                <div
+                                    key={subscription.id}
+                                    className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-primary/30 transition-all duration-500 group hover:scale-[1.02] relative overflow-hidden"
+                                >
+                                    {/* Card Gradient */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2.5rem]"></div>
+
+                                    <div className="relative z-10">
+                                        {/* Student Info */}
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+                                                {subscription.students?.full_name?.[0] || 'S'}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors">
+                                                    {subscription.students?.full_name || 'Unknown'}
+                                                </h3>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">
+                                                    Student
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Coach Info */}
+                                        <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                            <UserIcon className="w-4 h-4 text-accent" />
+                                            <div>
+                                                <p className="text-xs font-black text-white/60 uppercase tracking-wider">Coach</p>
+                                                <p className="text-sm font-black text-white">{subscription.coaches?.full_name || 'Unknown'}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Sessions Info */}
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Remaining</p>
+                                                <p className="text-2xl font-black text-primary">{subscription.sessions_remaining}</p>
+                                            </div>
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Total</p>
+                                                <p className="text-2xl font-black text-white">{subscription.sessions_total}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Price & Expiry */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                            <div>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Total Price</p>
+                                                <p className="text-xl font-black premium-gradient-text">${subscription.total_price}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Expires</p>
+                                                <p className="text-xs font-bold text-white/80">{format(new Date(subscription.expiry_date), 'MMM dd, yyyy')}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Status Badge */}
+                                        <div className="mt-4">
+                                            {(() => {
+                                                const isExpired = new Date(subscription.expiry_date) < new Date();
+                                                return isExpired ? (
+                                                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                                                <span className="text-xs font-black text-red-500 uppercase tracking-wider">Expired</span>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-[10px] text-red-400/80 font-bold">
+                                                            ⚠️ Payment required to renew subscription
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-2xl">
+                                                        <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
+                                                        <span className="text-xs font-black text-accent uppercase tracking-wider">Active Subscription</span>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16">
+                            <div className="w-24 h-24 mx-auto mb-6 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center">
+                                <TrendingUp className="w-12 h-12 text-white/20" />
+                            </div>
+                            <p className="text-white/40 font-black uppercase tracking-widest text-sm">No Active PT Subscriptions</p>
+                            <p className="text-white/20 text-xs mt-2">Click "Add PT Subscription" to get started</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -189,15 +391,22 @@ export default function Students() {
                                             <div className="flex items-center gap-5">
                                                 <div className="relative">
                                                     <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-2xl blur opacity-0 group-hover:opacity-20 transition-all duration-500"></div>
-                                                    <div className="relative w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary font-black text-xl shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                                    <div className={`relative w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary font-black text-xl shadow-inner group-hover:scale-110 transition-transform duration-500 ${!student.is_active && 'opacity-40'}`}>
                                                         {student.full_name?.[0] || '?'}
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-black text-white text-lg group-hover:text-primary transition-colors duration-300">
-                                                        {student.full_name || <span className="text-white/20 italic font-medium">{t('common.unknown')}</span>}
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`font-black text-white text-lg group-hover:text-primary transition-colors duration-300 ${!student.is_active && 'opacity-40'}`}>
+                                                            {student.full_name || <span className="text-white/20 italic font-medium">{t('common.unknown')}</span>}
+                                                        </div>
+                                                        {!student.is_active && (
+                                                            <span className="px-2 py-1 bg-red-500/10 border border-red-500/20 rounded-lg text-[8px] font-black text-red-500 uppercase tracking-wider">
+                                                                Inactive
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
+                                                    <div className={`text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mt-1 flex items-center gap-2 ${!student.is_active && 'opacity-40'}`}>
                                                         <span className="w-1.5 h-1.5 rounded-full bg-primary/30"></span>
                                                         ID: {String(student.id).slice(0, 8)}
                                                     </div>
@@ -206,12 +415,27 @@ export default function Students() {
                                         </td>
                                         <td className="px-10 py-8">
                                             {(() => {
+                                                if (!student.is_active) {
+                                                    return (
+                                                        <button
+                                                            onClick={() => toggleStudentStatus(student.id, student.is_active)}
+                                                            className="inline-flex items-center px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20 hover:scale-105"
+                                                        >
+                                                            <span className="w-2 h-2 rounded-full mr-2.5 bg-red-500"></span>
+                                                            Inactive
+                                                        </button>
+                                                    );
+                                                }
+
                                                 const status = getSubscriptionStatus(student.subscription_expiry);
                                                 return (
-                                                    <span className={`inline-flex items-center px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${status.color}`}>
+                                                    <button
+                                                        onClick={() => toggleStudentStatus(student.id, student.is_active)}
+                                                        className={`inline-flex items-center px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${status.color} hover:scale-105 hover:shadow-lg cursor-pointer`}
+                                                    >
                                                         <span className={`w-2 h-2 rounded-full mr-2.5 ${status.label === t('students.active') ? 'bg-emerald-400 animate-pulse' : 'bg-current'}`}></span>
                                                         {status.label}
-                                                    </span>
+                                                    </button>
                                                 );
                                             })()}
                                         </td>
@@ -257,6 +481,23 @@ export default function Students() {
                                         </td>
                                         <td className="px-10 py-8 text-right">
                                             <div className="flex items-center justify-end gap-3">
+                                                {/* Renew Button - Only for expired subscriptions */}
+                                                {(() => {
+                                                    const status = getSubscriptionStatus(student.subscription_expiry);
+                                                    const isExpired = status.label !== t('students.active');
+                                                    return isExpired && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setStudentToRenew(student);
+                                                                setShowRenewModal(true);
+                                                            }}
+                                                            className="p-3 rounded-xl bg-accent/10 hover:bg-accent/20 text-accent hover:text-accent border border-accent/20 hover:border-accent/40 transition-all duration-300 group/renew"
+                                                            title="Renew Subscription"
+                                                        >
+                                                            <RefreshCw className="w-4 h-4 group-hover/renew:rotate-180 transition-transform duration-500" />
+                                                        </button>
+                                                    );
+                                                })()}
                                                 <button
                                                     onClick={() => {
                                                         setEditingStudent(student);
@@ -290,6 +531,27 @@ export default function Students() {
                         setEditingStudent(null);
                     }}
                     onSuccess={refetch}
+                />
+            )}
+
+            {showPTModal && (
+                <AddPTSubscriptionForm
+                    onClose={() => setShowPTModal(false)}
+                    onSuccess={fetchPTSubscriptions}
+                />
+            )}
+
+            {showRenewModal && studentToRenew && (
+                <RenewSubscriptionForm
+                    student={studentToRenew}
+                    onClose={() => {
+                        setShowRenewModal(false);
+                        setStudentToRenew(null);
+                    }}
+                    onSuccess={() => {
+                        refetch();
+                        fetchPTSubscriptions();
+                    }}
                 />
             )}
 

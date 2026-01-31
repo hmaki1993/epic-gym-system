@@ -87,7 +87,7 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                     <th className="px-6 py-4">Coach</th>
                                     <th className="px-6 py-4 text-center">Sessions</th>
                                     <th className="px-6 py-4 text-center">Base Salary</th>
-                                    <th className="px-6 py-4 text-right">Total Payout</th>
+                                    <th className="px-6 py-4 text-right">Unpaid Liability</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -96,10 +96,10 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                 ) : (
                                     payroll.map((p, i) => (
                                         <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                            <td className="px-6 py-4 font-bold text-white group-hover:text-rose-400 transition-colors">{p.coach_name}</td>
+                                            <td className="px-6 py-4 font-bold text-white group-hover:text-orange-400 transition-colors">{p.coach_name}</td>
                                             <td className="px-6 py-4 text-center text-white/60 font-bold">{p.total_pt_sessions}</td>
                                             <td className="px-6 py-4 text-center text-white/40 text-xs font-mono">{p.salary.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-right font-black text-rose-400 tracking-tight">
+                                            <td className="px-6 py-4 text-right font-black text-orange-400 tracking-tight">
                                                 -{p.total_earnings.toLocaleString()} <span className="text-[9px] text-white/20">EGP</span>
                                             </td>
                                         </tr>
@@ -157,9 +157,9 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                 {/* Header */}
                 <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
                     <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-2xl ${type === 'expenses' ? 'bg-rose-500/20 text-rose-400' :
-                                type === 'profit' ? 'bg-orange-500/20 text-orange-400' :
-                                    'bg-primary/20 text-primary'
+                        <div className={`p-3 rounded-2xl ${type === 'expenses' ? 'bg-orange-500/20 text-orange-400' :
+                            type === 'profit' ? 'bg-emerald-500/20 text-emerald-400' :
+                                'bg-primary/20 text-primary'
                             }`}>
                             {type === 'expenses' ? <Wallet className="w-6 h-6" /> :
                                 type === 'profit' ? <TrendingUp className="w-6 h-6" /> :

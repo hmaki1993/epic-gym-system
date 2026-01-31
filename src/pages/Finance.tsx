@@ -61,7 +61,7 @@ export default function Finance() {
         switch (detailType) {
             case 'revenue': return t('finance.totalRevenue');
             case 'income': return 'Monthly Income';
-            case 'expenses': return 'Payroll Expenses';
+            case 'expenses': return 'Outstanding Payroll (Liabilities)'; // Renamed
             case 'profit': return 'Net Profit Summary';
             default: return '';
         }
@@ -123,23 +123,23 @@ export default function Finance() {
                     </div>
                 </button>
 
-                {/* Total Expenses (Payroll) */}
-                <button onClick={() => setDetailType('expenses')} className="text-left w-full glass-card p-8 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 cursor-pointer hover:border-rose-400/30">
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-rose-500/5 rounded-full blur-3xl group-hover:bg-rose-500/10 transition-colors"></div>
+                {/* Liabilities (Outstanding Payroll) */}
+                <button onClick={() => setDetailType('expenses')} className="text-left w-full glass-card p-8 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 cursor-pointer hover:border-orange-500/30">
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-colors"></div>
                     <div className="flex items-center justify-between mb-8 relative z-10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-rose-400 transition-colors">Expenses (Payroll)</p>
-                        <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-400 shadow-inner">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-orange-400 transition-colors">Outstanding Liabilities</p>
+                        <div className="p-3 bg-orange-500/20 rounded-2xl text-orange-400 shadow-inner">
                             <Wallet className="w-5 h-5" />
                         </div>
                     </div>
                     <div className="flex items-baseline gap-2 relative z-10">
-                        <h3 className="text-3xl font-black text-rose-400 tracking-tighter">
+                        <h3 className="text-3xl font-black text-orange-400 tracking-tighter">
                             {payrollLoading ? '...' : monthlyExpenses.toLocaleString()}
                         </h3>
                         <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
                     </div>
-                    <div className="absolute bottom-6 right-8 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-rose-400 flex items-center gap-1">
-                        View Details →
+                    <div className="absolute bottom-6 right-8 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-orange-400 flex items-center gap-1">
+                        View Debts →
                     </div>
                 </button>
 

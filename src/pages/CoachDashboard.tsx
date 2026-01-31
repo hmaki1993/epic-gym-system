@@ -16,6 +16,7 @@ export default function CoachDashboard() {
     const [savedSessions, setSavedSessions] = useState<any[]>([]);
     const [syncLoading, setSyncLoading] = useState(true);
     const [dailyTotalSeconds, setDailyTotalSeconds] = useState(0);
+    const [ptSubscriptions, setPtSubscriptions] = useState<any[]>([]);
 
     // Removed redundant toggleLanguage - handled by DashboardLayout
 
@@ -114,6 +115,91 @@ export default function CoachDashboard() {
         }
 
         fetchTodaySessions();
+
+        // Real-time subscription for PT sessions
+        const ptSessionsSubscription = supabase
+            .channel('pt_sessions_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'pt_sessions'
+                },
+                (payload) => {
+                    console.log('PT sessions changed:', payload);
+                    fetchTodaySessions();
+                }
+            )
+            .subscribe();
+
+        // Real-time subscription for PT subscriptions
+        const ptSubscriptionsChannel = supabase
+            .channel('coach_pt_subscriptions_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'pt_subscriptions'
+                },
+                (payload) => {
+                    console.log('PT subscriptions changed:', payload);
+                    fetchPTSubscriptions();
+                }
+            )
+            .subscribe();
+
+        // Fetch PT subscriptions on mount
+        fetchPTSubscriptions();
+
+        // Real-time subscription for coach attendance
+        const attendanceSubscription = supabase
+            .channel('coach_attendance_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'coach_attendance'
+                },
+                async (payload) => {
+                    console.log('Coach attendance changed:', payload);
+                    // Re-sync attendance data
+                    const todayStr = format(new Date(), 'yyyy-MM-dd');
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { data: attendance } = await supabase
+                            .from('coach_attendance')
+                            .select('*')
+                            .eq('coach_id', user.id)
+                            .eq('date', todayStr)
+                            .maybeSingle();
+
+                        if (attendance) {
+                            const start = new Date(attendance.check_in_time);
+                            if (!attendance.check_out_time) {
+                                setIsCheckedIn(true);
+                                setCheckInTime(format(start, 'HH:mm:ss'));
+                                const now = new Date().getTime();
+                                setElapsedTime(Math.floor((now - start.getTime()) / 1000));
+                            } else {
+                                setIsCheckedIn(false);
+                                const end = new Date(attendance.check_out_time);
+                                setDailyTotalSeconds(Math.floor((end.getTime() - start.getTime()) / 1000));
+                            }
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
+        // Cleanup subscriptions
+        return () => {
+            ptSessionsSubscription.unsubscribe();
+            ptSubscriptionsChannel.unsubscribe();
+            attendanceSubscription.unsubscribe();
+        };
     }, []);
 
     const fetchTodaySessions = async () => {
@@ -133,6 +219,29 @@ export default function CoachDashboard() {
             setSavedSessions(data || []);
         } catch (error) {
             console.error('Error fetching sessions:', error);
+        }
+    };
+
+    const fetchPTSubscriptions = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data, error } = await supabase
+                .from('pt_subscriptions')
+                .select(`
+                    *,
+                    students(id, full_name)
+                `)
+                .eq('coach_id', user.id)
+                // Removed .eq('status', 'active') to show expired subscriptions too
+                .order('status', { ascending: true }) // Active first, then expired
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setPtSubscriptions(data || []);
+        } catch (error) {
+            console.error('Error fetching PT subscriptions:', error);
         }
     };
 
@@ -432,6 +541,50 @@ export default function CoachDashboard() {
                                         });
 
                                     if (error) throw error;
+
+                                    // 3. Try to record payment (Best Effort)
+                                    try {
+                                        // Find student by name
+                                        const { data: students } = await supabase
+                                            .from('students')
+                                            .select('id')
+                                            .ilike('full_name', ptStudentName)
+                                            .limit(1);
+
+                                        if (students && students.length > 0) {
+                                            const studentId = students[0].id;
+                                            // Get coach rate if not already available
+                                            let rate = 0;
+                                            if (user.user_metadata?.pt_rate) {
+                                                rate = user.user_metadata.pt_rate;
+                                            } else {
+                                                const { data: coachData } = await supabase
+                                                    .from('coaches')
+                                                    .select('pt_rate')
+                                                    .eq('id', user.id)
+                                                    .single();
+                                                rate = coachData?.pt_rate || 0;
+                                            }
+
+                                            if (rate > 0) {
+                                                await supabase.from('payments').insert({
+                                                    student_id: studentId,
+                                                    amount: rate,
+                                                    payment_date: new Date().toISOString(),
+                                                    payment_method: 'cash',
+                                                    notes: `PT Session - ${ptStudentName}`
+                                                });
+
+                                                // Note: We can't easily invalidate queries here as we don't have queryClient context easily accessible without refactoring
+                                                // But since this is a separate dashboard, it might be fine.
+                                                // Ideally we should use useQueryClient like we did in AddStudentForm.
+                                            }
+                                        }
+                                    } catch (payError) {
+                                        console.error('Error recording auto-payment for PT session:', payError);
+                                        // Don't block the UI for payment error
+                                    }
+
                                     setPtStudentName('');
                                     fetchTodaySessions();
                                     toast.success(t('common.saveSuccess'));
@@ -529,6 +682,128 @@ export default function CoachDashboard() {
                 </div>
             </div>
 
+            {/* My PT Students Section */}
+            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent">
+                <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-accent/10 to-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div className="relative z-10">
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
+                        <div className="p-3 bg-gradient-to-br from-accent to-primary rounded-2xl text-white shadow-lg shadow-accent/20">
+                            <User className="w-6 h-6" />
+                        </div>
+                        My PT Students
+                        <span className="px-3 py-1 bg-accent/20 text-accent text-xs rounded-full border border-accent/30 font-black uppercase tracking-wider">
+                            Premium
+                        </span>
+                    </h2>
+
+                    {ptSubscriptions.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {ptSubscriptions.map((subscription) => (
+                                <div
+                                    key={subscription.id}
+                                    className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-accent/30 transition-all duration-500 group hover:scale-[1.02] relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2.5rem]"></div>
+
+                                    <div className="relative z-10">
+                                        {/* Student Info */}
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-accent/20 group-hover:scale-110 transition-transform">
+                                                {subscription.students?.full_name?.[0] || 'S'}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-black text-white text-xl tracking-tight group-hover:text-accent transition-colors">
+                                                    {subscription.students?.full_name || 'Unknown'}
+                                                </h3>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">
+                                                    PT Student
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Sessions Progress */}
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-xs font-black text-white/60 uppercase tracking-wider">Sessions Progress</span>
+                                                <span className="text-xs font-black text-accent">
+                                                    {subscription.sessions_remaining}/{subscription.sessions_total}
+                                                </span>
+                                            </div>
+                                            <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-accent to-primary transition-all duration-500 rounded-full"
+                                                    style={{
+                                                        width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%`
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Stats Grid */}
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Remaining</p>
+                                                <p className="text-3xl font-black text-accent">{subscription.sessions_remaining}</p>
+                                            </div>
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Per Session</p>
+                                                <p className="text-2xl font-black text-white">${subscription.price_per_session}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Expiry Date */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                            <div>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Expires</p>
+                                                <p className="text-sm font-bold text-white/80">{format(new Date(subscription.expiry_date), 'MMM dd, yyyy')}</p>
+                                            </div>
+                                            {(() => {
+                                                const isExpired = new Date(subscription.expiry_date) < new Date();
+                                                return isExpired ? (
+                                                    <div className="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full animate-pulse">
+                                                        <span className="text-xs font-black text-red-500 uppercase tracking-wider">Expired</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="px-4 py-2 bg-accent/10 border border-accent/20 rounded-full">
+                                                        <span className="text-xs font-black text-accent uppercase tracking-wider">Active</span>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Payment Alert for Expired */}
+                                        {(() => {
+                                            const isExpired = new Date(subscription.expiry_date) < new Date();
+                                            return isExpired && (
+                                                <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl animate-in fade-in duration-300">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                                        <p className="text-xs font-black text-red-500 uppercase tracking-wider">
+                                                            Payment Required
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-[10px] text-red-400/80 mt-2 font-bold">
+                                                        Student needs to renew subscription
+                                                    </p>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16">
+                            <div className="w-24 h-24 mx-auto mb-6 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center">
+                                <User className="w-12 h-12 text-white/20" />
+                            </div>
+                            <p className="text-white/40 font-black uppercase tracking-widest text-sm">No PT Students Yet</p>
+                            <p className="text-white/20 text-xs mt-2">PT students will appear here when assigned</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* My Groups Section */}
             <div className="mt-8">
@@ -554,6 +829,8 @@ function GroupsList() {
     const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
     useEffect(() => {
+        let coachId: string | null = null;
+
         const fetchGroups = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -570,6 +847,8 @@ function GroupsList() {
                 return;
             }
 
+            coachId = coachData.id;
+
             // 2. Fetch Groups using Coach ID
             const { data, error } = await supabase
                 .from('training_groups')
@@ -584,7 +863,70 @@ function GroupsList() {
             }
             setLoading(false);
         };
+
         fetchGroups();
+
+        // Real-time subscription for training_groups changes
+        const groupsSubscription = supabase
+            .channel('training_groups_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+                    schema: 'public',
+                    table: 'training_groups'
+                },
+                async (payload) => {
+                    console.log('Training groups changed:', payload);
+                    // Refetch groups when any change happens
+                    if (coachId) {
+                        const { data } = await supabase
+                            .from('training_groups')
+                            .select('*, students(id, full_name, birth_date)')
+                            .eq('coach_id', coachId)
+                            .order('name', { ascending: true });
+
+                        if (data) {
+                            setGroups(data);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
+        // Real-time subscription for students changes (affects group member counts)
+        const studentsSubscription = supabase
+            .channel('students_changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'students'
+                },
+                async (payload) => {
+                    console.log('Students changed:', payload);
+                    // Refetch groups when students are updated
+                    if (coachId) {
+                        const { data } = await supabase
+                            .from('training_groups')
+                            .select('*, students(id, full_name, birth_date)')
+                            .eq('coach_id', coachId)
+                            .order('name', { ascending: true });
+
+                        if (data) {
+                            setGroups(data);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
+        // Cleanup subscriptions on unmount
+        return () => {
+            groupsSubscription.unsubscribe();
+            studentsSubscription.unsubscribe();
+        };
     }, []);
 
     if (loading) return <div className="text-white/40 italic">Loading groups...</div>;

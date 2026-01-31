@@ -28,6 +28,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
         parent_contact: initialData?.parent_contact || '',
         subscription_type: initialData?.subscription_type || '', // Initialize empty, will be set by effect
         subscription_start: format(new Date(), 'yyyy-MM-dd'),
+        subscription_expiry: initialData?.subscription_expiry || '', // Manual expiry date
         training_days: initialData?.training_days || [],
         training_schedule: initialData?.training_schedule || [],
         coach_id: initialData?.coach_id || '',
@@ -36,10 +37,21 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
 
     // Update subscription_type when plans are loaded
     useEffect(() => {
-        if (plans.length > 0 && !formData.subscription_type && !initialData) {
+        if (plans.length > 0 && (!formData.subscription_type || formData.subscription_type === '') && !initialData) {
             setFormData(prev => ({ ...prev, subscription_type: plans[0].id }));
         }
     }, [plans, initialData]);
+
+
+    // Auto-calculate expiry date when plan or start date changes
+    useEffect(() => {
+        if (formData.subscription_start && formData.subscription_type && plans.length > 0) {
+            const calculatedExpiry = calculateExpiry(formData.subscription_start, formData.subscription_type);
+            // Always update to calculated expiry when plan or start date changes
+            // User can manually edit after if needed
+            setFormData(prev => ({ ...prev, subscription_expiry: calculatedExpiry }));
+        }
+    }, [formData.subscription_start, formData.subscription_type, plans]);
 
     const { data: coaches } = useCoaches();
 
@@ -104,7 +116,11 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
         setLoading(true);
 
         try {
-            const expiry = calculateExpiry(formData.subscription_start, formData.subscription_type);
+            // Use manual expiry date from form (already calculated by useEffect or manually edited)
+            // Ensure we don't send empty string - fallback to calculated expiry
+            const expiry = (formData.subscription_expiry && formData.subscription_expiry.trim() !== '')
+                ? formData.subscription_expiry
+                : calculateExpiry(formData.subscription_start, formData.subscription_type);
 
             // 1. Determine Group (Auto-Grouping Logic)
             let trainingGroupId = null;
@@ -161,10 +177,10 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                 subscription_expiry: expiry,
                 training_days: formData.training_days,
                 training_schedule: formData.training_schedule,
-                coach_id: formData.coach_id || null,
-                subscription_plan_id: formData.subscription_type,
+                coach_id: formData.coach_id && formData.coach_id.trim() !== '' ? formData.coach_id : null,
+                subscription_plan_id: formData.subscription_type && formData.subscription_type.trim() !== '' ? formData.subscription_type : null,
                 notes: formData.notes,
-                training_group_id: trainingGroupId // Assign to Training Group
+                training_group_id: trainingGroupId || null // Assign to Training Group
             };
 
             let error;
@@ -185,6 +201,20 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                     .single();
                 error = insertError;
                 studentId = data?.id;
+
+                // Record initial payment for new student
+                if (studentId && formData.subscription_type) {
+                    const selectedPlan = plans.find(p => p.id === formData.subscription_type);
+                    if (selectedPlan) {
+                        await supabase.from('payments').insert({
+                            student_id: studentId,
+                            amount: selectedPlan.price,
+                            payment_date: formData.subscription_start || new Date().toISOString(),
+                            payment_method: 'cash', // Default to cash
+                            notes: `New Registration - ${selectedPlan.name}`
+                        });
+                    }
+                }
             }
 
             if (error) throw error;
@@ -253,8 +283,9 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
             }
 
             queryClient.invalidateQueries({ queryKey: ['students'] });
-            if (formData.coach_id) queryClient.invalidateQueries({ queryKey: ['training_groups'] }); // Invalidate groups too
             queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+            if (formData.coach_id) queryClient.invalidateQueries({ queryKey: ['training_groups'] }); // Invalidate groups too
 
             toast.success(initialData ? 'Gymnast updated successfully' : 'Gymnast added successfully', {
                 icon: '🎉',
@@ -449,6 +480,10 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Start Date & Expiry Date */}
+                        <div className="grid grid-cols-2 gap-6 mt-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Start Date</label>
                                 <input
@@ -456,6 +491,18 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                     className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                     value={formData.subscription_start}
                                     onChange={e => setFormData({ ...formData, subscription_start: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center gap-2">
+                                    Expiry Date
+                                    <span className="px-2 py-0.5 bg-accent/10 text-accent text-[8px] rounded-full border border-accent/20">Editable</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                    value={formData.subscription_expiry}
+                                    onChange={e => setFormData({ ...formData, subscription_expiry: e.target.value })}
                                 />
                             </div>
                         </div>
