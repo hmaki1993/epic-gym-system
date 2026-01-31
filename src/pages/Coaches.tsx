@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 
 interface Coach {
     id: string;
+    profile_id?: string;
     full_name: string;
     email?: string;
     specialty: string;

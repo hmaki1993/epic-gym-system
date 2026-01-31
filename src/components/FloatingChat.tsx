@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import { Send, MessageCircle, X, Maximize2, Minimize2, Search, Paperclip, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
 
 interface Message {
     id: string;
@@ -10,7 +11,7 @@ interface Message {
     sender_name: string;
     sender_role: string;
     content: string;
-    image_url?: string; // Add image_url to interface
+    image_url?: string;
     created_at: string;
 }
 
@@ -27,7 +28,7 @@ export default function FloatingChat({
     currentUserRole,
     currentUserName
 }: FloatingChatProps) {
-    const { i18n } = useTranslation();
+    const { i18n, t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const [showOnline, setShowOnline] = useState(false);
@@ -37,14 +38,14 @@ export default function FloatingChat({
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
-    const [searchQuery, setSearchQuery] = useState(''); // Add Search Query state
-    const [showSearch, setShowSearch] = useState(false); // Add Search Toggle state
-    const [isUploading, setIsUploading] = useState(false); // Add Uploading state
+    const [msgToDeleteId, setMsgToDeleteId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const isRtl = i18n.language === 'ar' || document.dir === 'rtl';
 
-    // Filter messages based on search query
     const filteredMessages = messages.filter(msg =>
         msg.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
         msg.sender_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -68,7 +69,6 @@ export default function FloatingChat({
 
             const { data } = supabase.storage.from('chat-images').getPublicUrl(filePath);
 
-            // Send message with image
             const messageData = {
                 sender_id: user.id,
                 sender_name: user.full_name || 'Staff member',
@@ -81,7 +81,6 @@ export default function FloatingChat({
 
             if (msgError) throw msgError;
 
-            // Optimistic update
             const sentMsg = msgData?.[0] as Message;
             if (sentMsg) {
                 setMessages(prev => [...prev, sentMsg]);
@@ -106,7 +105,6 @@ export default function FloatingChat({
             fetchUser();
         }
 
-        // Request notification permission on mount
         if ('Notification' in window) {
             Notification.requestPermission();
         }
@@ -175,26 +173,21 @@ export default function FloatingChat({
                     if (prev.some(m => m.id === newMsg.id)) return prev;
                     return [...prev, newMsg];
                 });
-                // Check if message is from someone else
                 if (newMsg.sender_id !== user?.id && (!isOpen || document.hidden)) {
-                    // 1. Play Sound
                     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
                     audio.volume = 0.6;
                     audio.play().catch(e => console.log('Audio blocked', e));
 
-                    // 2. Browser/System Notification (works if minimized)
                     if (Notification.permission === 'granted') {
                         new Notification(`New Message from ${newMsg.sender_name}`, {
                             body: newMsg.content,
-                            icon: '/logo.png' // Ensure this exists or use a generic one
+                            icon: '/logo.png'
                         });
                     }
 
-                    // 3. Professional In-App Toast
                     toast.custom((t) => (
                         <div
-                            className={`${t.visible ? 'animate-enter' : 'animate-leave'
-                                } max-w-md w-full glass-card border border-white/10 shadow-premium rounded-[2rem] pointer-events-auto flex items-center gap-4 p-4 cursor-pointer`}
+                            className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full glass-card border border-white/10 shadow-premium rounded-[2rem] pointer-events-auto flex items-center gap-4 p-4 cursor-pointer`}
                             onClick={() => {
                                 setIsOpen(true);
                                 toast.dismiss(t.id);
@@ -276,15 +269,17 @@ export default function FloatingChat({
         }
     };
 
-    const handleDeleteMessage = async (messageId: string) => {
-        if (!confirm('Are you sure you want to delete this message?')) return;
+    const handleDeleteMessage = async () => {
+        if (!msgToDeleteId) return;
 
         const { error } = await supabase
             .from('staff_messages')
             .delete()
-            .eq('id', messageId);
+            .eq('id', msgToDeleteId);
 
-        if (error) {
+        if (!error) {
+            setMsgToDeleteId(null);
+        } else {
             toast.error('Failed to delete message');
         }
     };
@@ -307,10 +302,8 @@ export default function FloatingChat({
 
     return (
         <div className={`fixed bottom-8 ${isRtl ? 'left-8' : 'right-8'} z-[100] flex flex-col items-end`}>
-            {/* Chat Window */}
             {isOpen && (
                 <div className={`mb-6 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden animate-in slide-in-from-bottom-10 duration-500 flex flex-col ${isMaximized ? 'w-[400px] h-[600px]' : 'w-[350px] h-[450px]'}`} style={{ backgroundColor: 'rgba(5, 5, 5, 0.85)' }}>
-                    {/* Header */}
                     <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-center justify-between relative z-20">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                             <button
@@ -325,7 +318,7 @@ export default function FloatingChat({
                                     <input
                                         autoFocus
                                         type="text"
-                                        placeholder="Search messages..."
+                                        placeholder="Search..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/20"
@@ -350,7 +343,7 @@ export default function FloatingChat({
                                     className="hidden sm:flex text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em] items-center gap-1.5 hover:text-emerald-300 transition-colors ml-auto mr-2"
                                 >
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    {onlineUsers.length} Online
+                                    {onlineUsers.length}
                                 </button>
                             )}
                         </div>
@@ -365,11 +358,10 @@ export default function FloatingChat({
                     </div>
 
                     <div className="flex-1 flex overflow-hidden relative">
-                        {/* Online Users Section */}
                         {showOnline && (
                             <div className="absolute inset-y-0 left-0 w-48 bg-black/80 backdrop-blur-xl border-r border-white/10 z-30 animate-in slide-in-from-left duration-300 flex flex-col p-4">
-                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4 px-2">Online Now</h4>
-                                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4 px-2">Online</h4>
+                                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar text-white">
                                     {onlineUsers.map((u, i) => (
                                         <div key={i} className="flex items-center gap-2 group cursor-default">
                                             <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[8px] font-black ${getRoleColor(u.role)}`}>
@@ -377,7 +369,7 @@ export default function FloatingChat({
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[10px] font-bold text-white/80 truncate">{u.name}</p>
-                                                <p className="text-[7px] font-black text-white/20 uppercase tracking-tighter">{u.role.replace('_', ' ')}</p>
+                                                <p className="text-[7px] font-black text-white/20 uppercase tracking-tighter">{u.role}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -385,31 +377,33 @@ export default function FloatingChat({
                             </div>
                         )}
 
-                        {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/40">
                             {loading ? (
                                 <div className="h-full flex items-center justify-center text-white/10 animate-pulse uppercase font-black text-[10px] tracking-widest">Loading...</div>
-                            ) : messages.length === 0 ? (
+                            ) : filteredMessages.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-white/10 space-y-4">
                                     <MessageCircle className="w-12 h-12" />
-                                    <p className="uppercase font-black text-[10px] tracking-widest">No messages yet</p>
+                                    <p className="uppercase font-black text-[10px] tracking-widest">No messages</p>
                                 </div>
                             ) : (
-                                filteredMessages.map((msg, idx) => { // Use filteredMessages
+                                filteredMessages.map((msg, idx) => {
                                     const isMe = msg.sender_id === user.id;
                                     return (
                                         <div key={msg.id || idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in duration-300 group`}>
                                             {!isMe && (
                                                 <span className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1 px-2">
-                                                    {msg.sender_name} • {msg.sender_role.replace('_', ' ')}
+                                                    {msg.sender_name} • {msg.sender_role}
                                                 </span>
                                             )}
                                             <div className="relative">
                                                 {isMe && (
                                                     <button
-                                                        onClick={() => handleDeleteMessage(msg.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setMsgToDeleteId(msg.id);
+                                                        }}
                                                         className="absolute top-1/2 -translate-y-1/2 -left-8 p-1.5 rounded-full text-white/20 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
-                                                        title="Delete message"
+                                                        title="Delete"
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </button>
@@ -417,7 +411,7 @@ export default function FloatingChat({
                                                 <div className={`px-5 py-3 rounded-2xl text-[13px] font-bold tracking-tight max-w-[85%] ${isMe ? 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/10' : 'bg-white/5 text-white/80 border border-white/5 rounded-tl-none'}`}>
                                                     {msg.image_url && (
                                                         <div className="mb-2 rounded-lg overflow-hidden border border-white/10">
-                                                            <img src={msg.image_url} alt="Sent attachment" className="max-w-full h-auto object-cover max-h-[200px]" loading="lazy" />
+                                                            <img src={msg.image_url} alt="Sent" className="max-w-full h-auto object-cover max-h-[200px]" loading="lazy" />
                                                         </div>
                                                     )}
                                                     {msg.content !== '📷 Image' && msg.content}
@@ -431,7 +425,6 @@ export default function FloatingChat({
                         </div>
                     </div>
 
-                    {/* Input */}
                     <div className="p-4 border-t border-white/5 bg-white/[0.02] relative">
                         {showEmoji && (
                             <div className="absolute bottom-full left-4 mb-4 p-4 glass-card rounded-2xl border border-white/10 shadow-premium animate-in zoom-in slide-in-from-bottom-2 duration-300 w-[240px] bg-black/90">
@@ -461,7 +454,6 @@ export default function FloatingChat({
                                 <span className="text-sm">😊</span>
                             </button>
 
-                            {/* Image Upload Button */}
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -482,7 +474,7 @@ export default function FloatingChat({
                                 type="text"
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder="Message staff..."
+                                placeholder="Message..."
                                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                             />
                             <button
@@ -497,29 +489,27 @@ export default function FloatingChat({
                 </div>
             )}
 
-            {/* Toggle Button */}
+            <ConfirmModal
+                isOpen={!!msgToDeleteId}
+                onClose={() => setMsgToDeleteId(null)}
+                onConfirm={handleDeleteMessage}
+                title="Delete Message"
+                message="Are you sure you want to delete this message? This action cannot be undone."
+                type="danger"
+            />
+
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`relative group p-4 rounded-[1.5rem] shadow-2xl transition-all duration-500 hover:scale-105 active:scale-95 ${isOpen
-                    ? 'bg-rose-500 text-white rotate-90 scale-90'
-                    : 'bg-[#0a0a0a] border border-white/10 text-white hover:border-primary/50'}`}
+                className={`relative group p-4 rounded-[1.5rem] shadow-2xl transition-all duration-500 hover:scale-105 active:scale-95 ${isOpen ? 'bg-rose-500 text-white rotate-90 scale-90' : 'bg-[#0a0a0a] border border-white/10 text-white hover:border-primary/50'}`}
             >
-                {/* Status Indicator */}
                 {!isOpen && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4 relative z-20">
                         <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'}`}></span>
                         <span className={`relative inline-flex rounded-full h-4 w-4 border-2 border-[#0a0a0a] ${userStatus === 'online' ? 'bg-emerald-500' : 'bg-orange-500'}`}></span>
                     </span>
                 )}
-
                 {isOpen ? <X className="relative z-10 w-6 h-6" /> : <MessageCircle className="relative z-10 w-6 h-6 text-white/90" />}
             </button>
         </div>
     );
-}
-
-// Add optional prop type for typescript if needed, though we're using implicit any in this project structure often.
-// Better to make it clean:
-interface FloatingChatProps {
-    userStatus?: 'online' | 'busy';
 }

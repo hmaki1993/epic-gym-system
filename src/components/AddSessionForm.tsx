@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, Save, Calendar, Trash2 } from 'lucide-react';
+import { X, Save, Calendar, Trash2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
 
 interface Coach {
     id: string;
@@ -27,6 +28,7 @@ interface AddSessionFormProps {
 export default function AddSessionForm({ onClose, onSuccess, initialData }: AddSessionFormProps) {
     const [loading, setLoading] = useState(false);
     const [coaches, setCoaches] = useState<Coach[]>([]);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -111,15 +113,6 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
     };
 
     const handleDelete = async () => {
-        // Since we are replacing native popups, we should use a custom modal here too, but for now we'll keep simple window.confirm to avoid heavy refactoring unless requested.
-        // Wait, the user asked to replace ALL popups.
-        // However, this task is about "Tables part text not showing".
-        // I will use confirm() for now but formatted nicely? No, `window.confirm` is still native.
-        // I should stick to the scope of fixing visibility. I'll leave confirm() as is for this specific tool call to minimize risk, 
-        // OR I can use the new ConfirmModal if I pass it down or manage state. 
-        // To keep it simple and focused on visibility: I will just use window.confirm but ensure the FORM is visible.
-
-        if (!confirm('Are you sure you want to delete this class?')) return;
         setLoading(true);
         try {
             const { error } = await supabase.from('training_sessions').delete().eq('id', initialData?.id);
@@ -168,30 +161,40 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Coach</label>
-                            <select
-                                required
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
-                                value={formData.coach_id}
-                                onChange={e => setFormData({ ...formData, coach_id: e.target.value })}
-                            >
-                                <option value="" className="bg-slate-900">Select Coach</option>
-                                {coaches.map(c => (
-                                    <option key={c.id} value={c.id} className="bg-slate-900">{c.full_name}</option>
-                                ))}
-                            </select>
+                            <div className="relative group/coach">
+                                <select
+                                    required
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
+                                    value={formData.coach_id}
+                                    onChange={e => setFormData({ ...formData, coach_id: e.target.value })}
+                                >
+                                    <option value="" className="bg-slate-900">Select Coach</option>
+                                    {coaches.map(c => (
+                                        <option key={c.id} value={c.id} className="bg-slate-900">{c.full_name}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/coach:opacity-100 transition-opacity">
+                                    <ChevronDown className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Day</label>
-                            <select
-                                required
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
-                                value={formData.day_of_week}
-                                onChange={e => setFormData({ ...formData, day_of_week: e.target.value })}
-                            >
-                                {daysOfWeek.map(day => (
-                                    <option key={day} value={day} className="bg-slate-900">{day}</option>
-                                ))}
-                            </select>
+                            <div className="relative group/day">
+                                <select
+                                    required
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
+                                    value={formData.day_of_week}
+                                    onChange={e => setFormData({ ...formData, day_of_week: e.target.value })}
+                                >
+                                    {daysOfWeek.map(day => (
+                                        <option key={day} value={day} className="bg-slate-900">{day}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/day:opacity-100 transition-opacity">
+                                    <ChevronDown className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -233,7 +236,7 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
                         {initialData ? (
                             <button
                                 type="button"
-                                onClick={handleDelete}
+                                onClick={() => setShowDeleteConfirm(true)}
                                 className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-400 transition-all bg-red-500/5 hover:bg-red-500/10 rounded-2xl flex items-center gap-3"
                             >
                                 <Trash2 className="w-4 h-4" />
@@ -269,6 +272,15 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDelete}
+                title="Delete Class"
+                message="Are you sure you want to delete this training session? This action cannot be undone."
+                type="danger"
+            />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator as CalculatorIcon, Scale, Activity, ChevronRight } from 'lucide-react';
+import { Calculator as CalculatorIcon, Scale, Activity, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Calculator() {
@@ -316,7 +316,7 @@ function CalorieCalculator() {
                         <select
                             value={data.activity}
                             onChange={e => setData({ ...data, activity: e.target.value })}
-                            className="w-full p-6 rounded-2xl outline-none transition-all border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white appearance-none font-bold cursor-pointer"
+                            className="w-full p-6 rounded-2xl outline-none transition-all border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white appearance-none font-bold cursor-pointer pr-16"
                         >
                             <option className="bg-slate-900" value="1.2">Sedentary</option>
                             <option className="bg-slate-900" value="1.375">Lightly Active</option>
@@ -324,7 +324,9 @@ function CalorieCalculator() {
                             <option className="bg-slate-900" value="1.725">Very Active</option>
                             <option className="bg-slate-900" value="1.9">Extra Active</option>
                         </select>
-                        <ChevronRight className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none rotate-90" />
+                        <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity">
+                            <ChevronDown className="w-5 h-5 text-white" />
+                        </div>
                     </div>
                 </div>
             </div>

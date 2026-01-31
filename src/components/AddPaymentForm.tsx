@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, Save, DollarSign } from 'lucide-react';
+import { X, Save, DollarSign, ChevronDown } from 'lucide-react';
 
 interface Student {
     id: number;
@@ -87,18 +87,23 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Student</label>
-                        <select
-                            required
-                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
-                            value={formData.student_id}
-                            onChange={e => setFormData({ ...formData, student_id: e.target.value })}
-                        >
-                            <option value="" className="bg-slate-900">Select Student</option>
-                            {students.map(s => (
-                                <option key={s.id} value={s.id} className="bg-slate-900">{s.full_name}</option>
-                            ))}
-                        </select>
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Gymnast</label>
+                        <div className="relative group/student">
+                            <select
+                                required
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
+                                value={formData.student_id}
+                                onChange={e => setFormData({ ...formData, student_id: e.target.value })}
+                            >
+                                <option value="" className="bg-slate-900">Select Gymnast</option>
+                                {students.map(s => (
+                                    <option key={s.id} value={s.id} className="bg-slate-900">{s.full_name}</option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/student:opacity-100 transition-opacity">
+                                <ChevronDown className="w-4 h-4 text-white" />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, Loader2, User, Globe } from 'lucide-react';
+import { Lock, Mail, Loader2, User, Globe, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Register() {
@@ -176,14 +176,19 @@ export default function Register() {
                                 <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] ml-4">
                                     Account Role
                                 </label>
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value as 'admin' | 'coach')}
-                                    className="w-full px-8 py-4 bg-white/5 border border-white/10 rounded-[2rem] text-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all font-bold text-lg tracking-tight appearance-none cursor-pointer"
-                                >
-                                    <option value="coach" className="bg-slate-900">Coach / مدرب</option>
-                                    <option value="admin" className="bg-slate-900">Admin / مدير</option>
-                                </select>
+                                <div className="relative group/role">
+                                    <select
+                                        value={role}
+                                        onChange={(e) => setRole(e.target.value as 'admin' | 'coach')}
+                                        className="w-full px-8 py-4 bg-white/5 border border-white/10 rounded-[2rem] text-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all font-bold text-lg tracking-tight appearance-none cursor-pointer pr-16"
+                                    >
+                                        <option value="coach" className="bg-slate-900">Coach / مدرب</option>
+                                        <option value="admin" className="bg-slate-900">Admin / مدير</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-8 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity">
+                                        <ChevronDown className="w-6 h-6 text-white" />
+                                    </div>
+                                </div>
                             </div>
 
                             <button

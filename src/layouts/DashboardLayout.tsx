@@ -60,7 +60,7 @@ export default function DashboardLayout() {
 
     // Mock notifications for premium feel
     const notifications = [
-        { id: 1, title: 'New Student', message: 'Ahmed Ali just registered', time: '5m ago', icon: Users, color: 'text-primary' },
+        { id: 1, title: 'New Gymnast', message: 'Ahmed Ali just registered', time: '5m ago', icon: Users, color: 'text-primary' },
         { id: 2, title: 'Payment Received', message: 'Monthly subscription from Sara', time: '2h ago', icon: Wallet, color: 'text-emerald-400' },
         { id: 3, title: 'Schedule Update', message: 'Coach Omar updated his hours', time: '4h ago', icon: Calendar, color: 'text-accent' },
     ];
@@ -326,7 +326,7 @@ export default function DashboardLayout() {
                                                 </div>
                                             ) : (
                                                 <div className="p-20 text-center">
-                                                    <p className="text-white/20 font-black uppercase tracking-widest">{t('common.dashboard.searchPlaceholder') || 'Start typing to search students or coaches...'}</p>
+                                                    <p className="text-white/20 font-black uppercase tracking-widest">{t('common.dashboard.searchPlaceholder') || 'Start typing to search gymnasts or coaches...'}</p>
                                                 </div>
                                             )}
                                         </div>

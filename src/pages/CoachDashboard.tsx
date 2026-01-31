@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Calendar, CheckCircle, XCircle, Globe, User } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, XCircle, Globe, User, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -528,6 +528,106 @@ export default function CoachDashboard() {
                     ))}
                 </div>
             </div>
-        </div>
+
+
+            {/* My Groups Section */}
+            <div className="mt-8">
+                <h2 className="text-2xl font-black text-white italic tracking-tighter mb-6 flex items-center gap-3">
+                    <User className="w-6 h-6 text-primary" />
+                    MY <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">GROUPS</span>
+                </h2>
+                <GroupsList />
+            </div>
+        </div > // End of main div
+    );
+}
+
+// Add import at the top
+import GroupDetailsModal from '../components/GroupDetailsModal';
+
+// ... (existing imports)
+
+function GroupsList() {
+    const { t } = useTranslation();
+    const [groups, setGroups] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedGroup, setSelectedGroup] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchGroups = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // 1. Get Coach ID from profile
+            const { data: coachData } = await supabase
+                .from('coaches')
+                .select('id')
+                .eq('profile_id', user.id)
+                .single();
+
+            if (!coachData) {
+                setLoading(false);
+                return;
+            }
+
+            // 2. Fetch Groups using Coach ID
+            const { data, error } = await supabase
+                .from('training_groups')
+                .select('*, students(id, full_name, birth_date)')
+                .eq('coach_id', coachData.id)
+                .order('name', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching groups:', error);
+            } else {
+                setGroups(data || []);
+            }
+            setLoading(false);
+        };
+        fetchGroups();
+    }, []);
+
+    if (loading) return <div className="text-white/40 italic">Loading groups...</div>;
+    if (groups.length === 0) return <div className="p-6 bg-white/5 rounded-2xl border border-white/10 text-white/40 italic">No groups assigned yet.</div>;
+
+    return (
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {groups.map(group => (
+                    <div key={group.id} className="glass-card p-6 rounded-3xl border border-white/10 relative group hover:-translate-y-1 transition-transform duration-300 flex flex-col">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        <div className="relative z-10 flex-1">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    {/* Icon removed as requested */}
+                                </div>
+                                <span className="px-3 py-1 bg-white/5 rounded-lg text-xs font-black text-white/60 uppercase tracking-widest border border-white/5">
+                                    {group.students?.length || 0} Students
+                                </span>
+                            </div>
+                            <h3 className="text-xl font-black text-white tracking-wide mb-1">{group.name}</h3>
+                            <p className="text-white/40 text-xs font-mono tracking-widest uppercase mb-6">
+                                {group.schedule_key.split('|').length} Sessions / Week
+                            </p>
+
+                            <button
+                                onClick={() => setSelectedGroup(group)}
+                                className="w-full py-3 rounded-xl bg-white/5 hover:bg-primary hover:text-white border border-white/10 hover:border-primary/20 text-white/60 font-black text-xs uppercase tracking-widest transition-all duration-300 group/btn flex items-center justify-center gap-2"
+                            >
+                                View Gymnasts
+                                <ChevronRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 -translate-x-2 group-hover/btn:translate-x-0 transition-all" />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {selectedGroup && (
+                <GroupDetailsModal
+                    group={selectedGroup}
+                    onClose={() => setSelectedGroup(null)}
+                />
+            )}
+        </>
     );
 }

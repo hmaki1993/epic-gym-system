@@ -3,25 +3,48 @@ import { supabase } from '../lib/supabase';
 import { Plus, Search, Filter, Smile, Edit, Trash2 } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import AddStudentForm from '../components/AddStudentForm';
+import ConfirmModal from '../components/ConfirmModal';
 import { useTranslation } from 'react-i18next';
 import { useStudents } from '../hooks/useData';
 
+
 interface Student {
-    id: number; // bigint
+    id: number;
     full_name: string;
     age: number;
     contact_number: string;
+    parent_contact: string;
     subscription_expiry: string;
     created_at: string;
+    coaches?: {
+        full_name: string;
+    };
+    subscription_plans?: {
+        name: string;
+        price: number;
+    };
+    training_groups?: {
+        name: string;
+    };
 }
 
 export default function Students() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { data: studentsData, isLoading: loading, refetch } = useStudents();
     const students = studentsData || [];
 
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<number | null>(null);
+
+    // Group View State
+    // const [viewMode, setViewMode] = useState<'list' | 'groups'>('list'); // Removed
+    // const [groups, setGroups] = useState<any[]>([]); // Removed
+    // const [groupsLoading, setGroupsLoading] = useState(false); // Removed
+    // const [selectedGroup, setSelectedGroup] = useState<any>(null); // Removed
+
+    // Fetch Groups logic removed
+
 
     const getSubscriptionStatus = (expiryDate: string | null) => {
         if (!expiryDate) return { label: t('common.unknown'), color: 'bg-gray-100 text-gray-700 border-gray-200' };
@@ -44,15 +67,16 @@ export default function Students() {
 
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t('common.deleteConfirm'))) return;
+    const handleDelete = async () => {
+        if (!idToDelete) return;
 
-        const { error } = await supabase.from('students').delete().eq('id', id);
+        const { error } = await supabase.from('students').delete().eq('id', idToDelete);
         if (error) {
             console.error('Error deleting:', error);
             alert(t('common.deleteError'));
         } else {
             refetch();
+            setIdToDelete(null);
         }
     };
 
@@ -63,16 +87,22 @@ export default function Students() {
                     <h1 className="text-3xl sm:text-4xl font-extrabold premium-gradient-text tracking-tight uppercase">{t('students.title')}</h1>
                     <p className="text-white/60 mt-2 text-sm sm:text-base font-bold tracking-wide uppercase opacity-100">{t('students.subtitle')}</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingStudent(null);
-                        setShowAddModal(true);
-                    }}
-                    className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span className="font-semibold">{t('dashboard.addStudent')}</span>
-                </button>
+
+                <div className="flex gap-4 w-full sm:w-auto">
+                    {/* View Toggle */}
+
+
+                    <button
+                        onClick={() => {
+                            setEditingStudent(null);
+                            setShowAddModal(true);
+                        }}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span className="font-semibold">{t('dashboard.addStudent')}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Stats Cards (Optional Quick View) */}
@@ -91,15 +121,31 @@ export default function Students() {
 
             {/* Filters and Search */}
             <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium flex flex-col md:flex-row gap-6 items-center">
-                <div className="relative flex-1 w-full group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-primary transition-colors" />
-                    <input
-                        type="text"
-                        placeholder={t('common.search')}
-                        className="w-full pl-14 pr-6 py-5 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 transition-all focus:ring-4 focus:ring-primary/10 outline-none font-bold"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                <div className="flex-1 relative group max-w-2xl mx-auto w-full">
+                    {/* Premium Outer Glow */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-white/5 to-accent/20 rounded-[2rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-1000"></div>
+
+                    <div className="relative flex items-center bg-[#0d1321]/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-8 py-2 overflow-hidden transition-all duration-500 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_50px_-12px_rgba(129,140,248,0.3)] group-hover:bg-[#151d30]/90">
+                        {/* Animated Icon Container */}
+                        <div className="relative flex items-center justify-center mr-6">
+                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg scale-0 group-focus-within:scale-150 transition-transform duration-700 opacity-50"></div>
+                            <Search className="relative w-5 h-5 text-white/20 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-500 flex-shrink-0" />
+                        </div>
+
+                        {/* Search Input without placeholder */}
+                        <input
+                            type="text"
+                            spellCheck="false"
+                            className="relative flex-1 py-5 bg-transparent border-none text-white text-lg font-bold tracking-tight outline-none !p-0 selection:bg-primary/30"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+
+                        {/* Pro Shortcut Indicator */}
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black text-white/20 group-focus-within:text-primary/50 group-focus-within:border-primary/20 transition-all duration-500">
+                            <span className="tracking-tighter uppercase italic">{i18n.language === 'ar' ? 'بحث' : 'SEARCH'}</span>
+                        </div>
+                    </div>
                 </div>
                 <button className="p-5 bg-white/5 text-white/40 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all hover:scale-110 border border-white/5">
                     <Filter className="w-5 h-5" />
@@ -114,6 +160,8 @@ export default function Students() {
                             <tr>
                                 <th className="px-10 py-7">{t('common.name')}</th>
                                 <th className="px-10 py-7">{t('students.status')}</th>
+                                <th className="px-10 py-7">{t('students.assignedCoach', 'Coach')}</th>
+                                <th className="px-10 py-7">{t('students.plan', 'Plan')}</th>
                                 <th className="px-10 py-7">{t('students.contact')}</th>
                                 <th className="px-10 py-7 text-right">{t('common.actions')}</th>
                             </tr>
@@ -121,7 +169,7 @@ export default function Students() {
                         <tbody className="divide-y divide-white/5">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-10 py-20 text-center">
+                                    <td colSpan={6} className="px-10 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                                             <span className="text-white/20 font-black uppercase tracking-widest text-[10px] animate-pulse">{t('common.loading')}</span>
@@ -130,7 +178,7 @@ export default function Students() {
                                 </tr>
                             ) : filteredStudents.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-10 py-20 text-center">
+                                    <td colSpan={6} className="px-10 py-20 text-center">
                                         <div className="text-white/20 font-black uppercase tracking-widest text-xs">{t('common.noResults')}</div>
                                     </td>
                                 </tr>
@@ -157,13 +205,49 @@ export default function Students() {
                                             </div>
                                         </td>
                                         <td className="px-10 py-8">
-                                            <span className={`inline-flex items-center px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${student.subscription_status === 'active'
-                                                ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10 shadow-[0_0_20px_rgba(52,211,153,0.05)]'
-                                                : 'bg-rose-500/5 text-rose-400 border-rose-500/10 shadow-[0_0_20px_rgba(251,113,133,0.05)]'
-                                                }`}>
-                                                <span className={`w-2 h-2 rounded-full mr-2.5 ${student.subscription_status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`}></span>
-                                                {student.subscription_status}
-                                            </span>
+                                            {(() => {
+                                                const status = getSubscriptionStatus(student.subscription_expiry);
+                                                return (
+                                                    <span className={`inline-flex items-center px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${status.color}`}>
+                                                        <span className={`w-2 h-2 rounded-full mr-2.5 ${status.label === t('students.active') ? 'bg-emerald-400 animate-pulse' : 'bg-current'}`}></span>
+                                                        {status.label}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
+                                                    <span className="text-[10px] font-black text-primary">
+                                                        {student.coaches?.full_name?.charAt(0) || '?'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-white/80 group-hover:text-white transition-colors">
+                                                        {student.coaches?.full_name || <span className="text-white/20 text-xs uppercase tracking-wider">Not Assigned</span>}
+                                                    </span>
+                                                    {student.training_groups?.name && (
+                                                        <span className="text-[10px] font-black text-accent uppercase tracking-wider mt-0.5">
+                                                            {student.training_groups.name}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <div className="flex flex-col gap-2">
+                                                <span className="text-white font-black text-sm tracking-wide">
+                                                    {student.subscription_plans?.name || <span className="text-white/20 italic font-medium">No Plan</span>}
+                                                </span>
+                                                {student.subscription_plans?.price !== undefined && (
+                                                    <div className="flex items-center gap-2 self-start px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg shadow-[0_0_10px_rgba(245,158,11,0.1)] group-hover:bg-amber-500/20 transition-all duration-300">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></div>
+                                                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">
+                                                            {student.subscription_plans.price} EGP
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-10 py-8">
                                             <div className="flex flex-col">
@@ -178,17 +262,15 @@ export default function Students() {
                                                         setEditingStudent(student);
                                                         setShowAddModal(true);
                                                     }}
-                                                    className="p-4 bg-white/5 text-white/30 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all hover:scale-110 border border-white/5"
-                                                    title="Edit Student"
+                                                    className="p-3 rounded-xl bg-white/5 hover:bg-primary/20 text-white/40 hover:text-primary transition-all duration-300"
                                                 >
-                                                    <Edit className="w-5 h-5" />
+                                                    <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(student.id)}
-                                                    className="p-4 bg-white/5 text-white/30 hover:text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all hover:scale-110 border border-white/5"
-                                                    title="Delete Student"
+                                                    onClick={() => setIdToDelete(student.id)}
+                                                    className="p-3 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 transition-all duration-300"
                                                 >
-                                                    <Trash2 className="w-5 h-5" />
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -200,7 +282,6 @@ export default function Students() {
                 </div>
             </div>
 
-            {/* Modal */}
             {showAddModal && (
                 <AddStudentForm
                     initialData={editingStudent}
@@ -211,6 +292,14 @@ export default function Students() {
                     onSuccess={refetch}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={!!idToDelete}
+                onClose={() => setIdToDelete(null)}
+                onConfirm={handleDelete}
+                title={t('common.confirmDelete')}
+                message={t('common.deleteMessage')}
+            />
         </div>
     );
 }

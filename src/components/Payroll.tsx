@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useState } from 'react';
 import { Banknote, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useMonthlyPayroll } from '../hooks/useData';
 
 interface PayrollEntry {
     coach_id: string;
@@ -14,95 +14,18 @@ interface PayrollEntry {
 }
 
 interface PayrollProps {
-    refreshTrigger?: number;
     onViewAttendance?: (coachId: string) => void;
+    refreshTrigger?: number;
 }
 
-export default function Payroll({ refreshTrigger, onViewAttendance }: PayrollProps) {
+export default function Payroll({ onViewAttendance }: PayrollProps) {
     const { t } = useTranslation();
-    const [payrollData, setPayrollData] = useState<PayrollEntry[]>([]);
-    const [loading, setLoading] = useState(true);
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
-    useEffect(() => {
-        fetchPayroll();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshTrigger]);
+    // Use the shared hook for calculations
+    const { data, isLoading: loading } = useMonthlyPayroll(month);
+    const payrollData = data?.payrollData || [];
 
-    const fetchPayroll = async () => {
-        setLoading(true);
-        try {
-            // 1. Get all coaches
-            const { data: coaches, error: coachError } = await supabase
-                .from('coaches')
-                .select('id, full_name, pt_rate, salary');
-
-            if (coachError) throw coachError;
-
-            // 2. Get attendance and PT sessions for the selected month
-            const startOfMonth = `${month}-01`;
-            const lastDay = new Date(Number(month.split('-')[0]), Number(month.split('-')[1]), 0).getDate();
-            const endOfMonth = `${month}-${lastDay}`;
-
-            const [attendanceRes, sessionsRes] = await Promise.all([
-                supabase
-                    .from('coach_attendance')
-                    .select('coach_id, check_in_time, check_out_time, pt_sessions_count')
-                    .gte('date', startOfMonth)
-                    .lte('date', endOfMonth),
-                supabase
-                    .from('pt_sessions')
-                    .select('coach_id, sessions_count')
-                    .gte('date', startOfMonth)
-                    .lte('date', endOfMonth)
-            ]);
-
-            if (attendanceRes.error) throw attendanceRes.error;
-            if (sessionsRes.error) throw sessionsRes.error;
-
-            // 3. Aggregate data
-            const stats = coaches.map(coach => {
-                const coachAttendance = attendanceRes.data?.filter(a => a.coach_id === coach.id) || [];
-                const coachSessions = sessionsRes.data?.filter(s => s.coach_id === coach.id) || [];
-
-                // Calculate total work hours
-                let totalSeconds = 0;
-                coachAttendance.forEach(record => {
-                    if (record.check_in_time && record.check_out_time) {
-                        const start = new Date(record.check_in_time).getTime();
-                        const end = new Date(record.check_out_time).getTime();
-                        totalSeconds += Math.max(0, (end - start) / 1000);
-                    }
-                });
-                const totalHours = Number((totalSeconds / 3600).toFixed(1));
-
-                // Calculate total PT sessions (from both sources)
-                const attSessions = coachAttendance.reduce((sum, r) => sum + (Number(r.pt_sessions_count) || 0), 0);
-                const tableSessions = coachSessions.reduce((sum, s) => sum + (Number(s.sessions_count) || 1), 0);
-                const totalSessions = attSessions + tableSessions;
-
-                const salary = coach.salary || 0;
-                const ptEarnings = totalSessions * (coach.pt_rate || 0);
-
-                return {
-                    coach_id: coach.id,
-                    coach_name: coach.full_name,
-                    pt_rate: coach.pt_rate || 0,
-                    salary: salary,
-                    total_pt_sessions: totalSessions,
-                    total_hours: totalHours,
-                    total_earnings: ptEarnings + salary
-                };
-            });
-
-            setPayrollData(stats);
-
-        } catch (error) {
-            console.error('Error calculating payroll:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     return (
         <div className="glass-card rounded-[3rem] overflow-hidden border border-white/10 shadow-premium mt-12 bg-white/[0.01] animate-in fade-in slide-in-from-bottom-4 duration-700">

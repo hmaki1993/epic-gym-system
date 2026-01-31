@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
-import { X, Save, UserPlus } from 'lucide-react';
+import { X, Save, UserPlus, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface AddCoachFormProps {
@@ -9,6 +9,7 @@ interface AddCoachFormProps {
     onSuccess: () => void;
     initialData?: {
         id: string;
+        profile_id?: string;
         full_name: string;
         email?: string;
         role?: string;
@@ -82,21 +83,30 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
         setLoading(true);
 
         try {
-            let profileId = null;
+            let profileId = initialData?.profile_id || null;
 
-            // Handle Account Creation/Update via Edge Function if email/password provided
-            if (formData.email && (formData.password || !initialData)) {
+            // Handle Account Creation/Update via Edge Function
+            // Run function if:
+            // 1. It's a new coach
+            // 2. Email is changing
+            // 3. Password is being set
+            const isNewCoach = !initialData;
+            const isEmailChanging = formData.email !== initialData?.email;
+            const isPasswordChanging = !!formData.password;
+
+            if (isNewCoach || isEmailChanging || isPasswordChanging) {
                 const { data: functionData, error: functionError } = await supabase.functions.invoke('staff-management', {
                     body: {
+                        userId: profileId,
                         email: formData.email,
-                        password: formData.password || Math.random().toString(36).slice(-8), // Temp pass if none provided on create
+                        password: formData.password || (isNewCoach ? Math.random().toString(36).slice(-8) : undefined),
                         fullName: formData.full_name,
                         role: formData.role
                     }
                 });
 
                 if (functionError) throw functionError;
-                profileId = functionData.user_id;
+                if (functionData?.user_id) profileId = functionData.user_id;
             }
 
             const coachData: any = {
@@ -117,25 +127,26 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             let error;
 
             if (initialData) {
-                // Update existing coach
+                // Update existing coach record in DB
                 const { error: updateError } = await supabase
                     .from('coaches')
                     .update(coachData)
                     .eq('id', initialData.id);
                 error = updateError;
 
-                // Also update profile role and avatar if it changed/exists
+                // Sync profile data manually as well for extra robustness
                 if (profileId) {
                     await supabase
                         .from('profiles')
                         .update({
+                            full_name: formData.full_name,
                             role: formData.role,
                             avatar_url: formData.avatar_url
                         })
                         .eq('id', profileId);
                 }
             } else {
-                // Create new coach
+                // Create new coach record in DB
                 const { error: insertError } = await supabase
                     .from('coaches')
                     .insert([coachData]);
@@ -262,18 +273,23 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Specialty</label>
-                        <select
-                            required
-                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer"
-                            value={formData.specialty}
-                            onChange={e => setFormData({ ...formData, specialty: e.target.value })}
-                        >
-                            <option value="" disabled className="bg-slate-900">Select Specialty</option>
-                            <option value="Artistic Gymnastics (Boys)" className="bg-slate-900">Artistic Gymnastics (Boys)</option>
-                            <option value="Artistic Gymnastics (Girls)" className="bg-slate-900">Artistic Gymnastics (Girls)</option>
-                            <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
-                            <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
-                        </select>
+                        <div className="relative group/specialty">
+                            <select
+                                required
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
+                                value={formData.specialty}
+                                onChange={e => setFormData({ ...formData, specialty: e.target.value })}
+                            >
+                                <option value="" disabled className="bg-slate-900">Select Specialty</option>
+                                <option value="Artistic Gymnastics (Boys)" className="bg-slate-900">Artistic Gymnastics (Boys)</option>
+                                <option value="Artistic Gymnastics (Girls)" className="bg-slate-900">Artistic Gymnastics (Girls)</option>
+                                <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
+                                <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/specialty:opacity-100 transition-opacity">
+                                <ChevronDown className="w-4 h-4 text-white" />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -318,9 +334,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 <option value="reception" className="bg-[#1e2330]">{t('roles.reception')}</option>
                             </select>
                             <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity">
-                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                </svg>
+                                <ChevronDown className="w-4 h-4 text-white" />
                             </div>
                         </div>
                     </div>

@@ -1,9 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { format, startOfWeek, addDays, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, endOfWeek } from 'date-fns';
+import { enUS, ar } from 'date-fns/locale';
+import { Calendar as CalendarIcon, Clock, Users, ChevronLeft, ChevronRight, MoreHorizontal, Plus, Trash2, CalendarDays, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Calendar as CalendarIcon, Clock, Users, Plus, ChevronLeft, ChevronRight, CalendarDays, LogOut } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addDays, addMonths } from 'date-fns';
+
+import { useTranslation } from 'react-i18next';
+import { useOutletContext } from 'react-router-dom';
+import GroupCard from '../components/GroupCard';
+import GroupDetailsModal from '../components/GroupDetailsModal';
+import GroupFormModal from '../components/GroupFormModal';
+import ConfirmModal from '../components/ConfirmModal';
 import AddSessionForm from '../components/AddSessionForm';
+import toast from 'react-hot-toast';
 
 interface Session {
     id: string;
@@ -16,19 +24,27 @@ interface Session {
         full_name: string;
     };
     capacity: number;
+    name?: string;
+    schedule_key?: string;
 }
 
 type ViewMode = 'day' | 'week' | 'month';
 
 export default function Schedule() {
+    const { t, i18n } = useTranslation();
     const { role } = useOutletContext<{ role: string }>() || { role: null };
     const [sessions, setSessions] = useState<Session[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>('week');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingSession, setEditingSession] = useState<Session | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<any>(null);
+
+    // Admin Actions State
+    const [showGroupModal, setShowGroupModal] = useState(false);
+    const [editingGroup, setEditingGroup] = useState<any>(null);
+    const [groupToDelete, setGroupToDelete] = useState<any>(null);
 
     // Attendance State
     const [attendanceToday, setAttendanceToday] = useState<any>(null);
@@ -40,38 +56,43 @@ export default function Schedule() {
     const fetchSessions = async () => {
         setLoading(true);
 
-        let query = supabase
-            .from('training_sessions')
-            .select(`
-                *,
-                coaches ( full_name )
-            `);
+        try {
+            let query = supabase
+                .from('training_groups')
+                .select(`
+                    *,
+                    coaches(full_name),
+                    students(id, full_name, birth_date)
+                `);
 
-        // If user is a simple coach, only show THEIR sessions
-        if (role === 'coach') {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                // Find the coach record for this user
-                const { data: coachData } = await supabase
-                    .from('coaches')
-                    .select('id')
-                    .eq('profile_id', user.id)
-                    .single();
+            // If user is a simple coach, only show THEIR groups
+            if (role === 'coach') {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: coachData } = await supabase
+                        .from('coaches')
+                        .select('id')
+                        .eq('profile_id', user.id)
+                        .single();
 
-                if (coachData) {
-                    query = query.eq('coach_id', coachData.id);
+                    if (coachData) {
+                        query = query.eq('coach_id', coachData.id);
+                    }
                 }
             }
-        }
 
-        const { data, error } = await query;
+            const { data, error } = await query;
 
-        if (error) {
-            console.error('Error loading schedule:', error);
-        } else {
-            setSessions(data || []);
+            if (error) {
+                console.error('Error loading schedule:', error);
+            } else {
+                setSessions(data as any || []);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const fetchAttendanceStatus = async () => {
@@ -107,7 +128,6 @@ export default function Schedule() {
         if (role === 'coach') {
             fetchAttendanceStatus();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role]);
 
     useEffect(() => {
@@ -122,27 +142,24 @@ export default function Schedule() {
 
                 const hours = Math.floor(diff / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000); // Fixed parentheses
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
                 setElapsedTime(
                     `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
                 );
             };
 
-            updateTimer(); // Initial call
+            updateTimer();
             interval = setInterval(updateTimer, 1000);
         }
 
         return () => clearInterval(interval);
     }, [attendanceToday]);
 
-
-
     const handleCheckIn = async () => {
         if (!coachId) return;
         setAttendanceLoading(true);
         const today = new Date().toISOString().split('T')[0];
-        // const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false });
 
         const { data, error } = await supabase
             .from('coach_attendance')
@@ -162,7 +179,6 @@ export default function Schedule() {
     const handleCheckOut = async () => {
         if (!attendanceToday) return;
         setAttendanceLoading(true);
-        // const nowTime = new Date().toLocaleTimeString('en-US', { hour12: false });
 
         const { data, error } = await supabase
             .from('coach_attendance')
@@ -176,29 +192,43 @@ export default function Schedule() {
         setAttendanceLoading(false);
     };
 
-
-
     const navigateDate = (direction: 'prev' | 'next') => {
         if (viewMode === 'day') {
             setCurrentDate(d => direction === 'next' ? addDays(d, 1) : addDays(d, -1));
         } else if (viewMode === 'week') {
             setCurrentDate(d => direction === 'next' ? addDays(d, 7) : addDays(d, -7));
         } else {
-            setCurrentDate(d => direction === 'next' ? addMonths(d, 1) : addMonths(d, -1));
+            setCurrentDate(d => direction === 'next' ? addDays(d, 30) : addDays(d, -30)); // Simple month nav
         }
     };
 
     const getSessionsForDay = (date: Date) => {
         const dayName = format(date, 'EEEE');
-        return sessions.filter(s => s.day_of_week === dayName);
+        return sessions.filter(s => s.schedule_key && s.schedule_key.toLowerCase().includes(dayName.toLowerCase()));
+        // Note: Using schedule_key instead of day_of_week for groups
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!groupToDelete) return;
+
+        const { error } = await supabase.from('training_groups').delete().eq('id', groupToDelete.id);
+
+        if (error) {
+            console.error('Error deleting group:', error);
+            toast.error('Failed to delete group');
+        } else {
+            toast.success('Group deleted');
+            fetchSessions();
+        }
+        setGroupToDelete(null);
     };
 
     const renderHeader = () => (
         <div className="flex flex-col gap-8 mb-10">
             <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8">
                 <div className="text-center md:text-left">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold premium-gradient-text tracking-tight uppercase">Class Schedule</h1>
-                    <p className="text-white/60 mt-2 text-sm sm:text-base font-bold tracking-wide uppercase opacity-100">Manage training sessions and timings</p>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold premium-gradient-text tracking-tight uppercase">{t('schedule.title')}</h1>
+                    <p className="text-white/60 mt-2 text-sm sm:text-base font-bold tracking-wide uppercase opacity-100">{format(currentDate, 'MMMM yyyy', { locale: i18n.language === 'ar' ? ar : enUS })}</p>
                 </div>
 
                 {/* Coach Attendance Controls */}
@@ -282,16 +312,16 @@ export default function Schedule() {
                         </button>
                     </div>
 
-                    {['admin', 'head_coach'].includes(role || '') && (
+                    {role === 'admin' && (
                         <button
                             onClick={() => {
-                                setEditingSession(null);
-                                setShowAddModal(true);
+                                setEditingGroup(null);
+                                setShowGroupModal(true);
                             }}
                             className="flex items-center gap-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-6 py-3 rounded-xl shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95 border border-white/10"
                         >
                             <Plus className="w-5 h-5" />
-                            <span className="font-black uppercase tracking-widest text-[10px] hidden md:inline">Add Class</span>
+                            <span className="font-black uppercase tracking-widest text-[10px] hidden md:inline">Create Group</span>
                         </button>
                     )}
                 </div>
@@ -314,11 +344,10 @@ export default function Schedule() {
                             {day}
                         </div>
                     ))}
-                    {days.map((day: Date, _dayIdx: number) => {
+                    {days.map((day: Date) => {
                         const isToday = isSameDay(day, new Date());
                         const daySessions = getSessionsForDay(day);
-                        // Check if day is current month
-                        const isCurrentMonth = day.getMonth() === currentDate.getMonth() && day.getFullYear() === currentDate.getFullYear();
+                        const isCurrentMonth = isSameMonth(day, currentDate);
 
                         return (
                             <div
@@ -334,13 +363,13 @@ export default function Schedule() {
                                 </span>
 
                                 <div className="mt-4 space-y-1.5">
-                                    {daySessions.slice(0, 3).map(session => (
+                                    {daySessions.slice(0, 3).map((session, idx) => (
                                         <div
-                                            key={session.id}
+                                            key={session.id || idx}
                                             className="text-[9px] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 truncate group-hover:bg-primary/20 transition-colors"
-                                            title={`${session.title} (${session.start_time.slice(0, 5)})`}
+                                            title={session.title || session.name}
                                         >
-                                            {session.start_time.slice(0, 5)} {session.title}
+                                            {session.title || session.name}
                                         </div>
                                     ))}
                                     {daySessions.length > 3 && (
@@ -384,35 +413,25 @@ export default function Schedule() {
                             </div>
 
                             <div className="relative z-10 space-y-3">
-                                {daySessions.map(session => (
+                                {daySessions.map((session, idx) => (
                                     <div
-                                        key={session.id}
+                                        key={session.id || idx}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setEditingSession(session);
-                                            setShowAddModal(true);
+                                            // Handle click to view group?
+                                            setSelectedGroup(session);
                                         }}
                                         className="glass-card p-5 rounded-2xl border border-white/10 shadow-lg hover:shadow-premium transition-all duration-500 border-l-4 border-l-primary group cursor-pointer hover:scale-[1.05]"
                                     >
-                                        <h4 className="font-black text-white text-sm group-hover:text-primary transition-colors uppercase tracking-tight line-clamp-2">{session.title}</h4>
+                                        <h4 className="font-black text-white text-sm group-hover:text-primary transition-colors uppercase tracking-tight line-clamp-2">{session.title || session.name}</h4>
                                         <div className="mt-4 space-y-2">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-2">
-                                                <Clock className="w-3 h-3 text-primary" />
-                                                {session.start_time.slice(0, 5)} - {session.end_time.slice(0, 5)}
-                                            </p>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 flex items-center gap-2">
                                                 <Users className="w-3 h-3 text-primary" />
-                                                Coach {session.coaches?.full_name.split(' ')[0]}
+                                                Coach {session.coaches?.full_name?.split(' ')[0]}
                                             </p>
                                         </div>
                                     </div>
                                 ))}
-                                {daySessions.length === 0 && (
-                                    <div className="h-28 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-2xl text-white/20 gap-2">
-                                        <CalendarIcon className="w-5 h-5 opacity-20" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Empty</span>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     );
@@ -444,40 +463,30 @@ export default function Schedule() {
                             <p className="text-white/30 mt-2 font-bold uppercase tracking-widest text-xs">Enjoy your free day!</p>
                         </div>
                     ) : (
-                        daySessions
-                            .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                            .map(session => (
-                                <div
-                                    key={session.id}
-                                    className="p-8 flex items-center gap-8 hover:bg-white/[0.03] transition-all cursor-pointer group"
-                                    onClick={() => {
-                                        setEditingSession(session);
-                                        setShowAddModal(true);
-                                    }}
-                                >
-                                    <div className="text-center min-w-[100px] bg-white/5 p-4 rounded-2xl border border-white/5 group-hover:border-primary/20 group-hover:bg-primary/5 transition-all">
-                                        <p className="font-black text-white text-xl tracking-tighter">{session.start_time.slice(0, 5)}</p>
-                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">{session.end_time.slice(0, 5)}</p>
-                                    </div>
-                                    <div className="w-1 h-16 bg-white/5 rounded-full group-hover:bg-primary transition-all duration-500"></div>
-                                    <div className="flex-1">
-                                        <h4 className="font-black text-white text-xl group-hover:text-primary transition-colors uppercase tracking-tight">{session.title}</h4>
-                                        <div className="flex flex-wrap items-center gap-6 mt-3">
-                                            <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30">
-                                                <Users className="w-4 h-4 text-primary" />
-                                                Coach {session.coaches?.full_name}
-                                            </span>
-                                            <span className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-lg text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
-                                                {session.capacity} Spots Available
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="hidden md:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/20 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-4 group-hover:translate-x-0">
-                                        Edit Details
-                                        <ChevronRight className="w-4 h-4" />
+                        daySessions.map((session, idx) => (
+                            <div
+                                key={session.id || idx}
+                                className="p-8 flex items-center gap-8 hover:bg-white/[0.03] transition-all cursor-pointer group"
+                                onClick={() => {
+                                    // Handle view details
+                                    setSelectedGroup(session);
+                                }}
+                            >
+                                <div className="text-center min-w-[100px] bg-white/5 p-4 rounded-2xl border border-white/5 group-hover:border-primary/20 group-hover:bg-primary/5 transition-all">
+                                    <p className="font-black text-white text-xl tracking-tighter">Day</p>
+                                </div>
+                                <div className="w-1 h-16 bg-white/5 rounded-full group-hover:bg-primary transition-all duration-500"></div>
+                                <div className="flex-1">
+                                    <h4 className="font-black text-white text-xl group-hover:text-primary transition-colors uppercase tracking-tight">{session.title || session.name}</h4>
+                                    <div className="flex flex-wrap items-center gap-6 mt-3">
+                                        <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30">
+                                            <Users className="w-4 h-4 text-primary" />
+                                            Coach {session.coaches?.full_name}
+                                        </span>
                                     </div>
                                 </div>
-                            ))
+                            </div>
+                        ))
                     )}
                 </div>
             </div>
@@ -488,9 +497,61 @@ export default function Schedule() {
         <div className="space-y-6 animate-in fade-in duration-500">
             {renderHeader()}
 
-            {viewMode === 'month' && renderMonthView()}
-            {viewMode === 'week' && renderWeekView()}
-            {viewMode === 'day' && renderDayView()}
+            {loading ? (
+                <div className="text-white/40 italic">Loading schedule...</div>
+            ) : (
+                <>
+                    {/* View Switcher */}
+                    {viewMode === 'month' && renderMonthView()}
+                    {viewMode === 'week' && renderWeekView()}
+                    {viewMode === 'day' && renderDayView()}
+
+                    {/* Group Grid (Available in all views or just a specific section? Currently replacing the session list if Admin wants to manage) */}
+                    <div className="mt-12">
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-6">All Groups</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {sessions.map((session: any) => (
+                                <GroupCard
+                                    key={session.id}
+                                    group={session}
+                                    onViewDetails={(g) => setSelectedGroup(g)}
+                                    onEdit={role === 'admin' ? (g) => { setEditingGroup(g); setShowGroupModal(true); } : undefined}
+                                    onDelete={role === 'admin' ? (g) => setGroupToDelete(g) : undefined}
+                                />
+                            ))}
+
+                            {sessions.length === 0 && (
+                                <div className="col-span-full py-12 text-center text-white/40 italic">
+                                    No groups found. {role === 'admin' ? 'Create one above!' : ''}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {selectedGroup && (
+                        <GroupDetailsModal
+                            group={selectedGroup}
+                            onClose={() => setSelectedGroup(null)}
+                        />
+                    )}
+
+                    {showGroupModal && (
+                        <GroupFormModal
+                            initialData={editingGroup}
+                            onClose={() => setShowGroupModal(false)}
+                            onSuccess={fetchSessions}
+                        />
+                    )}
+
+                    <ConfirmModal
+                        isOpen={!!groupToDelete}
+                        onClose={() => setGroupToDelete(null)}
+                        onConfirm={handleDeleteGroup}
+                        title="Delete Group"
+                        message="Are you sure you want to delete this group? This will NOT delete the students, but they will be unassigned."
+                    />
+                </>
+            )}
 
             {showAddModal && (
                 <AddSessionForm

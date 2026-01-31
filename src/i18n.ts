@@ -16,7 +16,8 @@ i18n
                 translation: {
                     common: {
                         dashboard: 'Dashboard',
-                        students: 'Students',
+                        students: 'Gymnasts',
+                        student: 'Gymnast',
                         coaches: 'Coaches',
                         schedule: 'Schedule',
                         finance: 'Finance',
@@ -34,6 +35,7 @@ i18n
                         actions: 'Actions',
                         name: 'Name',
                         phone: 'Phone',
+                        parentPhone: 'Parent Phone WhatsApp',
                         status: 'Status',
                         unknown: 'Unknown',
                         invalid: 'Invalid',
@@ -62,14 +64,14 @@ i18n
                     },
                     dashboard: {
                         welcome: 'Welcome back',
-                        totalStudents: 'Total Students',
+                        totalStudents: 'Total Gymnasts',
                         activeCoaches: 'Active Coaches',
                         monthlyRevenue: 'Monthly Revenue',
                         quickActions: 'Quick Actions',
-                        addStudent: 'Add Student',
+                        addStudent: 'Add Gymnast',
                         addCoach: 'Add Coach',
                         recordPayment: 'Record Payment',
-                        newJoiners: 'New Joiners',
+                        newJoiners: 'New Gymnasts',
                         viewAll: 'View All',
                         noRecentActivity: 'No recent activity.',
                         joined: 'Joined {{date}}',
@@ -79,15 +81,31 @@ i18n
                         coachName: 'Coach'
                     },
                     students: {
-                        title: 'Student Management',
+                        title: 'Gymnast Management',
                         subtitle: 'Manage enrollments and track subscriptions',
+                        status: 'Gymnast Status',
                         age: 'Age',
+                        birthDate: 'Birth Date',
                         contact: 'Contact Info',
                         subscription: 'Subscription',
                         expiry: 'Expires',
                         active: 'Active',
                         expired: 'Expired',
-                        expiringSoon: 'Expiring Soon'
+                        expiringSoon: 'Expiring Soon',
+                        trainingDays: 'Training Days',
+                        startTime: 'Start Time',
+                        endTime: 'End Time',
+                        assignedCoach: 'Assigned Coach',
+                        selectCoach: 'Select Coach',
+                        days: {
+                            sat: 'Sat',
+                            sun: 'Sun',
+                            mon: 'Mon',
+                            tue: 'Tue',
+                            wed: 'Wed',
+                            thu: 'Thu',
+                            fri: 'Fri'
+                        }
                     },
                     coaches: {
                         title: 'Coach Management',
@@ -135,13 +153,13 @@ i18n
                         checkInSuccess: 'Check-in successful! ✅',
                         checkOutSuccess: 'Check-out successful! 👋',
                         ptSessions: 'Today\'s PT Sessions 💪',
-                        ptNote: 'Record student names for private training sessions today',
-                        playerName: 'Player Name',
+                        ptNote: 'Record gymnast names for private training sessions today',
+                        playerName: 'Gymnast Name',
                         add: 'Add',
                         savedSessions: 'Today\'s Recorded Sessions',
                         noSessions: 'No sessions recorded yet',
                         schedule: 'Schedule',
-                        enterNameError: 'Please enter student name',
+                        enterNameError: 'Please enter gymnast name',
                         dailySummary: 'Daily Work Hours',
                         totalToday: 'TOTAL TODAY',
                         inProgress: 'IN PROGRESS',
@@ -167,7 +185,8 @@ i18n
                 translation: {
                     common: {
                         dashboard: 'لوحة التحكم',
-                        students: 'الطلاب',
+                        students: 'اللاعبين',
+                        student: 'لاعب',
                         coaches: 'المدربين',
                         schedule: 'الجدول',
                         finance: 'المالية',
@@ -185,6 +204,7 @@ i18n
                         actions: 'إجراءات',
                         name: 'الاسم',
                         phone: 'الهاتف',
+                        parentPhone: 'رقم ولي الأمر (واتساب)',
                         status: 'الحالة',
                         unknown: 'غير معروف',
                         invalid: 'غير صالح',
@@ -213,14 +233,14 @@ i18n
                     },
                     dashboard: {
                         welcome: 'مرحباً بك',
-                        totalStudents: 'إجمالي الطلاب',
+                        totalStudents: 'إجمالي اللاعبين',
                         activeCoaches: 'المدربين النشطين',
                         monthlyRevenue: 'الإيرادات الشهرية',
                         quickActions: 'إجراءات سريعة',
-                        addStudent: 'إضافة طالب',
+                        addStudent: 'إضافة لاعب',
                         addCoach: 'إضافة مدرب',
                         recordPayment: 'تسجيل دفعة',
-                        newJoiners: 'المشتركين الجدد',
+                        newJoiners: 'اللاعبين الجدد',
                         viewAll: 'عرض الكل',
                         noRecentActivity: 'لا يوجد نشاط مؤخر',
                         joined: 'انضم {{date}}',
@@ -230,15 +250,31 @@ i18n
                         coachName: 'المدرب'
                     },
                     students: {
-                        title: 'إدارة الطلاب',
+                        title: 'إدارة اللاعبين',
                         subtitle: 'إدارة التسجيلات ومتابعة الاشتراكات',
-                        age: 'العمر',
+                        status: 'حالة اللاعب',
+                        age: 'السن',
+                        birthDate: 'تاريخ الميلاد',
                         contact: 'بيانات الاتصال',
                         subscription: 'الاشتراك',
                         expiry: 'ينتهي في',
                         active: 'نشط',
                         expired: 'منتهي',
-                        expiringSoon: 'ينتهي قريبا'
+                        expiringSoon: 'ينتهي قريبا',
+                        trainingDays: 'أيام التمرين',
+                        startTime: 'وقت البدء',
+                        endTime: 'وقت الانتهاء',
+                        assignedCoach: 'المدرب المسؤول',
+                        selectCoach: 'اختر المدرب',
+                        days: {
+                            sat: 'السبت',
+                            sun: 'الأحد',
+                            mon: 'الاثنين',
+                            tue: 'الثلاثاء',
+                            wed: 'الأربعاء',
+                            thu: 'الخميس',
+                            fri: 'الجمعة'
+                        }
                     },
                     coaches: {
                         title: 'إدارة المدربين',
@@ -318,4 +354,3 @@ i18n
     });
 
 export default i18n;
-

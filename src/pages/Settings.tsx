@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Save, Building2, Palette, Globe, User, Lock, Key } from 'lucide-react';
+import { Save, Building2, Palette, Globe, User, Lock, Key, CreditCard, Plus, Trash2, AlertTriangle, X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSubscriptionPlans, useAddPlan, useDeletePlan } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
@@ -41,6 +43,7 @@ export default function Settings() {
         full_name: '',
         email: ''
     });
+    const [initialEmail, setInitialEmail] = useState('');
 
     const [passwordData, setPasswordData] = useState({
         newPassword: '',
@@ -61,6 +64,7 @@ export default function Settings() {
                     full_name: profile?.full_name || '',
                     email: user.email || ''
                 });
+                setInitialEmail(user.email || '');
             }
         };
         fetchProfile();
@@ -106,23 +110,59 @@ export default function Settings() {
         e.preventDefault();
         setProfileLoading(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Not authenticated');
+            // Fetch fresh user data directly from Auth server
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) throw new Error('Session expired or security token invalid. Please log in again.');
 
-            const { error } = await supabase
+            // 1. Update Profile (Name) in Database
+            const { error: profileError } = await supabase
                 .from('profiles')
                 .update({ full_name: userData.full_name })
                 .eq('id', user.id);
 
-            if (error) throw error;
+            if (profileError) throw profileError;
+
+            // 2. Handle Email Update (Only if different from Auth server's current record)
+            const inputEmail = userData.email.trim().toLowerCase();
+            const currentAuthEmail = user.email?.trim().toLowerCase();
+
+            if (inputEmail && currentAuthEmail && inputEmail !== currentAuthEmail) {
+                try {
+                    const { error: authError } = await supabase.auth.updateUser({
+                        email: inputEmail
+                    });
+
+                    if (authError) throw authError;
+                    toast.success('Email update started! Follow the link sent to your new email.');
+                } catch (authError: any) {
+                    console.error('Email Update Error:', authError);
+                    toast.error(`Could not update email: ${authError.message}`, { duration: 5000 });
+                }
+            } else {
+                toast.success(t('common.saveSuccess'));
+            }
 
             // Dispatch custom event for real-time header update
             window.dispatchEvent(new Event('userProfileUpdated'));
 
-            toast.success(t('common.saveSuccess'));
         } catch (error: any) {
             console.error('Error updating profile:', error);
-            toast.error(error.message || 'Error updating profile');
+
+            // Handle specific JWT corruption error with auto-recovery
+            if (error.message?.includes('sub claim') || error.message?.includes('JWT')) {
+                toast.error('Session Error: Your login session is corrupted. Redirecting to login to fix it...', {
+                    duration: 5000,
+                    icon: '🔒'
+                });
+                setTimeout(() => {
+                    supabase.auth.signOut().then(() => {
+                        localStorage.clear();
+                        window.location.href = '/login';
+                    });
+                }, 3000);
+            } else {
+                toast.error(error.message || 'Error updating profile');
+            }
         } finally {
             setProfileLoading(false);
         }
@@ -260,10 +300,10 @@ export default function Settings() {
                                     >
                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
                                         {loading ? (
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <span className="animate-pulse">Saving...</span>
                                         ) : (
                                             <>
-                                                <Save className="w-5 h-5 relative z-10" />
+                                                <Save className="w-4 h-4 relative z-10" />
                                                 <span className="relative z-10">{t('common.save')}</span>
                                             </>
                                         )}
@@ -271,6 +311,11 @@ export default function Settings() {
                                 </div>
                             </form>
                         </div>
+                    )}
+
+                    {/* Subscription Plans Management - Admin Only */}
+                    {role === 'admin' && (
+                        <SubscriptionPlansManager />
                     )}
                 </div>
 
@@ -296,14 +341,18 @@ export default function Settings() {
                                     placeholder="Your Name"
                                 />
                             </div>
-                            <div className="space-y-2 group opacity-50">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Email Address (Read-only)</label>
+                            <div className="space-y-2 group">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2 group-focus-within:text-primary transition-colors">Email Address</label>
                                 <input
                                     type="email"
-                                    disabled
                                     value={userData.email}
-                                    className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white/40 cursor-not-allowed font-bold"
+                                    onChange={e => setUserData({ ...userData, email: e.target.value })}
+                                    className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white transition-all outline-none font-bold"
+                                    placeholder="your@email.com"
                                 />
+                                {initialEmail && (
+                                    <p className="text-[9px] text-white/20 ml-2 uppercase font-bold">Current on server: {initialEmail}</p>
+                                )}
                             </div>
 
                             <button
@@ -311,8 +360,19 @@ export default function Settings() {
                                 disabled={profileLoading}
                                 className="w-full bg-white/5 hover:bg-white/10 text-white px-10 py-4 rounded-2xl border border-white/10 transition-all font-black uppercase tracking-widest text-[10px] hover:border-primary/30"
                             >
-                                {profileLoading ? 'Saving...' : 'Update Display Name'}
+                                {profileLoading ? 'Saving...' : 'Update Profile'}
                             </button>
+
+                            <div className="pt-4 border-t border-white/5">
+                                <p className="text-[10px] text-white/30 text-center mb-4 uppercase font-bold tracking-tighter">Having trouble saving? Your session might be stale.</p>
+                                <button
+                                    type="button"
+                                    onClick={() => supabase.auth.signOut().then(() => window.location.href = '/login')}
+                                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 px-10 py-3 rounded-2xl border border-red-500/20 transition-all font-black uppercase tracking-widest text-[9px]"
+                                >
+                                    Fix Session (Log Out)
+                                </button>
+                            </div>
                         </form>
                     </div>
 
@@ -367,5 +427,165 @@ export default function Settings() {
                 </div>
             </div>
         </div >
+    );
+}
+
+function SubscriptionPlansManager() {
+    const { t } = useTranslation();
+    const queryClient = useQueryClient();
+    const { data: plans, isLoading } = useSubscriptionPlans();
+    const addPlanMutation = useAddPlan();
+    const deletePlanMutation = useDeletePlan();
+    const [newPlan, setNewPlan] = useState({ name: '', duration_months: 1, price: 0 });
+    const [isAdding, setIsAdding] = useState(false);
+    const [planToDelete, setPlanToDelete] = useState<string | null>(null);
+
+    const handleAdd = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newPlan.name) return;
+        try {
+            await addPlanMutation.mutateAsync(newPlan);
+            toast.success('Plan added successfully');
+            setNewPlan({ name: '', duration_months: 1, price: 0 });
+            setIsAdding(false);
+            queryClient.invalidateQueries({ queryKey: ['subscription_plans'] });
+        } catch (error: any) {
+            console.error('Failed to add plan:', error);
+            toast.error(`Error: ${error.message || 'Failed to add plan'}`);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!planToDelete) return;
+        try {
+            await deletePlanMutation.mutateAsync(planToDelete);
+            toast.success('Plan deleted');
+            setPlanToDelete(null);
+            queryClient.invalidateQueries({ queryKey: ['subscription_plans'] });
+        } catch (error: any) {
+            console.error('Failed to delete plan:', error);
+            toast.error(`Error: ${error.message || 'Failed to delete plan'}`);
+            setPlanToDelete(null);
+        }
+    };
+
+    return (
+        <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium lg:col-span-1">
+            <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                    <div className="p-3 bg-primary/20 rounded-2xl text-primary">
+                        <CreditCard className="w-6 h-6" />
+                    </div>
+                    Subscription Plans
+                </h2>
+                <button
+                    onClick={() => setIsAdding(!isAdding)}
+                    className="p-3 bg-primary/10 text-primary hover:bg-primary/20 rounded-2xl transition-all"
+                >
+                    <Plus className={`w-6 h-6 transition-transform ${isAdding ? 'rotate-45' : ''}`} />
+                </button>
+            </div>
+
+            {isAdding && (
+                <form onSubmit={handleAdd} className="mb-10 p-6 bg-white/5 rounded-[2rem] border border-white/5 space-y-6 animate-in zoom-in duration-300">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Plan Name</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Season Pass"
+                            value={newPlan.name}
+                            onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
+                            className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-primary/50 transition-all font-bold"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Months</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={newPlan.duration_months}
+                                onChange={e => setNewPlan({ ...newPlan, duration_months: parseInt(e.target.value) })}
+                                className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-primary/50 transition-all font-bold"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Price (Optional)</label>
+                            <input
+                                type="number"
+                                value={newPlan.price}
+                                onChange={e => setNewPlan({ ...newPlan, price: parseFloat(e.target.value) })}
+                                className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-primary/50 transition-all font-bold"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20"
+                    >
+                        Save New Plan
+                    </button>
+                </form>
+            )}
+
+            <div className="space-y-4">
+                {isLoading ? (
+                    <div className="py-10 text-center text-white/20 animate-pulse uppercase font-black text-[10px] tracking-widest">Loading Plans...</div>
+                ) : plans?.length === 0 ? (
+                    <div className="py-10 text-center text-white/20 uppercase font-black text-[10px] tracking-widest">No custom plans yet</div>
+                ) : (
+                    plans?.map(plan => (
+                        <div key={plan.id} className="flex items-center justify-between p-6 bg-white/5 rounded-[2rem] border border-white/5 group hover:border-primary/30 transition-all animate-in slide-in-from-left duration-500">
+                            <div>
+                                <div className="text-white font-black uppercase tracking-wide">{plan.name}</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">
+                                    {plan.duration_months} {plan.duration_months === 1 ? 'Month' : 'Months'} • {plan.price > 0 ? `${plan.price} EGP` : 'Free Tier'}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setPlanToDelete(plan.id)}
+                                className="p-3 text-white/20 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        </div>
+                    ))
+                )}
+            </div>
+            <p className="mt-8 text-[10px] font-bold text-white/20 uppercase leading-relaxed px-2">
+                Note: Changing plans will not affect existing gymnasts. New enrollments will see the updated options.
+            </p>
+
+            {/* Custom Premium Modal */}
+            {planToDelete && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="glass-card max-w-md w-full p-10 rounded-[2.5rem] border border-white/10 shadow-2xl relative animate-in zoom-in duration-300">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="p-5 bg-rose-500/20 rounded-full text-rose-500 mb-6 animate-pulse">
+                                <AlertTriangle className="w-10 h-10" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-4">Are you sure?</h3>
+                            <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest leading-relaxed mb-10">
+                                You are about to delete this plan. Gymnasts currently enrolled in this plan will not be affected, but new gymnasts won't be able to select it.
+                            </p>
+                            <div className="flex gap-4 w-full">
+                                <button
+                                    onClick={() => setPlanToDelete(null)}
+                                    className="flex-1 px-6 py-4 rounded-2xl bg-white/5 text-white/60 font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="flex-1 px-6 py-4 rounded-2xl bg-rose-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all hover:scale-105 active:scale-95"
+                                >
+                                    Yes, Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

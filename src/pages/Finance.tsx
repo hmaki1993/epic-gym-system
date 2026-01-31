@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Plus, Wallet, Calendar, TrendingUp } from 'lucide-react';
 import AddPaymentForm from '../components/AddPaymentForm';
 import { format } from 'date-fns';
-import { usePayments } from '../hooks/useData';
+import { usePayments, useMonthlyPayroll } from '../hooks/useData';
 import { useTranslation } from 'react-i18next';
+import FinanceDetailModal from '../components/FinanceDetailModal';
 
 interface Payment {
     id: string;
@@ -20,20 +21,51 @@ interface Payment {
 export default function Finance() {
     const { t } = useTranslation();
     const { data: paymentsData, isLoading: loading, refetch } = usePayments();
+
+    // Monthly Payroll Integration
+    const currentMonthStr = format(new Date(), 'yyyy-MM');
+    const { data: payrollData, isLoading: payrollLoading } = useMonthlyPayroll(currentMonthStr);
+
     const payments = (paymentsData as Payment[]) || [];
     const totalRevenue = payments.reduce((sum: number, p: Payment) => sum + Number(p.amount), 0);
 
     // Calculate monthly revenue (simple filter for current month)
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    const monthlyRevenue = payments
+    const monthlyPayments = payments
         .filter(p => {
             const d = new Date(p.payment_date);
             return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        })
-        .reduce((sum, p) => sum + Number(p.amount), 0);
+        });
+    const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+    const monthlyExpenses = payrollData?.totalPayroll || 0;
+    const netProfit = monthlyRevenue - monthlyExpenses;
 
     const [showAddModal, setShowAddModal] = useState(false);
+
+    // Modal State
+    const [detailType, setDetailType] = useState<'revenue' | 'income' | 'expenses' | 'profit' | null>(null);
+
+    const getModalData = () => {
+        switch (detailType) {
+            case 'revenue': return payments;
+            case 'income': return monthlyPayments;
+            case 'expenses': return payrollData?.payrollData || [];
+            case 'profit': return { revenue: monthlyRevenue, expenses: monthlyExpenses, profit: netProfit };
+            default: return null;
+        }
+    };
+
+    const getModalTitle = () => {
+        switch (detailType) {
+            case 'revenue': return t('finance.totalRevenue');
+            case 'income': return 'Monthly Income';
+            case 'expenses': return 'Payroll Expenses';
+            case 'profit': return 'Net Profit Summary';
+            default: return '';
+        }
+    };
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -54,42 +86,99 @@ export default function Finance() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Total Revenue */}
+                <button onClick={() => setDetailType('revenue')} className="text-left w-full glass-card p-8 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 cursor-pointer hover:border-primary/30">
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
                     <div className="flex items-center justify-between mb-8 relative z-10">
                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-primary transition-colors">{t('finance.totalRevenue')}</p>
-                        <div className="p-4 bg-primary/20 rounded-2xl text-primary shadow-inner">
-                            <TrendingUp className="w-6 h-6" />
+                        <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+                            <TrendingUp className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="flex items-baseline gap-3 relative z-10">
-                        <h3 className="text-5xl font-black text-white tracking-tighter">{totalRevenue.toLocaleString()}</h3>
-                        <span className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
+                    <div className="flex items-baseline gap-2 relative z-10">
+                        <h3 className="text-3xl font-black text-white tracking-tighter">{totalRevenue.toLocaleString()}</h3>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
                     </div>
-                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 relative z-10">
-                        <span className="flex h-2 w-2 relative">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        {t('common.online') || 'Live System'}
+                    <div className="absolute bottom-6 right-8 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1">
+                        View Details →
                     </div>
-                </div>
+                </button>
 
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/10 transition-colors"></div>
+                {/* Monthly Income */}
+                <button onClick={() => setDetailType('income')} className="text-left w-full glass-card p-8 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 cursor-pointer hover:border-indigo-400/30">
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-colors"></div>
                     <div className="flex items-center justify-between mb-8 relative z-10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-accent transition-colors">{t('common.monthly') || 'This Month'}</p>
-                        <div className="p-4 bg-accent/20 rounded-2xl text-accent shadow-inner">
-                            <Calendar className="w-6 h-6" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-indigo-400 transition-colors">Income (Month)</p>
+                        <div className="p-3 bg-indigo-500/20 rounded-2xl text-indigo-400 shadow-inner">
+                            <Calendar className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="flex items-baseline gap-3 relative z-10">
-                        <h3 className="text-5xl font-black text-white tracking-tighter">{monthlyRevenue.toLocaleString()}</h3>
-                        <span className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
+                    <div className="flex items-baseline gap-2 relative z-10">
+                        <h3 className="text-3xl font-black text-white tracking-tighter">{monthlyRevenue.toLocaleString()}</h3>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
                     </div>
-                </div>
+                    <div className="absolute bottom-6 right-8 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1">
+                        View Details →
+                    </div>
+                </button>
+
+                {/* Total Expenses (Payroll) */}
+                <button onClick={() => setDetailType('expenses')} className="text-left w-full glass-card p-8 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 cursor-pointer hover:border-rose-400/30">
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-rose-500/5 rounded-full blur-3xl group-hover:bg-rose-500/10 transition-colors"></div>
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-rose-400 transition-colors">Expenses (Payroll)</p>
+                        <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-400 shadow-inner">
+                            <Wallet className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline gap-2 relative z-10">
+                        <h3 className="text-3xl font-black text-rose-400 tracking-tighter">
+                            {payrollLoading ? '...' : monthlyExpenses.toLocaleString()}
+                        </h3>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
+                    </div>
+                    <div className="absolute bottom-6 right-8 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-rose-400 flex items-center gap-1">
+                        View Details →
+                    </div>
+                </button>
+
+                {/* Net Profit */}
+                <button onClick={() => setDetailType('profit')} className="text-left w-full glass-card p-8 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 cursor-pointer hover:border-emerald-400/30">
+                    <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl transition-colors ${netProfit >= 0 ? 'bg-emerald-500/5 group-hover:bg-emerald-500/10' : 'bg-orange-500/5 group-hover:bg-orange-500/10'}`}></div>
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <p className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors ${netProfit >= 0 ? 'text-white/40 group-hover:text-emerald-400' : 'text-white/40 group-hover:text-orange-400'}`}>Net Profit</p>
+                        <div className={`p-3 rounded-2xl shadow-inner ${netProfit >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                            <Wallet className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="flex items-baseline gap-2 relative z-10">
+                        <h3 className={`text-3xl font-black tracking-tighter ${netProfit >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                            {payrollLoading ? '...' : netProfit.toLocaleString()}
+                        </h3>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">EGP</span>
+                    </div>
+                    {/* Glowing indicator */}
+                    <div className="mt-4 flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.3em] relative z-10 opacity-60">
+                        {netProfit >= 0 ? (
+                            <span className="text-emerald-400 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> PROFITABLE</span>
+                        ) : (
+                            <span className="text-orange-400 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span> DEFICIT</span>
+                        )}
+                    </div>
+                    <div className="absolute bottom-6 right-8 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                        View Details →
+                    </div>
+                </button>
             </div>
+
+            <FinanceDetailModal
+                isOpen={!!detailType}
+                onClose={() => setDetailType(null)}
+                type={detailType}
+                title={getModalTitle()}
+                data={getModalData()}
+            />
 
             {/* Recent Transactions List */}
             <div className="glass-card rounded-[3rem] overflow-hidden border border-white/10 shadow-premium mt-12 bg-white/[0.01]">
@@ -124,7 +213,7 @@ export default function Finance() {
                                                 </div>
                                                 <div>
                                                     <div className="font-black text-white text-xl tracking-tight leading-none mb-1 group-hover:text-primary transition-colors">
-                                                        {payment.students?.full_name || 'Unknown Student'}
+                                                        {payment.students?.full_name || 'Unknown Gymnast'}
                                                     </div>
                                                     <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.1em]">Verified Payment</div>
                                                 </div>
