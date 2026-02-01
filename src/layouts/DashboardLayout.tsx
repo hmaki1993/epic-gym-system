@@ -58,12 +58,51 @@ export default function DashboardLayout() {
         }
     });
 
-    // Mock notifications for premium feel
-    const notifications = [
-        { id: 1, title: 'New Gymnast', message: 'Ahmed Ali just registered', time: '5m ago', icon: Users, color: 'text-primary' },
-        { id: 2, title: 'Payment Received', message: 'Monthly subscription from Sara', time: '2h ago', icon: Wallet, color: 'text-emerald-400' },
-        { id: 3, title: 'Schedule Update', message: 'Coach Omar updated his hours', time: '4h ago', icon: Calendar, color: 'text-accent' },
-    ];
+    // Real notifications state
+    const [notifications, setNotifications] = useState<{
+        id: string;
+        title: string;
+        message: string;
+        created_at: string;
+        type: 'student' | 'payment' | 'schedule';
+        is_read: boolean;
+    }[]>([]);
+
+    useEffect(() => {
+        // Fetch initial notifications
+        const fetchNotifications = async () => {
+            const { data } = await supabase
+                .from('notifications')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (data) setNotifications(data);
+        };
+
+        fetchNotifications();
+
+        // Subscribe to realtime notifications
+        const channel = supabase
+            .channel('notifications-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notifications'
+                },
+                (payload) => {
+                    setNotifications(prev => [payload.new as any, ...prev]);
+                    // Optional: Play sound or show browser notification here
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchUserRole = async () => {
@@ -356,22 +395,44 @@ export default function DashboardLayout() {
                                         <h3 className="font-black text-white uppercase tracking-tight text-lg">{t('common.notifications') || 'Recent Activity'}</h3>
                                     </div>
                                     <div className="max-h-[70vh] overflow-y-auto">
-                                        {notifications.map(note => (
-                                            <div key={note.id} className="p-6 border-b border-white/5 hover:bg-white/[0.02] transition-all group cursor-pointer">
-                                                <div className="flex gap-4">
-                                                    <div className={`p-3 rounded-2xl bg-white/5 shadow-inner ${note.color} group-hover:scale-110 transition-transform`}>
-                                                        <note.icon className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <h4 className="font-black text-white text-sm">{note.title}</h4>
-                                                            <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{note.time}</span>
-                                                        </div>
-                                                        <p className="text-xs text-white/50 group-hover:text-white/70 transition-colors">{note.message}</p>
-                                                    </div>
-                                                </div>
+                                        {notifications.length === 0 ? (
+                                            <div className="p-8 text-center text-white/20 font-black uppercase tracking-widest text-xs">
+                                                No notifications yet
                                             </div>
-                                        ))}
+                                        ) : (
+                                            notifications.map(note => {
+                                                let Icon = Bell;
+                                                let color = 'text-white';
+
+                                                if (note.type === 'student') { Icon = Users; color = 'text-primary'; }
+                                                else if (note.type === 'payment') { Icon = Wallet; color = 'text-emerald-400'; }
+                                                else if (note.type === 'schedule') { Icon = Calendar; color = 'text-accent'; }
+
+                                                const timeAgo = (dateStr: string) => {
+                                                    const diff = (new Date().getTime() - new Date(dateStr).getTime()) / 1000 / 60;
+                                                    if (diff < 60) return `${Math.floor(diff)}m ago`;
+                                                    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+                                                    return `${Math.floor(diff / 1440)}d ago`;
+                                                };
+
+                                                return (
+                                                    <div key={note.id} className={`p-6 border-b border-white/5 hover:bg-white/[0.02] transition-all group cursor-pointer ${!note.is_read ? 'bg-primary/5' : ''}`}>
+                                                        <div className="flex gap-4">
+                                                            <div className={`p-3 rounded-2xl bg-white/5 shadow-inner ${color} group-hover:scale-110 transition-transform`}>
+                                                                <Icon className="w-5 h-5" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex justify-between items-start mb-1">
+                                                                    <h4 className="font-black text-white text-sm">{note.title}</h4>
+                                                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{timeAgo(note.created_at)}</span>
+                                                                </div>
+                                                                <p className="text-xs text-white/50 group-hover:text-white/70 transition-colors">{note.message}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
                                     </div>
                                     <button className="w-full p-6 text-[10px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-primary transition-colors bg-white/[0.01]">
                                         {t('common.viewAll') || 'View All Notifications'}

@@ -34,7 +34,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
         coach_id: '',
         sessions_total: 1,
         start_date: format(new Date(), 'yyyy-MM-dd'),
-        expiry_date: format(addMonths(new Date(), 3), 'yyyy-MM-dd'),
+        expiry_date: format(addMonths(new Date(), 12), 'yyyy-MM-dd'), // Default to 1 year validity to rely on sessions
         price: 0
     });
 
@@ -226,34 +226,19 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                         />
                     </div>
 
-                    {/* Date Range */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="group">
-                            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                                <Calendar className="w-3 h-3" />
-                                {t('common.startDate') || 'Start Date'}
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.start_date}
-                                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                                className="w-full px-6 py-4 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold"
-                                required
-                            />
-                        </div>
-                        <div className="group">
-                            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                                <Calendar className="w-3 h-3" />
-                                {t('common.expiryDate') || 'Expiry Date'}
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.expiry_date}
-                                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                                className="w-full px-6 py-4 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold"
-                                required
-                            />
-                        </div>
+                    {/* Date Range - Only Start Date Visible */}
+                    <div className="group">
+                        <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                            <Calendar className="w-3 h-3" />
+                            {t('common.startDate') || 'Start Date'}
+                        </label>
+                        <input
+                            type="date"
+                            value={formData.start_date}
+                            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                            className="w-full px-6 py-4 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold"
+                            required
+                        />
                     </div>
 
                     {/* Price Input & Display */}
