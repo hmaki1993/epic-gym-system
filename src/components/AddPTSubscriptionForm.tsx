@@ -173,6 +173,10 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                 <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                     {/* Student Selection */}
                     <div className="group">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                            <User className="w-3 h-3" />
+                            {t('common.student') || 'Student'}
+                        </label>
                         <select
                             value={formData.student_id}
                             onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
@@ -180,7 +184,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                                 }`}
                             required
                         >
-                            <option value="" disabled hidden>Student</option>
+                            <option value="" disabled hidden>Select Student</option>
                             {students.map(student => (
                                 <option key={student.id} value={student.id} className="bg-gray-900 text-white text-base font-medium">
                                     {student.full_name}
@@ -191,6 +195,10 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
 
                     {/* Coach Selection */}
                     <div className="group">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                            <User className="w-3 h-3" />
+                            {t('common.coach') || 'Coach'}
+                        </label>
                         <select
                             value={formData.coach_id}
                             onChange={(e) => setFormData({ ...formData, coach_id: e.target.value })}
@@ -198,7 +206,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                                 }`}
                             required
                         >
-                            <option value="" disabled hidden>Coach</option>
+                            <option value="" disabled hidden>Select Coach</option>
                             {coaches.map(coach => (
                                 <option key={coach.id} value={coach.id} className="bg-gray-900 text-white text-base font-medium">
                                     {coach.full_name} - ${coach.pt_rate}/session
@@ -209,10 +217,13 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
 
                     {/* Sessions Count */}
                     <div className="group">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors">
+                            {t('pt.sessionCount') || 'Number of Sessions'}
+                        </label>
                         <input
                             type="number"
                             min="1"
-                            placeholder={t('pt.sessionCount') || 'Sessions'}
+                            placeholder={t('pt.sessionCount') || 'Number of Sessions'}
                             value={formData.sessions_total}
                             onChange={(e) => setFormData({ ...formData, sessions_total: e.target.value })}
                             className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
@@ -222,6 +233,10 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
 
                     {/* Date Range - Only Start Date Visible */}
                     <div className="group">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                            <Calendar className="w-3 h-3" />
+                            {t('common.startDate') || 'Start Date'}
+                        </label>
                         <input
                             type="date"
                             value={formData.start_date}
@@ -233,6 +248,10 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
 
                     {/* Price Input & Display */}
                     <div className="group">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                            <DollarSign className="w-3 h-3" />
+                            {t('common.price') || 'Price'}
+                        </label>
                         <div className="relative">
                             <input
                                 type="number"
