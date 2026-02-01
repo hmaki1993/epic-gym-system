@@ -43,7 +43,8 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
     const selectedCoach = coaches.find(c => c.id === formData.coach_id);
     const pricePerSession = selectedCoach?.pt_rate || 0;
 
-    // Update price when coach or sessions change
+    // Price calculation removed as per user request to allow manual entry of total amount
+    /*
     useEffect(() => {
         if (selectedCoach) {
             const count = Number(formData.sessions_total) || 0;
@@ -54,6 +55,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
             }));
         }
     }, [formData.coach_id, formData.sessions_total, coaches]);
+    */
 
     useEffect(() => {
         fetchCoaches();
