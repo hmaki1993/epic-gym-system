@@ -12,6 +12,7 @@ import Settings from './pages/Settings';
 import Calculator from './pages/Calculator';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PublicRegistration from './pages/PublicRegistration';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminCameras from './pages/AdminCameras';
 
@@ -66,6 +67,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/registration" element={<PublicRegistration />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
