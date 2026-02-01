@@ -255,7 +255,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                             <option value="" disabled hidden></option>
                             {coaches.map(coach => (
                                 <option key={coach.id} value={coach.id} className="bg-gray-900 text-white text-base font-medium">
-                                    {coach.full_name} - ${coach.pt_rate}/session
+                                    {coach.full_name}
                                 </option>
                             ))}
                         </select>
