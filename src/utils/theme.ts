@@ -66,6 +66,15 @@ export const applyThemeStyles = (themeId: string) => {
             root.style.setProperty('--color-surface', 'rgba(59, 7, 100, 0.7)');
             root.style.setProperty('--color-accent', '#a855f7'); // Purple 500
             root.style.setProperty('color', '#faf5ff');
+        } else if (themeId === 'minddazzle') {
+            // Minddazzle Elite - Premium Deep Teal & Plum
+            root.style.setProperty('--color-primary', '#622347');    // Plum
+            root.style.setProperty('--color-primary-foreground', '#ffffff');
+            root.style.setProperty('--color-secondary', '#122E34');  // Deep Teal
+            root.style.setProperty('--color-background', '#0E1D21'); // Charcoal
+            root.style.setProperty('--color-surface', 'rgba(18, 46, 52, 0.7)');
+            root.style.setProperty('--color-accent', '#677E8A');     // Steel Blue
+            root.style.setProperty('color', '#ABAFB5');             // Muted Gray
         } else {
             // Refined Default
             applyThemeStyles('midnight');

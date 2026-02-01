@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Banknote, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMonthlyPayroll } from '../hooks/useData';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface PayrollEntry {
     coach_id: string;
@@ -20,6 +21,7 @@ interface PayrollProps {
 
 export default function Payroll({ onViewAttendance }: PayrollProps) {
     const { t } = useTranslation();
+    const { currency } = useCurrency();
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
     // Use the shared hook for calculations
@@ -102,7 +104,7 @@ export default function Payroll({ onViewAttendance }: PayrollProps) {
                                             <span className="text-3xl font-black text-emerald-400 tracking-tighter">
                                                 {row.total_earnings.toLocaleString()}
                                             </span>
-                                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">EGP</span>
+                                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{currency.code}</span>
                                         </div>
                                     </td>
                                 </tr>

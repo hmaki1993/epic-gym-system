@@ -3,11 +3,14 @@ import { format } from 'date-fns';
 import { useOutletContext, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDashboardStats } from '../hooks/useData';
+
 import CoachDashboard from './CoachDashboard';
+import { useCurrency } from '../context/CurrencyContext';
 
 export default function Dashboard() {
     const { t } = useTranslation(); // Init hook
     const { role, fullName } = useOutletContext<{ role: string, fullName: string }>() || { role: null, fullName: null };
+    const { formatPrice } = useCurrency();
 
     const { data: stats, isLoading: loading } = useDashboardStats();
 
@@ -34,7 +37,7 @@ export default function Dashboard() {
         },
         {
             label: t('dashboard.monthlyRevenue'),
-            value: displayStats.monthlyRevenue.toLocaleString() + ' EGP',
+            value: formatPrice(displayStats.monthlyRevenue),
             icon: TrendingUp,
             color: 'bg-green-500',
             trend: '+5% from last month'
@@ -63,27 +66,27 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {statCards.map((stat, index) => (
-                    <div key={index} className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium group hover:scale-[1.02] transition-transform duration-500">
-                        <div className="flex items-center justify-between mb-6">
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-white/50">{stat.label}</p>
-                            <div className={`p-4 rounded-2xl text-white ${stat.color} shadow-lg shadow-black/10 group-hover:scale-110 transition-transform`}>
-                                <stat.icon className="w-6 h-6" />
+                    <div key={index} className="glass-card p-5 rounded-3xl border border-white/10 shadow-premium group hover:scale-[1.02] transition-transform duration-500">
+                        <div className="flex items-center justify-between mb-4">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 truncate w-full">{stat.label}</p>
+                            <div className={`p-2 rounded-xl text-white ${stat.color} shadow-lg shadow-black/10 group-hover:scale-110 transition-transform`}>
+                                <stat.icon className="w-4 h-4" />
                             </div>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <h3 className="text-4xl font-black text-white">{loading ? '-' : stat.value}</h3>
+                            <h3 className="text-2xl font-black text-white">{loading ? '-' : stat.value}</h3>
                         </div>
-                        <div className="mt-6 flex items-center text-[10px] font-black uppercase tracking-widest text-emerald-400">
-                            <ArrowUpRight className="w-4 h-4 mr-2" />
+                        <div className="mt-4 flex items-center text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                            <ArrowUpRight className="w-3 h-3 mr-1" />
                             {stat.trend}
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 gap-10">
                 {/* Recent Activity */}
                 <div className="glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden">
                     <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
@@ -116,41 +119,6 @@ export default function Dashboard() {
                             ))
                         )}
                     </div>
-                </div>
-
-                {/* Quick Actions or Calendar Placeholder */}
-                <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-10 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -mr-32 -mt-32"></div>
-
-                    <h3 className="font-black text-white text-xl uppercase tracking-tight mb-8 flex items-center gap-3 relative z-10">
-                        <Calendar className="w-6 h-6 text-primary" /> {t('dashboard.upcomingSessions')}
-                    </h3>
-
-                    <div className="space-y-6 relative z-10">
-                        <div className="glass-card p-6 rounded-[2rem] border border-white/10 hover:bg-white/10 transition-all group/item">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h4 className="font-black text-white text-lg group-hover/item:text-primary transition-colors">Gymnastics Level 1</h4>
-                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">{t('dashboard.coachName')} Ahmed • 4:00 PM</p>
-                                </div>
-                                <span className="bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest">{t('dashboard.today')}</span>
-                            </div>
-                        </div>
-
-                        <div className="glass-card p-6 rounded-[2rem] border border-white/10 hover:bg-white/10 transition-all group/item">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h4 className="font-black text-white text-lg group-hover/item:text-primary transition-colors">Advanced Training</h4>
-                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">{t('dashboard.coachName')} Sarah • 6:30 PM</p>
-                                </div>
-                                <span className="bg-white/10 text-white/40 text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest">{t('dashboard.tomorrow')}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button className="mt-10 w-full py-5 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white/50 hover:bg-white/10 hover:text-white transition-all relative z-10">
-                        View Full Schedule
-                    </button>
                 </div>
             </div>
         </div>

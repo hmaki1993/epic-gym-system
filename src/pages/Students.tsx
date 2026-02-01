@@ -5,9 +5,12 @@ import { differenceInDays, format } from 'date-fns';
 import AddStudentForm from '../components/AddStudentForm';
 import AddPTSubscriptionForm from '../components/AddPTSubscriptionForm';
 import RenewSubscriptionForm from '../components/RenewSubscriptionForm';
+import RenewPTSubscriptionForm from '../components/RenewPTSubscriptionForm';
 import ConfirmModal from '../components/ConfirmModal';
 import { useTranslation } from 'react-i18next';
 import { useStudents } from '../hooks/useData';
+import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 
 
@@ -34,6 +37,7 @@ interface Student {
 
 export default function Students() {
     const { t, i18n } = useTranslation();
+    const { currency } = useCurrency();
     const { data: studentsData, isLoading: loading, refetch } = useStudents();
     const students = studentsData || [];
 
@@ -43,7 +47,11 @@ export default function Students() {
     const [showPTModal, setShowPTModal] = useState(false);
     const [ptSubscriptions, setPtSubscriptions] = useState<any[]>([]);
     const [showRenewModal, setShowRenewModal] = useState(false);
+    const [showPTRenewModal, setShowPTRenewModal] = useState(false);
     const [studentToRenew, setStudentToRenew] = useState<Student | null>(null);
+    const [ptToDelete, setPtToDelete] = useState<any>(null);
+    const [ptToEdit, setPtToEdit] = useState<any>(null);
+    const [ptToRenew, setPtToRenew] = useState<any>(null);
 
     // Group View State
     // const [viewMode, setViewMode] = useState<'list' | 'groups'>('list'); // Removed
@@ -86,14 +94,31 @@ export default function Students() {
                 students(id, full_name),
                 coaches(id, full_name)
             `)
-            // Removed .eq('status', 'active') to show all subscriptions
-            .order('status', { ascending: true }) // Active first, then expired
+            .order('status', { ascending: true })
             .order('created_at', { ascending: false });
 
         if (error) {
             console.error('Error fetching PT subscriptions:', error);
         } else {
             setPtSubscriptions(data || []);
+        }
+    };
+
+    const handleDeletePT = async () => {
+        if (!ptToDelete) return;
+
+        const { error } = await supabase
+            .from('pt_subscriptions')
+            .delete()
+            .eq('id', ptToDelete.id);
+
+        if (error) {
+            console.error('Error deleting PT:', error);
+            toast.error(t('common.deleteError'));
+        } else {
+            toast.success(t('common.deleteSuccess'));
+            fetchPTSubscriptions();
+            setPtToDelete(null);
         }
     };
 
@@ -233,17 +258,43 @@ export default function Students() {
                                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2.5rem]"></div>
 
                                     <div className="relative z-10">
+                                        {/* Card Actions */}
+                                        <div className="absolute top-0 right-0 flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setPtToRenew(subscription);
+                                                    setShowPTRenewModal(true);
+                                                }}
+                                                className="p-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-xl border border-accent/20 transition-all"
+                                                title="Renew PT Subscription"
+                                            >
+                                                <RefreshCw className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setPtToEdit(subscription)}
+                                                className="p-2 bg-white/5 hover:bg-primary/20 text-white/20 hover:text-primary rounded-xl border border-white/5 transition-all"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setPtToDelete(subscription)}
+                                                className="p-2 bg-white/5 hover:bg-rose-500/20 text-white/20 hover:text-rose-500 rounded-xl border border-white/5 transition-all"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
                                         {/* Student Info */}
                                         <div className="flex items-center gap-4 mb-6">
                                             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                                                {subscription.students?.full_name?.[0] || 'S'}
+                                                {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
                                             </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors">
-                                                    {subscription.students?.full_name || 'Unknown'}
+                                            <div className="flex-1 min-w-0 pr-20">
+                                                <h3 className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors truncate" title={subscription.students?.full_name || subscription.student_name || 'Unknown'}>
+                                                    {subscription.students?.full_name || subscription.student_name || 'Unknown'}
                                                 </h3>
                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">
-                                                    Student
+                                                    {subscription.student_name && !subscription.students ? 'Guest Student' : 'Academy Student'}
                                                 </p>
                                             </div>
                                         </div>
@@ -251,15 +302,29 @@ export default function Students() {
                                         {/* Coach Info */}
                                         <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/5">
                                             <UserIcon className="w-4 h-4 text-accent" />
-                                            <div>
+                                            <div className="flex-1">
                                                 <p className="text-xs font-black text-white/60 uppercase tracking-wider">Coach</p>
                                                 <p className="text-sm font-black text-white">{subscription.coaches?.full_name || 'Unknown'}</p>
                                             </div>
                                         </div>
 
+                                        {/* Progress Bar */}
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">Progress</span>
+                                                <span className="text-xs font-black text-accent">{subscription.sessions_remaining}/{subscription.sessions_total}</span>
+                                            </div>
+                                            <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700"
+                                                    style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
                                         {/* Sessions Info */}
                                         <div className="grid grid-cols-2 gap-4 mb-6">
-                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-primary/5 transition-colors">
                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Remaining</p>
                                                 <p className="text-2xl font-black text-primary">{subscription.sessions_remaining}</p>
                                             </div>
@@ -273,7 +338,9 @@ export default function Students() {
                                         <div className="flex items-center justify-between pt-4 border-t border-white/5">
                                             <div>
                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Total Price</p>
-                                                <p className="text-xl font-black premium-gradient-text">${subscription.total_price}</p>
+                                                <p className="text-xl font-black premium-gradient-text tracking-tighter">
+                                                    {subscription.total_price?.toLocaleString()} <span className="text-[10px] uppercase ml-1">{currency.code}</span>
+                                                </p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Expires</p>
@@ -284,21 +351,23 @@ export default function Students() {
                                         {/* Status Badge */}
                                         <div className="mt-4">
                                             {(() => {
-                                                const isExpired = new Date(subscription.expiry_date) < new Date();
+                                                const isExpired = new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired' || subscription.sessions_remaining <= 0;
                                                 return isExpired ? (
                                                     <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
                                                         <div className="flex items-center justify-between mb-2">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                                                <span className="text-xs font-black text-red-500 uppercase tracking-wider">Expired</span>
+                                                                <span className="text-xs font-black text-red-500 uppercase tracking-wider">
+                                                                    {(subscription.sessions_remaining <= 0 || subscription.status === 'expired') ? 'Out of Sessions' : 'Expired'}
+                                                                </span>
                                                             </div>
                                                         </div>
-                                                        <p className="text-[10px] text-red-400/80 font-bold">
-                                                            ⚠️ Payment required to renew subscription
+                                                        <p className="text-[10px] text-red-400/80 font-bold uppercase tracking-wider">
+                                                            ⚠️ Renewal Required
                                                         </p>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center justify-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-2xl">
+                                                    <div className="flex items-center justify-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-2xl group-hover:bg-accent/20 transition-all">
                                                         <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
                                                         <span className="text-xs font-black text-accent uppercase tracking-wider">Active Subscription</span>
                                                     </div>
@@ -321,37 +390,45 @@ export default function Students() {
                 </div>
             </div>
 
-            {/* Filters and Search */}
-            <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium flex flex-col md:flex-row gap-6 items-center">
-                <div className="flex-1 relative group max-w-2xl mx-auto w-full">
+            {/* Filters and Search Container */}
+            <div className="glass-card p-10 rounded-[3.5rem] border border-white/10 shadow-premium flex flex-col md:flex-row gap-8 items-center bg-gradient-to-tr from-white/[0.02] to-transparent">
+                <div className="flex-1 relative group w-full max-w-3xl">
                     {/* Premium Outer Glow */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-white/5 to-accent/20 rounded-[2rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-1000"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-white/5 to-accent/10 rounded-[2rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-1000"></div>
 
-                    <div className="relative flex items-center bg-[#0d1321]/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-8 py-2 overflow-hidden transition-all duration-500 group-focus-within:border-primary/50 group-focus-within:shadow-[0_0_50px_-12px_rgba(129,140,248,0.3)] group-hover:bg-[#151d30]/90">
+                    <div className="relative flex items-center bg-[#0d1321]/60 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] px-8 overflow-hidden transition-all duration-500 group-focus-within:border-primary/40 group-focus-within:shadow-[0_0_60px_-15px_rgba(129,140,248,0.2)] group-hover:border-white/20">
                         {/* Animated Icon Container */}
-                        <div className="relative flex items-center justify-center mr-6">
+                        <div className="relative flex items-center justify-center mr-5">
                             <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg scale-0 group-focus-within:scale-150 transition-transform duration-700 opacity-50"></div>
-                            <Search className="relative w-5 h-5 text-white/20 group-focus-within:text-primary group-focus-within:scale-110 transition-all duration-500 flex-shrink-0" />
+                            <Search className="relative w-5 h-5 text-white/30 group-focus-within:text-primary transition-all duration-500 flex-shrink-0" />
                         </div>
 
-                        {/* Search Input without placeholder */}
+                        {/* Search Input */}
                         <input
                             type="text"
                             spellCheck="false"
-                            className="relative flex-1 py-5 bg-transparent border-none text-white text-lg font-bold tracking-tight outline-none !p-0 selection:bg-primary/30"
+                            placeholder={i18n.language === 'ar' ? 'ابحث بالاسم أو رقم الهاتف...' : 'Search by name or contact number...'}
+                            className="relative flex-1 py-6 bg-transparent border-none text-white text-lg font-bold tracking-tight outline-none placeholder:text-white/10 placeholder:font-black placeholder:uppercase placeholder:text-xs placeholder:tracking-[0.2em] selection:bg-primary/30"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
 
                         {/* Pro Shortcut Indicator */}
-                        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black text-white/20 group-focus-within:text-primary/50 group-focus-within:border-primary/20 transition-all duration-500">
-                            <span className="tracking-tighter uppercase italic">{i18n.language === 'ar' ? 'بحث' : 'SEARCH'}</span>
+                        <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-2xl border border-white/5 text-[9px] font-black text-white/20 group-focus-within:text-primary group-focus-within:border-primary/20 group-focus-within:bg-primary/5 transition-all duration-500 uppercase tracking-[0.2em] whitespace-nowrap">
+                            <span className="italic opacity-50">{i18n.language === 'ar' ? 'فلترة بحث' : 'FOCUSED'}</span>
                         </div>
                     </div>
                 </div>
-                <button className="p-5 bg-white/5 text-white/40 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all hover:scale-110 border border-white/5">
-                    <Filter className="w-5 h-5" />
-                </button>
+
+                <div className="flex items-center gap-4">
+                    <button
+                        className="group/filter flex items-center gap-4 px-8 py-5 bg-white/5 hover:bg-primary/10 text-white/30 hover:text-primary rounded-[2rem] border border-white/10 hover:border-primary/30 transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg"
+                        title="Advanced Filters"
+                    >
+                        <Filter className="w-5 h-5 group-hover/filter:rotate-180 transition-transform duration-700" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{i18n.language === 'ar' ? 'تصفية' : 'Filter'}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Students Table */}
@@ -467,7 +544,7 @@ export default function Students() {
                                                     <div className="flex items-center gap-2 self-start px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg shadow-[0_0_10px_rgba(245,158,11,0.1)] group-hover:bg-amber-500/20 transition-all duration-300">
                                                         <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></div>
                                                         <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">
-                                                            {student.subscription_plans.price} EGP
+                                                            {student.subscription_plans.price} {currency.code}
                                                         </span>
                                                     </div>
                                                 )}
@@ -525,19 +602,43 @@ export default function Students() {
 
             {showAddModal && (
                 <AddStudentForm
+                    onClose={() => setShowAddModal(false)}
                     initialData={editingStudent}
-                    onClose={() => {
+                    onSuccess={() => {
                         setShowAddModal(false);
                         setEditingStudent(null);
+                        refetch();
                     }}
-                    onSuccess={refetch}
                 />
             )}
 
-            {showPTModal && (
+            {(showPTModal || ptToEdit) && (
                 <AddPTSubscriptionForm
-                    onClose={() => setShowPTModal(false)}
-                    onSuccess={fetchPTSubscriptions}
+                    editData={ptToEdit}
+                    onClose={() => {
+                        setShowPTModal(false);
+                        setPtToEdit(null);
+                    }}
+                    onSuccess={() => {
+                        setShowPTModal(false);
+                        setPtToEdit(null);
+                        fetchPTSubscriptions();
+                    }}
+                />
+            )}
+
+            {showPTRenewModal && ptToRenew && (
+                <RenewPTSubscriptionForm
+                    subscription={ptToRenew}
+                    onClose={() => {
+                        setShowPTRenewModal(false);
+                        setPtToRenew(null);
+                    }}
+                    onSuccess={() => {
+                        setShowPTRenewModal(false);
+                        setPtToRenew(null);
+                        fetchPTSubscriptions();
+                    }}
                 />
             )}
 
@@ -549,19 +650,32 @@ export default function Students() {
                         setStudentToRenew(null);
                     }}
                     onSuccess={() => {
+                        setShowRenewModal(false);
+                        setStudentToRenew(null);
                         refetch();
-                        fetchPTSubscriptions();
                     }}
                 />
             )}
 
-            <ConfirmModal
-                isOpen={!!idToDelete}
-                onClose={() => setIdToDelete(null)}
-                onConfirm={handleDelete}
-                title={t('common.confirmDelete')}
-                message={t('common.deleteMessage')}
-            />
+            {idToDelete && (
+                <ConfirmModal
+                    isOpen={!!idToDelete}
+                    onClose={() => setIdToDelete(null)}
+                    onConfirm={handleDelete}
+                    title={t('students.deleteConfirm')}
+                    message={t('students.deleteWarning')}
+                />
+            )}
+
+            {ptToDelete && (
+                <ConfirmModal
+                    isOpen={!!ptToDelete}
+                    onClose={() => setPtToDelete(null)}
+                    onConfirm={handleDeletePT}
+                    title="Delete PT Subscription"
+                    message={`Are you sure you want to delete the PT subscription for ${ptToDelete.students?.full_name || ptToDelete.student_name || 'this student'}? This action cannot be undone.`}
+                />
+            )}
         </div>
     );
 }

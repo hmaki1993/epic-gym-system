@@ -5,10 +5,12 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { format, addMonths } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface AddPTSubscriptionFormProps {
     onClose: () => void;
     onSuccess: () => void;
+    editData?: any;
 }
 
 interface Coach {
@@ -22,40 +24,27 @@ interface Student {
     full_name: string;
 }
 
-export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubscriptionFormProps) {
+export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: AddPTSubscriptionFormProps) {
     const { t } = useTranslation();
+    const { currency } = useCurrency();
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
     const [coaches, setCoaches] = useState<Coach[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
 
-    const [isGuest, setIsGuest] = useState(false);
+    const [isGuest, setIsGuest] = useState(editData ? !editData.student_id : false);
     const [formData, setFormData] = useState({
-        student_id: '',
-        student_name: '',
-        coach_id: '',
-        sessions_total: '' as any,
-        start_date: format(new Date(), 'yyyy-MM-dd'),
-        expiry_date: format(addMonths(new Date(), 12), 'yyyy-MM-dd'), // Default to 1 year validity to rely on sessions
-        price: '' as any
+        student_id: editData?.student_id?.toString() || '',
+        student_name: editData?.student_name || '',
+        coach_id: editData?.coach_id || '',
+        sessions_total: editData?.sessions_total || '',
+        start_date: editData?.start_date || format(new Date(), 'yyyy-MM-dd'),
+        expiry_date: editData?.expiry_date || format(addMonths(new Date(), 12), 'yyyy-MM-dd'),
+        price: editData?.total_price || ''
     });
 
     const selectedCoach = coaches.find(c => c.id === formData.coach_id);
     const pricePerSession = selectedCoach?.pt_rate || 0;
-
-    // Price calculation removed as per user request to allow manual entry of total amount
-    /*
-    useEffect(() => {
-        if (selectedCoach) {
-            const count = Number(formData.sessions_total) || 0;
-            const newPrice = (selectedCoach.pt_rate || 0) * count;
-            setFormData(prev => ({
-                ...prev,
-                price: newPrice === 0 ? '' : newPrice
-            }));
-        }
-    }, [formData.coach_id, formData.sessions_total, coaches]);
-    */
 
     useEffect(() => {
         fetchCoaches();
@@ -107,44 +96,49 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
         setLoading(true);
 
         try {
-            const { error } = await supabase
-                .from('pt_subscriptions')
-                .insert({
-                    student_id: isGuest ? null : parseInt(formData.student_id),
-                    student_name: isGuest ? formData.student_name : null, // Store name if guest
-                    coach_id: formData.coach_id,
-                    sessions_total: formData.sessions_total,
-                    sessions_remaining: formData.sessions_total,
-                    price_per_session: formData.sessions_total > 0 ? formData.price / formData.sessions_total : 0,
-                    total_price: formData.price,
-                    start_date: formData.start_date,
-                    expiry_date: formData.expiry_date,
-                    status: 'active'
-                });
+            const payload = {
+                student_id: isGuest ? null : parseInt(formData.student_id),
+                student_name: isGuest ? formData.student_name : null,
+                coach_id: formData.coach_id,
+                sessions_total: parseInt(formData.sessions_total),
+                sessions_remaining: editData?.id ? (editData.sessions_remaining + (parseInt(formData.sessions_total) - editData.sessions_total)) : parseInt(formData.sessions_total),
+                expiry_date: formData.expiry_date,
+                total_price: parseFloat(formData.price),
+                price_per_session: parseFloat(formData.price) / parseInt(formData.sessions_total),
+                status: 'active'
+            };
 
-            if (error) throw error;
-
-            // Record payment for PT Subscription
-            // For guest, payment record might fail if student_id is required in payments table.
-            // Let's check if we can insert payment without student_id or with special handling.
-            // Assuming payments table has student_id FK constraint, we might skip payment record for guest OR user needs to create a 'Guest' student.
-            // To be safe, we only record payment if linked to a real student for now, or we need to update payments table too.
-            // Given the requirement "add player from outside", payment tracking might still be needed.
-            // But if payments.student_id is NOT NULL, we can't insert.
-            // For now, only insert payment if not guest or if we find a way.
-
-            if (!isGuest && formData.student_id) {
-                await supabase.from('payments').insert({
-                    student_id: parseInt(formData.student_id),
-                    amount: formData.price,
-                    payment_date: formData.start_date || new Date().toISOString(),
-                    payment_method: 'cash',
-                    notes: `PT Subscription - Coach ${selectedCoach?.full_name}`
-                });
+            if (editData?.id) {
+                const { error } = await supabase
+                    .from('pt_subscriptions')
+                    .update(payload)
+                    .eq('id', editData.id);
+                if (error) throw error;
             } else {
-                // For guests, we might not be able to link payment to a student account.
-                // We could rely on the pt_subscription record for revenue tracking in a more complex query?
-                // Or we accept that guests don't show up in standard 'student payments' ledgers.
+                const { error } = await supabase
+                    .from('pt_subscriptions')
+                    .insert(payload);
+                if (error) throw error;
+            }
+
+            // Record payment for PT Subscription (only for new ones or if specifically requested - let's do only for new for now)
+            if (!editData?.id) {
+                try {
+                    const paymentData: any = {
+                        amount: parseFloat(formData.price),
+                        payment_date: formData.start_date || new Date().toISOString(),
+                        payment_method: 'cash',
+                        notes: `PT Subscription - ${isGuest ? formData.student_name : (students.find(s => s.id === parseInt(formData.student_id))?.full_name)} - Coach ${selectedCoach?.full_name}`
+                    };
+
+                    if (!isGuest && formData.student_id) {
+                        paymentData.student_id = parseInt(formData.student_id);
+                    }
+
+                    await supabase.from('payments').insert(paymentData);
+                } catch (payErr) {
+                    console.error('Payment record failed:', payErr);
+                }
             }
 
             // Invalidate queries to update Revenue UI and PT lists
@@ -155,7 +149,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
             onSuccess();
             onClose();
         } catch (error: any) {
-            console.error('Error creating PT subscription:', error);
+            console.error('Error with PT subscription:', error);
             toast.error(error.message || t('common.error'));
         } finally {
             setLoading(false);
@@ -307,7 +301,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                                 required
                             />
                             <div className="absolute right-8 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black uppercase tracking-widest pointer-events-none">
-                                EGP
+                                {currency.code}
                             </div>
                         </div>
                     </div>

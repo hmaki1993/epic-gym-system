@@ -7,12 +7,15 @@ import { format, parseISO, addMonths } from 'date-fns';
 export default function PublicRegistration() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
-    const [coaches, setCoaches] = useState<{ id: string, full_name: string, role: string }[]>([]);
+    const [coaches, setCoaches] = useState<{ id: string, full_name: string, specialty: string }[]>([]);
     const [plans, setPlans] = useState<{ id: string, name: string, price: number, duration_months: number }[]>([]);
 
     // Form State
     const [formData, setFormData] = useState({
         full_name: '',
+        father_name: '',
+        mother_name: '',
+        training_type: '',
         birth_date: '',
         gender: 'male',
         contact_number: '',       // Student Phone
@@ -28,8 +31,8 @@ export default function PublicRegistration() {
     useEffect(() => {
         const fetchData = async () => {
             const [coachesRes, plansRes] = await Promise.all([
-                supabase.from('coaches').select('id, full_name, role').order('full_name'),
-                supabase.from('subscription_plans').select('*').eq('is_active', true)
+                supabase.from('coaches').select('id, full_name, specialty').order('full_name'),
+                supabase.from('subscription_plans').select('*')
             ]);
             if (coachesRes.data) setCoaches(coachesRes.data);
             if (plansRes.data) setPlans(plansRes.data);
@@ -72,7 +75,7 @@ export default function PublicRegistration() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.full_name || !formData.birth_date || !formData.parent_contact || !formData.subscription_type) {
+        if (!formData.full_name || !formData.father_name || !formData.mother_name || !formData.birth_date || !formData.parent_contact || !formData.subscription_type) {
             toast.error('Please fill in all required fields');
             return;
         }
@@ -139,6 +142,8 @@ export default function PublicRegistration() {
                 .from('students')
                 .insert({
                     full_name: formData.full_name,
+                    father_name: formData.father_name,
+                    mother_name: formData.mother_name,
                     birth_date: formData.birth_date,
                     age: age,
                     parent_contact: formData.parent_contact,
@@ -152,8 +157,7 @@ export default function PublicRegistration() {
                     training_days: formData.training_days,
                     training_schedule: formData.training_schedule,
                     is_active: true,
-                    gender: formData.gender,
-                    join_date: joinDateStr
+                    gender: formData.gender
                 })
                 .select('id')
                 .single();
@@ -221,6 +225,9 @@ export default function PublicRegistration() {
                 setSuccess(false);
                 setFormData({
                     full_name: '',
+                    father_name: '',
+                    mother_name: '',
+                    training_type: '',
                     birth_date: '',
                     gender: 'male',
                     contact_number: '',
@@ -245,72 +252,111 @@ export default function PublicRegistration() {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+            <div className="min-h-screen bg-[#0E1D21] flex flex-col items-center justify-center p-4 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[150px] animate-pulse"></div>
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[150px] animate-pulse delay-1000"></div>
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#622347]/20 rounded-full blur-[150px] animate-pulse"></div>
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#122E34]/40 rounded-full blur-[150px] animate-pulse delay-1000"></div>
                 </div>
                 <div className="z-10 text-center animate-in zoom-in-95 duration-700">
-                    <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-500/30 animate-bounce">
-                        <CheckCircle className="w-16 h-16 text-white" />
+                    <div className="w-32 h-32 bg-gradient-to-br from-[#622347] to-[#122E34] rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-[#622347]/30 animate-bounce">
+                        <CheckCircle className="w-16 h-16 text-[#ABAFB5]" />
                     </div>
-                    <h1 className="text-5xl font-black text-white uppercase tracking-tighter mb-4 premium-gradient-text">
+                    <h1 className="text-5xl font-black text-[#ABAFB5] uppercase tracking-tighter mb-4 premium-gradient-text-mind">
                         Welcome to the Family!
                     </h1>
-                    <p className="text-xl text-white/60 font-medium tracking-widest uppercase">
+                    <p className="text-xl text-[#677E8A] font-medium tracking-widest uppercase">
                         Registration Complete
                     </p>
                 </div>
+
+                <style>{`
+                    .premium-gradient-text-mind {
+                        background: linear-gradient(135deg, #ABAFB5 0%, #677E8A 100%);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                    }
+                `}</style>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden font-cairo">
+        <div className="min-h-screen bg-[#0E1D21] flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden font-cairo">
 
-            {/* Background Effects */}
+            {/* Background Effects - Premium Atmosphere */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-20%] right-[20%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[180px]"></div>
-                <div className="absolute bottom-[-20%] left-[10%] w-[60%] h-[60%] bg-accent/10 rounded-full blur-[180px]"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[#0B1518]"></div>
+                <div className="absolute top-[10%] right-[10%] w-[60%] h-[60%] bg-[#122E34]/40 rounded-full blur-[180px] animate-pulse"></div>
+                <div className="absolute bottom-[20%] left-[5%] w-[50%] h-[50%] bg-[#622347]/15 rounded-full blur-[150px] transition-all duration-1000"></div>
+
+                {/* Subtle Moving Particles Overlay */}
+                <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
             </div>
 
             {/* Header / Logo */}
-            <div className="relative z-10 mb-8 text-center">
-                <div className="relative inline-block group mb-6">
-                    <div className="absolute -inset-4 bg-gradient-to-r from-primary to-accent rounded-full blur opacity-40 group-hover:opacity-60 transition duration-1000"></div>
-                    <img src="/logo.png" alt="Epic Gym" className="relative h-28 w-auto object-contain drop-shadow-2xl" />
+            <div className="relative z-10 mb-12 text-center scale-90 md:scale-100">
+                <div className="relative inline-block group mb-8">
+                    <div className="absolute -inset-6 bg-gradient-to-r from-[#622347]/30 to-[#122E34]/30 rounded-full blur-2xl opacity-40 group-hover:opacity-100 transition duration-1000"></div>
+                    <img src="/logo.png" alt="Epic Gym" className="relative h-32 w-auto object-contain drop-shadow-2xl brightness-110" />
                 </div>
-                <h2 className="text-4xl font-black text-white uppercase tracking-tight premium-gradient-text">
+                <h2 className="text-5xl font-black text-white uppercase tracking-tight premium-gradient-text-mind leading-tight">
                     Join The Legacy
                 </h2>
+                <div className="h-1 w-24 bg-gradient-to-r from-transparent via-[#622347] to-transparent mx-auto mt-4 opacity-50"></div>
             </div>
 
             {/* Form Card */}
-            <div className="w-full max-w-4xl relative z-10 mb-12">
-                <div className="glass-card p-1 rounded-[3rem] bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-2xl backdrop-blur-xl">
-                    <div className="bg-[#0f172a]/90 backdrop-blur-md rounded-[2.9rem] p-8 md:p-12">
-                        <form onSubmit={handleSubmit} className="space-y-10">
+            <div className="w-full max-w-4xl relative z-10 mb-20">
+                <div className="relative p-[1px] rounded-[3.5rem] bg-gradient-to-br from-white/10 via-transparent to-white/5 shadow-2xl">
+                    <div className="bg-[#122E34]/30 backdrop-blur-3xl rounded-[3.4rem] p-8 md:p-14 overflow-hidden border border-white/5 shadow-inner">
+                        {/* Internal Decorative Glows */}
+                        <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#622347]/10 rounded-full blur-3xl"></div>
+
+                        <form onSubmit={handleSubmit} className="space-y-12 relative z-10">
 
                             {/* Section: Personal Info */}
-                            <div className="space-y-6">
-                                <h3 className="text-sm font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <User className="w-4 h-4" /> Personal Details
+                            <div className="space-y-8">
+                                <h3 className="text-xs font-black text-[#677E8A] uppercase tracking-[0.4em] flex items-center gap-3 ml-2">
+                                    <div className="p-2 bg-[#622347]/20 rounded-lg text-[#622347]"><User className="w-4 h-4" /></div>
+                                    Personal Identity
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Gymnast Name</label>
-                                        <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="input-premium" required placeholder="Full Name" />
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block group-focus-within:text-[#677E8A] transition-colors">Gymnast Name</label>
+                                        <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="input-mind" required placeholder="" />
                                     </div>
                                     <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Date of Birth</label>
-                                        <input type="date" value={formData.birth_date} onChange={e => setFormData({ ...formData, birth_date: e.target.value })} className="input-premium calendar-picker-indicator-white" required />
+                                        <div className="flex justify-between items-center mb-3 ml-6 mr-6">
+                                            <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] block">Born On</label>
+                                            {formData.birth_date && (
+                                                <span className="text-[10px] font-black text-[#622347] uppercase tracking-[0.2em] animate-in fade-in slide-in-from-right-4">
+                                                    {(() => {
+                                                        const birth = new Date(formData.birth_date);
+                                                        const now = new Date();
+                                                        let age = now.getFullYear() - birth.getFullYear();
+                                                        const m = now.getMonth() - birth.getMonth();
+                                                        if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+                                                        return age >= 0 ? `${age} YR OLD` : '';
+                                                    })()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <input type="date" value={formData.birth_date} onChange={e => setFormData({ ...formData, birth_date: e.target.value })} className="input-mind calendar-picker-indicator-white" required />
+                                    </div>
+                                    <div className="group">
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Legacy of (Father)</label>
+                                        <input type="text" value={formData.father_name} onChange={e => setFormData({ ...formData, father_name: e.target.value })} className="input-mind" required placeholder="" />
+                                    </div>
+                                    <div className="group">
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Heart of (Mother)</label>
+                                        <input type="text" value={formData.mother_name} onChange={e => setFormData({ ...formData, mother_name: e.target.value })} className="input-mind" required placeholder="" />
                                     </div>
                                     <div className="group md:col-span-2">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Gender</label>
-                                        <div className="flex bg-white/5 rounded-2xl p-1.5 border border-white/10">
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Gender Identity</label>
+                                        <div className="flex bg-[#0E1D21]/50 rounded-[2rem] p-2 border border-white/5">
                                             {['male', 'female'].map(g => (
                                                 <button key={g} type="button" onClick={() => setFormData({ ...formData, gender: g })}
-                                                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${formData.gender === g ? (g === 'male' ? 'bg-blue-600' : 'bg-pink-600') + ' text-white shadow-lg' : 'text-white/40 hover:text-white'}`}>
+                                                    className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${formData.gender === g ? (g === 'male' ? 'bg-[#122E34] border border-[#677E8A]/20' : 'bg-[#622347] border border-white/10') + ' text-white shadow-2xl scale-[1.02]' : 'text-[#677E8A]/50 hover:text-white hover:bg-white/5'}`}>
                                                     {g}
                                                 </button>
                                             ))}
@@ -320,50 +366,45 @@ export default function PublicRegistration() {
                             </div>
 
                             {/* Section: Contact Info */}
-                            <div className="space-y-6 border-t border-white/5 pt-8">
-                                <h3 className="text-sm font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <Phone className="w-4 h-4" /> Contact Information
+                            <div className="space-y-8 pt-4">
+                                <h3 className="text-xs font-black text-[#677E8A] uppercase tracking-[0.4em] flex items-center gap-3 ml-2">
+                                    <div className="p-2 bg-[#622347]/20 rounded-lg text-[#622347]"><Phone className="w-4 h-4" /></div>
+                                    Connectivity
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Phone Number</label>
-                                        <input type="tel" value={formData.contact_number} onChange={e => setFormData({ ...formData, contact_number: e.target.value })} className="input-premium" placeholder="01xxxxxxxxx" required />
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Primary Contact</label>
+                                        <input type="tel" value={formData.contact_number} onChange={e => setFormData({ ...formData, contact_number: e.target.value })} className="input-mind" placeholder="" required />
                                     </div>
                                     <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Parent WhatsApp</label>
-                                        <input type="tel" value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} className="input-premium" placeholder="01xxxxxxxxx" required />
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Secondary / WhatsApp</label>
+                                        <input type="tel" value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} className="input-mind" placeholder="" required />
                                     </div>
-                                    <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Email Address</label>
+                                    <div className="group md:col-span-2">
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Physical Address</label>
                                         <div className="relative">
-                                            <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
-                                            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="input-premium pl-14" placeholder="email@example.com" />
-                                        </div>
-                                    </div>
-                                    <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Home Address</label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
-                                            <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="input-premium pl-14" placeholder="City, Street..." />
+                                            <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#622347]" />
+                                            <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="input-mind pl-16" placeholder="" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Section: Training & Subscription */}
-                            <div className="space-y-6 border-t border-white/5 pt-8">
-                                <h3 className="text-sm font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4" /> Training Plan
+                            <div className="space-y-8 pt-4">
+                                <h3 className="text-xs font-black text-[#677E8A] uppercase tracking-[0.4em] flex items-center gap-3 ml-2">
+                                    <div className="p-2 bg-[#622347]/20 rounded-lg text-[#622347]"><TrendingUp className="w-4 h-4" /></div>
+                                    Elite Program
                                 </h3>
 
-                                <div className="space-y-4">
-                                    <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest ml-4 block">Select Training Days</label>
-                                    <div className="flex flex-wrap gap-2">
+                                <div className="space-y-6">
+                                    <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] ml-6 block">Training Cadence</label>
+                                    <div className="flex flex-wrap gap-3">
                                         {daysOfWeek.map(day => (
                                             <button key={day} type="button" onClick={() => toggleDay(day)}
-                                                className={`flex-1 min-w-[3.5rem] py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${formData.training_days.includes(day)
-                                                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105'
-                                                    : 'bg-white/5 border-white/10 text-white/30 hover:bg-white/10 hover:border-white/20'}`}>
+                                                className={`flex-1 min-w-[4rem] py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${formData.training_days.includes(day)
+                                                    ? 'bg-[#122E34] border-[#677E8A]/30 text-white shadow-xl scale-[1.05]'
+                                                    : 'bg-[#0E1D21]/30 border-white/5 text-[#677E8A]/40 hover:bg-white/5 hover:border-white/10'}`}>
                                                 {day}
                                             </button>
                                         ))}
@@ -371,19 +412,13 @@ export default function PublicRegistration() {
 
                                     {/* Time Selectors */}
                                     {formData.training_schedule.length > 0 && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 animate-in fade-in slide-in-from-top-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 animate-in fade-in zoom-in-95 duration-700">
                                             {formData.training_schedule.map(schedule => (
-                                                <div key={schedule.day} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
-                                                    <span className="text-xs font-black uppercase text-primary w-12">{schedule.day}</span>
-                                                    <div className="flex-1 grid grid-cols-2 gap-2">
-                                                        <div className="relative">
-                                                            <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
-                                                            <input type="time" value={schedule.start} onChange={e => updateTime(schedule.day, 'start', e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-lg py-2 pl-7 pr-2 text-xs text-white outline-none focus:border-primary/50" />
-                                                        </div>
-                                                        <div className="relative">
-                                                            <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
-                                                            <input type="time" value={schedule.end} onChange={e => updateTime(schedule.day, 'end', e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-lg py-2 pl-7 pr-2 text-xs text-white outline-none focus:border-primary/50" />
-                                                        </div>
+                                                <div key={schedule.day} className="p-6 bg-[#0E1D21]/40 border border-[#677E8A]/10 rounded-[2rem] flex items-center gap-6 group/item">
+                                                    <span className="text-[10px] font-black uppercase text-[#622347] w-14 group-focus-within/item:text-white transition-colors">{schedule.day}</span>
+                                                    <div className="flex-1 grid grid-cols-2 gap-3">
+                                                        <input type="time" value={schedule.start} onChange={e => updateTime(schedule.day, 'start', e.target.value)} className="w-full bg-[#122E34]/20 border border-white/5 rounded-xl py-2 px-3 text-[10px] font-black text-white outline-none focus:border-[#622347] transition-all" />
+                                                        <input type="time" value={schedule.end} onChange={e => updateTime(schedule.day, 'end', e.target.value)} className="w-full bg-[#122E34]/20 border border-white/5 rounded-xl py-2 px-3 text-[10px] font-black text-white outline-none focus:border-[#622347] transition-all" />
                                                     </div>
                                                 </div>
                                             ))}
@@ -391,29 +426,42 @@ export default function PublicRegistration() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
                                     <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Subscription Type</label>
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Discipline</label>
                                         <div className="relative">
-                                            <select value={formData.subscription_type} onChange={e => setFormData({ ...formData, subscription_type: e.target.value })} className="input-premium appearance-none" required>
-                                                <option value="" className="bg-slate-900">Select Plan</option>
-                                                {plans.map(plan => (
-                                                    <option key={plan.id} value={plan.id} className="bg-slate-900">{plan.name} - {plan.price} EGP</option>
-                                                ))}
+                                            <select value={formData.training_type} onChange={e => setFormData({ ...formData, training_type: e.target.value })} className="input-mind appearance-none" required>
+                                                <option value="" className="bg-[#0E1D21]"></option>
+                                                <option value="Artistic Gymnastics" className="bg-[#0E1D21]">Artistic Gymnastics</option>
+                                                <option value="Rhythmic Gymnastics" className="bg-[#0E1D21]">Rhythmic Gymnastics</option>
+                                                <option value="Parkour" className="bg-[#0E1D21]">Parkour</option>
+                                                <option value="Fitness" className="bg-[#0E1D21]">Fitness</option>
                                             </select>
-                                            <ChevronRight className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none rotate-90" />
+                                            <ChevronRight className="absolute right-8 top-1/2 -translate-y-1/2 w-5 h-5 text-[#622347] pointer-events-none rotate-90" />
                                         </div>
                                     </div>
                                     <div className="group">
-                                        <label className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-2 ml-4 block">Select Coach (Optional)</label>
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Membership Tier</label>
                                         <div className="relative">
-                                            <select value={formData.coach_id} onChange={e => setFormData({ ...formData, coach_id: e.target.value })} className="input-premium appearance-none">
-                                                <option value="" className="bg-slate-900">No Specific Coach</option>
-                                                {coaches.map(coach => (
-                                                    <option key={coach.id} value={coach.id} className="bg-slate-900">{coach.full_name} ({coach.role})</option>
+                                            <select value={formData.subscription_type} onChange={e => setFormData({ ...formData, subscription_type: e.target.value })} className="input-mind appearance-none" required>
+                                                <option value="" className="bg-[#0E1D21]"></option>
+                                                {plans.map(plan => (
+                                                    <option key={plan.id} value={plan.id} className="bg-[#0E1D21] font-bold">{plan.name}</option>
                                                 ))}
                                             </select>
-                                            <ChevronRight className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none rotate-90" />
+                                            <ChevronRight className="absolute right-8 top-1/2 -translate-y-1/2 w-5 h-5 text-[#622347] pointer-events-none rotate-90" />
+                                        </div>
+                                    </div>
+                                    <div className="group md:col-span-2">
+                                        <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block">Guided By (Coach Picker)</label>
+                                        <div className="relative">
+                                            <select value={formData.coach_id} onChange={e => setFormData({ ...formData, coach_id: e.target.value })} className="input-mind appearance-none">
+                                                <option value="" className="bg-[#0E1D21]"></option>
+                                                {coaches.map(coach => (
+                                                    <option key={coach.id} value={coach.id} className="bg-[#0E1D21] font-bold">Coach / {coach.full_name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronRight className="absolute right-8 top-1/2 -translate-y-1/2 w-5 h-5 text-[#622347] pointer-events-none rotate-90" />
                                         </div>
                                     </div>
                                 </div>
@@ -423,12 +471,21 @@ export default function PublicRegistration() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full group relative overflow-hidden bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white py-6 rounded-[2rem] font-black text-xl uppercase tracking-widest shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full group relative overflow-hidden bg-gradient-to-r from-[#622347] to-[#122E34] text-white py-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.98] mt-12 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
                             >
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                                <span className="relative z-10 flex items-center justify-center gap-3">
-                                    {loading ? 'Processing Registration...' : 'Join Now'}
-                                    {!loading && <ChevronRight className="w-6 h-6" />}
+                                <div className="absolute inset-0 bg-[#ABAFB5]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-700"></div>
+                                <span className="relative z-10 flex items-center justify-center gap-4">
+                                    {loading ? (
+                                        <>
+                                            <Clock className="w-6 h-6 animate-spin" />
+                                            Authenticating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Initiate Membership
+                                            <Sparkles className="w-6 h-6 group-hover:animate-ping" />
+                                        </>
+                                    )}
                                 </span>
                             </button>
 
@@ -437,26 +494,57 @@ export default function PublicRegistration() {
                 </div>
             </div>
 
+            <footer className="relative z-10 text-center pb-12">
+                <p className="text-[10px] font-black text-[#ABAFB5]/20 uppercase tracking-[0.5em]">Powered by Epic Gym Systems • Excellence since day one</p>
+            </footer>
+
             <style>{`
-                .input-premium {
+                .premium-gradient-text-mind {
+                    background: linear-gradient(135deg, #ABAFB5 0%, #677E8A 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .input-mind {
                     width: 100%;
-                    padding: 1.5rem 2rem;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 1.5rem;
+                    padding: 1.5rem 2.5rem;
+                    background: #0E1D21;
+                    border: 1px solid rgba(103, 126, 138, 0.15);
+                    border-radius: 2rem;
                     color: white;
-                    font-size: 1.1rem; /* xl */
-                    font-weight: 700;
+                    font-size: 1rem;
+                    font-weight: 800;
                     outline: none;
-                    transition: all 0.3s;
+                    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
                 }
-                .input-premium:focus {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(var(--primary-rgb), 0.5);
-                    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+                .input-mind:focus {
+                    background: #122E34;
+                    border-color: #622347;
+                    box-shadow: 0 0 40px rgba(98, 35, 71, 0.2), inset 0 2px 4px rgba(0,0,0,0.1);
+                    transform: translateY(-2px);
                 }
-                .input-premium::placeholder {
-                    color: rgba(255, 255, 255, 0.2);
+                .input-mind::placeholder {
+                    color: rgba(103, 126, 138, 0.3);
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    font-size: 0.8rem;
+                }
+                .calendar-picker-indicator-white::-webkit-calendar-picker-indicator {
+                    filter: invert(1) brightness(0.6) sepia(1) saturate(5) hue-rotate(280deg);
+                    cursor: pointer;
+                    opacity: 0.5;
+                }
+                .calendar-picker-indicator-white::-webkit-calendar-picker-indicator:hover {
+                    opacity: 1;
+                }
+                select.input-mind {
+                    cursor: pointer;
+                }
+                @media (max-width: 768px) {
+                    .input-mind {
+                        padding: 1.25rem 1.5rem;
+                        font-size: 0.9rem;
+                    }
                 }
             `}</style>
         </div>

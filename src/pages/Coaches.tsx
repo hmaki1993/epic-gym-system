@@ -7,6 +7,7 @@ import Payroll from '../components/Payroll';
 import { useTranslation } from 'react-i18next';
 import { useCoaches } from '../hooks/useData';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Coach {
     id: string;
@@ -23,6 +24,7 @@ interface Coach {
 
 export default function Coaches() {
     const { t } = useTranslation();
+    const { currency } = useCurrency();
     const { data: coachesData, isLoading: loading, refetch } = useCoaches();
     const coaches = coachesData || [];
 
@@ -161,15 +163,22 @@ export default function Coaches() {
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors">{coach.full_name}</h3>
                                 {(coach as any).attendance_status && (
-                                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border ${(coach as any).attendance_status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]' :
-                                        (coach as any).attendance_status === 'done' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]' :
-                                            'bg-white/5 text-white/40 border-white/10'
-                                        }`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${(coach as any).attendance_status === 'working' ? 'bg-emerald-400 animate-pulse' : (coach as any).attendance_status === 'done' ? 'bg-blue-400' : 'bg-white/20'}`}></span>
-                                        {(coach as any).attendance_status === 'working' ? t('coaches.workingNow') :
-                                            (coach as any).attendance_status === 'done' ? t('coaches.done') :
-                                                t('coaches.away')}
-                                    </span>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border ${(coach as any).attendance_status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_20px_rgba(52,211,153,0.2)]' :
+                                            (coach as any).attendance_status === 'done' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                'bg-white/5 text-white/40 border-white/10'
+                                            }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full mr-2 ${(coach as any).attendance_status === 'working' ? 'bg-emerald-400 animate-pulse' : (coach as any).attendance_status === 'done' ? 'bg-blue-400' : 'bg-white/20'}`}></span>
+                                            {(coach as any).attendance_status === 'working' ? 'ACTIVE / ONLINE' :
+                                                (coach as any).attendance_status === 'done' ? 'COMPLETED' :
+                                                    'AWAY'}
+                                        </span>
+                                        {(coach as any).daily_total_seconds > 0 && (
+                                            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest font-mono">
+                                                {Math.floor((coach as any).daily_total_seconds / 3600)}h {Math.floor(((coach as any).daily_total_seconds % 3600) / 60)}m worked
+                                            </span>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 text-white/60 mt-2 font-bold uppercase tracking-wider text-[10px]">
@@ -177,28 +186,41 @@ export default function Coaches() {
                                     <Medal className="w-3 h-3 mr-1.5 text-primary" />
                                     <span>{coach.specialty}</span>
                                 </div>
-                                {coach.profiles?.role && (
+                                {coach.role && (
                                     <div className="bg-[#1e2330] px-3 py-1.5 rounded-xl border border-white/5 flex items-center justify-center">
-                                        <span className="text-white font-black uppercase tracking-[0.2em]">{t(`roles.${coach.profiles.role}`)}</span>
+                                        <span className="text-white font-black uppercase tracking-[0.2em]">{t(`roles.${coach.role}`)}</span>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Today's Times */}
+                            {/* Today's Times - Premium Display */}
                             {(coach as any).check_in_time && (
-                                <div className="mt-2 text-[11px] flex items-center gap-2 text-gray-900 font-bold font-mono opacity-80">
-                                    <Clock className="w-3 h-3" />
-                                    <span>
-                                        {new Date((coach as any).check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        {(coach as any).check_out_time && ` - ${new Date((coach as any).check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                    </span>
+                                <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group-hover:border-primary/20 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/20 rounded-lg text-primary shadow-inner">
+                                            <Clock className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Shift Time</p>
+                                            <p className="text-xs font-black text-white/70 font-mono tracking-tighter">
+                                                {new Date((coach as any).check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {(coach as any).check_out_time && ` - ${new Date((coach as any).check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {(coach as any).attendance_status === 'working' && (
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-lg">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">LIVE</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">PT Rate:</span>
-                                    <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[10px] opacity-40">EGP/hr</span></span>
+                                    <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[10px] opacity-40">{currency.code}/hr</span></span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Sessions:</span>

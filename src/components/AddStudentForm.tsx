@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useSubscriptionPlans, useCoaches } from '../hooks/useData';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface AddStudentFormProps {
     onClose: () => void;
@@ -16,6 +17,7 @@ interface AddStudentFormProps {
 
 export default function AddStudentForm({ onClose, onSuccess, initialData }: AddStudentFormProps) {
     const { t, i18n } = useTranslation();
+    const { currency } = useCurrency();
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
     const { data: plansData, isLoading: isLoadingPlans } = useSubscriptionPlans();
@@ -23,7 +25,13 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
 
     const [formData, setFormData] = useState({
         full_name: initialData?.full_name || '',
+        father_name: initialData?.father_name || '',
+        mother_name: initialData?.mother_name || '',
+        email: initialData?.email || '',
+        address: initialData?.address || '',
         birth_date: initialData?.birth_date || '',
+        gender: initialData?.gender || 'male',
+        training_type: initialData?.training_type || '',
         contact_number: initialData?.contact_number || '',
         parent_contact: initialData?.parent_contact || '',
         subscription_type: initialData?.subscription_type || '', // Initialize empty, will be set by effect
@@ -170,7 +178,13 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
 
             const studentData = {
                 full_name: formData.full_name,
+                father_name: formData.father_name,
+                mother_name: formData.mother_name,
+                email: formData.email,
+                address: formData.address,
                 birth_date: formData.birth_date,
+                gender: formData.gender,
+                training_type: formData.training_type,
                 age: calculateAge(formData.birth_date),
                 contact_number: formData.contact_number,
                 parent_contact: formData.parent_contact,
@@ -356,11 +370,49 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                 onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
                             />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.phone', 'Phone Number')}</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Gender</label>
+                            <div className="flex bg-white/5 rounded-2xl p-1.5 border border-white/10">
+                                {['male', 'female'].map(g => (
+                                    <button key={g} type="button" onClick={() => setFormData({ ...formData, gender: g })}
+                                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${formData.gender === g ? (g === 'male' ? 'bg-blue-600' : 'bg-pink-600') + ' text-white shadow-lg' : 'text-white/40 hover:text-white'}`}>
+                                        {g}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Training Type</label>
+                            <div className="relative">
+                                <select
+                                    value={formData.training_type}
+                                    onChange={e => setFormData({ ...formData, training_type: e.target.value })}
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none"
+                                    required
+                                >
+                                    <option value="" className="bg-slate-900">Select Sport</option>
+                                    <option value="Artistic Gymnastics" className="bg-slate-900">Artistic Gymnastics</option>
+                                    <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
+                                    <option value="Parkour" className="bg-slate-900">Parkour</option>
+                                    <option value="Fitness" className="bg-slate-900">Fitness</option>
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Father's Name</label>
+                            <input
+                                type="text"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                value={formData.father_name}
+                                onChange={e => setFormData({ ...formData, father_name: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.phone', "Father's Phone")}</label>
                             <input
                                 required
                                 type="tel"
@@ -369,13 +421,42 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                 onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
                             />
                         </div>
+
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.parentPhone', 'Parent Phone')}</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Mother's Name</label>
+                            <input
+                                type="text"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                value={formData.mother_name}
+                                onChange={e => setFormData({ ...formData, mother_name: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.parentPhone', "Mother's Phone")}</label>
                             <input
                                 type="tel"
                                 className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.parent_contact}
                                 onChange={e => setFormData({ ...formData, parent_contact: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Email</label>
+                            <input
+                                type="email"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Address</label>
+                            <input
+                                type="text"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                value={formData.address}
+                                onChange={e => setFormData({ ...formData, address: e.target.value })}
                             />
                         </div>
                     </div>
@@ -458,7 +539,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                         <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full animate-in fade-in slide-in-from-right-4 duration-500">
                                             <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]"></div>
                                             <span className="text-[10px] font-black text-primary uppercase tracking-wider">
-                                                {plans.find(p => p.id === formData.subscription_type)?.price} EGP
+                                                {plans.find(p => p.id === formData.subscription_type)?.price} {currency.code}
                                             </span>
                                         </div>
                                     )}

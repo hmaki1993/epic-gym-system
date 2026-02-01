@@ -7,8 +7,10 @@ import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { applyThemeStyles } from '../utils/theme';
+import { useCurrency, CURRENCIES, CurrencyCode } from '../context/CurrencyContext';
 
 export default function Settings() {
+    const { currency, setCurrency } = useCurrency();
     interface GymProfile {
         name: string;
         phone: string;
@@ -78,6 +80,7 @@ export default function Settings() {
         { id: 'amber', name: 'Dark Amber', primary: '#fbbf24', secondary: '#3f2f1d', bg: '#1a140a' },
         { id: 'ocean', name: 'Deep Ocean', primary: '#22d3ee', secondary: '#1e3a3f', bg: '#0a1a1f' },
         { id: 'royal', name: 'Royal Purple', primary: '#c084fc', secondary: '#2e1f3f', bg: '#14091a' },
+        { id: 'minddazzle', name: 'Minddazzle Elite', primary: '#622347', secondary: '#122E34', bg: '#0E1D21' },
     ];
 
 
@@ -242,6 +245,38 @@ export default function Settings() {
                                         <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white shadow-lg animate-in zoom-in duration-300">
                                             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                                         </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Currency Settings */}
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
+                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
+                    <div className="relative z-10">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                            <div className="p-3 bg-emerald-500/20 rounded-2xl text-emerald-500">
+                                <Globe className="w-6 h-6" />
+                            </div>
+                            Currency
+                        </h2>
+
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            {(Object.keys(CURRENCIES) as CurrencyCode[]).map((code) => (
+                                <button
+                                    key={code}
+                                    onClick={() => setCurrency(code)}
+                                    className={`relative p-6 rounded-3xl border transition-all duration-300 hover:scale-105 ${currency.code === code
+                                        ? 'bg-emerald-500/20 border-emerald-500/50 shadow-lg shadow-emerald-500/10'
+                                        : 'bg-white/5 border-white/5 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <div className="text-2xl mb-2 text-white">{CURRENCIES[code].symbol}</div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-white/50">{CURRENCIES[code].name}</div>
+                                    {currency.code === code && (
+                                        <div className="absolute top-4 right-4 w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                                     )}
                                 </button>
                             ))}
@@ -432,6 +467,7 @@ export default function Settings() {
 
 function SubscriptionPlansManager() {
     const { t } = useTranslation();
+    const { currency } = useCurrency();
     const queryClient = useQueryClient();
     const { data: plans, isLoading } = useSubscriptionPlans();
     const addPlanMutation = useAddPlan();
@@ -539,7 +575,7 @@ function SubscriptionPlansManager() {
                             <div>
                                 <div className="text-white font-black uppercase tracking-wide">{plan.name}</div>
                                 <div className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">
-                                    {plan.duration_months} {plan.duration_months === 1 ? 'Month' : 'Months'} • {plan.price > 0 ? `${plan.price} EGP` : 'Free Tier'}
+                                    {plan.duration_months} {plan.duration_months === 1 ? 'Month' : 'Months'} • {plan.price > 0 ? `${plan.price} ${currency.code}` : 'Free Tier'}
                                 </div>
                             </div>
                             <button

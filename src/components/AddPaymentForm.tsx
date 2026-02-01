@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, Save, DollarSign, ChevronDown } from 'lucide-react';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Student {
     id: number;
@@ -13,6 +14,7 @@ interface AddPaymentFormProps {
 }
 
 export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormProps) {
+    const { currency } = useCurrency();
     const [loading, setLoading] = useState(false);
     const [students, setStudents] = useState<Student[]>([]);
 
@@ -108,7 +110,7 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Amount (EGP)</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Amount ({currency.code})</label>
                             <input
                                 required
                                 type="number"
@@ -123,7 +125,10 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
                             <input
                                 required
                                 type="date"
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white text-center [color-scheme:dark] cursor-pointer"
+                                style={{
+                                    colorScheme: 'dark'
+                                }}
                                 value={formData.date}
                                 onChange={e => setFormData({ ...formData, date: e.target.value })}
                             />

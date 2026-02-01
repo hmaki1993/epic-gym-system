@@ -6,6 +6,7 @@ import { parseISO, addMonths, format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSubscriptionPlans } from '../hooks/useData';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface RenewSubscriptionFormProps {
     student: any;
@@ -15,6 +16,7 @@ interface RenewSubscriptionFormProps {
 
 export default function RenewSubscriptionForm({ student, onClose, onSuccess }: RenewSubscriptionFormProps) {
     const { t } = useTranslation();
+    const { currency } = useCurrency();
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
     const { data: plansData } = useSubscriptionPlans();
@@ -142,7 +144,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                             {selectedPlan && (
                                 <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
                                     <DollarSign className="w-3 h-3 text-primary" />
-                                    <span className="text-[10px] font-black text-primary uppercase">{selectedPlan.price} EGP</span>
+                                    <span className="text-[10px] font-black text-primary uppercase">{selectedPlan.price} {currency.code}</span>
                                 </div>
                             )}
                         </div>
@@ -154,7 +156,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                         >
                             {plans.map(plan => (
                                 <option key={plan.id} value={plan.id} className="bg-slate-900">
-                                    {plan.name} - {plan.price} EGP
+                                    {plan.name} - {plan.price} {currency.code}
                                 </option>
                             ))}
                         </select>
@@ -205,7 +207,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                             </div>
                             <div className="flex items-center justify-between pt-2 border-t border-white/10">
                                 <span className="text-sm font-black text-accent">Total Amount</span>
-                                <span className="text-lg font-black text-accent">{selectedPlan.price} EGP</span>
+                                <span className="text-lg font-black text-accent">{selectedPlan.price} {currency.code}</span>
                             </div>
                         </div>
                     )}

@@ -50,7 +50,11 @@ i18n
                         confirm: 'OK',
                         chat: 'Staff Chat',
                         online: 'Online',
-                        offline: 'Offline'
+                        offline: 'Offline',
+                        startDate: 'Start Date',
+                        price: 'Price',
+                        saving: 'Saving...',
+                        coach: 'Coach'
                     },
                     cameras: {
                         subtitle: 'Monitor gym activities in real-time',
@@ -178,6 +182,12 @@ i18n
                         me: 'You',
                         online_count: 'Staff members currently online',
                         only_you: 'Nobody else is online'
+                    },
+                    pt: {
+                        addSubscription: 'Add PT Subscription',
+                        sessionCount: 'Number of Sessions',
+                        active: 'Active PT',
+                        expired: 'Expired PT'
                     }
                 }
             },
@@ -219,7 +229,11 @@ i18n
                         confirm: 'تأكيد',
                         chat: 'شات الموظفين',
                         online: 'متصل',
-                        offline: 'غير متصل'
+                        offline: 'غير متصل',
+                        startDate: 'تاريخ البدء',
+                        price: 'السعر',
+                        saving: 'جاري الحفظ...',
+                        coach: 'المدرب'
                     },
                     cameras: {
                         subtitle: 'مراقبة أنشطة الجيم في الوقت الفعلي',
@@ -347,6 +361,12 @@ i18n
                         me: 'أنت',
                         online_count: 'من الموظفين متصلون الآن',
                         only_you: 'لا يوجد أحد غيرك متصل حالياً'
+                    },
+                    pt: {
+                        addSubscription: 'إضافة اشتراك PT',
+                        sessionCount: 'عدد الجلسات',
+                        active: 'اشتراك نشط',
+                        expired: 'اشتراك منتهي'
                     }
                 }
             }

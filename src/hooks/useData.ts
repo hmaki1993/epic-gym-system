@@ -59,23 +59,31 @@ export function useCoaches() {
 
                 const studentNames = coachPTs.map(s => s.student_name).join(', ');
 
-                // Determine Status
+                // Determine Status and Calculate Duration
                 let status = 'away';
+                let dailyTotalSeconds = 0;
+
                 if (dayAttendance) {
+                    const start = new Date(dayAttendance.check_in_time);
                     if (dayAttendance.check_in_time && !dayAttendance.check_out_time) {
                         status = 'working';
+                        dailyTotalSeconds = Math.floor((new Date().getTime() - start.getTime()) / 1000);
                     } else if (dayAttendance.check_out_time) {
                         status = 'done';
+                        const end = new Date(dayAttendance.check_out_time);
+                        dailyTotalSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
                     }
                 }
 
                 return {
                     ...coach,
+                    role: coach.profiles?.role,
                     pt_sessions_today: totalSessions,
                     pt_student_name: studentNames,
                     attendance_status: status,
                     check_in_time: dayAttendance?.check_in_time,
-                    check_out_time: dayAttendance?.check_out_time
+                    check_out_time: dayAttendance?.check_out_time,
+                    daily_total_seconds: dailyTotalSeconds
                 };
             });
 
@@ -228,10 +236,12 @@ export function useMonthlyPayroll(month: string) {
                 });
                 const totalHours = Number((totalSeconds / 3600).toFixed(1));
 
-                // Calculate total PT sessions (from both sources)
+                // Calculate total PT sessions (Prioritize table sessions; fallback to attendance count for legacy)
+                const tableSessions = coachSessions.reduce((sum, s) => sum + (Number(s.sessions_count ?? 1)), 0);
                 const attSessions = coachAttendance.reduce((sum, r) => sum + (Number(r.pt_sessions_count) || 0), 0);
-                const tableSessions = coachSessions.reduce((sum, s) => sum + (Number(s.sessions_count) || 1), 0);
-                const totalSessions = attSessions + tableSessions;
+
+                // We use table sessions if present, otherwise fallback to the simpler attendance count
+                const totalSessions = tableSessions > 0 ? tableSessions : attSessions;
 
                 const salary = coach.salary || 0;
                 const ptEarnings = totalSessions * (coach.pt_rate || 0);
@@ -256,5 +266,91 @@ export function useMonthlyPayroll(month: string) {
             };
         },
         staleTime: 1000 * 60 * 5 // Cache for 5 minutes
+    });
+}
+
+// --- Refunds Hooks ---
+export function useRefunds() {
+    return useQuery({
+        queryKey: ['refunds'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('refunds')
+                .select('*, students ( full_name )')
+                .order('refund_date', { ascending: false });
+            if (error) throw error;
+            return data;
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+}
+
+export function useAddRefund() {
+    return useMutation({
+        mutationFn: async (refund: { student_id: string; amount: number; reason?: string; refund_date: string }) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data, error } = await supabase
+                .from('refunds')
+                .insert([{ ...refund, created_by: user?.id }])
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        },
+    });
+}
+
+export function useDeleteRefund() {
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase
+                .from('refunds')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+        },
+    });
+}
+
+// --- Expenses Hooks ---
+export function useExpenses() {
+    return useQuery({
+        queryKey: ['expenses'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('expenses')
+                .select('*')
+                .order('expense_date', { ascending: false });
+            if (error) throw error;
+            return data;
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+}
+
+export function useAddExpense() {
+    return useMutation({
+        mutationFn: async (expense: { description: string; amount: number; category: string; expense_date: string }) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data, error } = await supabase
+                .from('expenses')
+                .insert([{ ...expense, created_by: user?.id }])
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        },
+    });
+}
+
+export function useDeleteExpense() {
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase
+                .from('expenses')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+        },
     });
 }

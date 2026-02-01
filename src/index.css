@@ -1,17 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #818cf8;
+  --color-primary: #10b981;
+  /* Emerald 500 */
   --color-primary-foreground: #ffffff;
-  --color-secondary: #1e293b;
+  --color-secondary: #0E1D21;
+  /* Minddazzle Dark */
   --color-secondary-foreground: #ffffff;
-  --color-accent: #c084fc;
+  --color-accent: #34d399;
+  /* Emerald 400 */
   --color-accent-foreground: #ffffff;
-  --color-background: #0f172a;
-  --color-surface: #1e293b;
+  --color-background: #0E1D21;
+  /* Minddazzle Dark BG */
+  --color-surface: #122E34;
+  /* Minddazzle Surface */
 
-  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-premium: 0 20px 40px -5px rgba(0, 0, 0, 0.4), 0 10px 20px -5px rgba(16, 185, 129, 0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(14, 29, 33, 0.5);
 }
 
 :root {
@@ -21,7 +26,7 @@
 
   color-scheme: dark;
   color: #f1f5f9;
-  background-color: var(--color-background);
+  background-color: #0E1D21;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -33,7 +38,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+  background: #0E1D21;
+  /* Minddazzle Base */
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(18, 46, 52, 0.5), transparent 25%);
   color: #f1f5f9;
   overflow-x: hidden;
 }
@@ -42,11 +51,21 @@ body {
   PREMIUM UTILITIES 
 */
 .glass-card {
-  background: rgba(30, 41, 59, 0.7) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: var(--shadow-glass) !important;
+  background: rgba(18, 46, 52, 0.6) !important;
+  /* #122E34 with opacity */
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.glass-card:hover {
+  background: rgba(18, 46, 52, 0.8) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  /* Emerald border on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(16, 185, 129, 0.1) !important;
 }
 
 .premium-gradient-text {

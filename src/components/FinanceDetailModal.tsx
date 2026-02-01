@@ -1,6 +1,8 @@
 
-import { X, TrendingUp, Calendar, Wallet, AlertTriangle } from 'lucide-react';
+
+import { X, TrendingUp, Calendar, Wallet, AlertTriangle, DollarSign, Receipt, Dumbbell } from 'lucide-react';
 import { format } from 'date-fns';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Payment {
     id: string;
@@ -18,6 +20,25 @@ interface PayrollEntry {
     salary: number;
     total_earnings: number;
     total_pt_sessions: number;
+    pt_rate: number;
+}
+
+interface Refund {
+    id: string;
+    amount: number;
+    refund_date: string;
+    reason?: string;
+    students: {
+        full_name: string;
+    };
+}
+
+interface Expense {
+    id: string;
+    description: string;
+    amount: number;
+    category: string;
+    expense_date: string;
 }
 
 interface ProfitData {
@@ -29,12 +50,13 @@ interface ProfitData {
 interface FinanceDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    type: 'revenue' | 'income' | 'expenses' | 'profit' | null;
+    type: 'revenue' | 'income' | 'expenses' | 'profit' | 'refunds' | 'general_expenses' | 'pt_sessions' | null;
     title: string;
-    data: Payment[] | PayrollEntry[] | ProfitData | null;
+    data: Payment[] | PayrollEntry[] | Refund[] | Expense[] | ProfitData | null;
 }
 
 export default function FinanceDetailModal({ isOpen, onClose, type, title, data }: FinanceDetailModalProps) {
+    const { currency } = useCurrency();
     if (!isOpen || !type || !data) return null;
 
     const renderContent = () => {
@@ -48,6 +70,7 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                             <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
                                 <tr>
                                     <th className="px-6 py-4">Student</th>
+                                    <th className="px-6 py-4">Type</th>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">Method</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
@@ -55,22 +78,37 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {payments.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No records found</td></tr>
+                                    <tr><td colSpan={5} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No records found</td></tr>
                                 ) : (
-                                    payments.map((p) => (
-                                        <tr key={p.id} className="hover:bg-white/5 transition-colors group">
-                                            <td className="px-6 py-4 font-bold text-white group-hover:text-primary transition-colors">{p.students?.full_name || 'Unknown'}</td>
-                                            <td className="px-6 py-4 text-white/60 text-xs font-mono">{format(new Date(p.payment_date), 'MMM dd, yyyy')}</td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-2 py-1 rounded-lg bg-white/5 text-[9px] font-black uppercase tracking-wider text-white/40 border border-white/5">
-                                                    {p.payment_method}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-black text-emerald-400 tracking-tight">
-                                                +{Number(p.amount).toLocaleString()} <span className="text-[9px] text-white/20">EGP</span>
-                                            </td>
-                                        </tr>
-                                    ))
+                                    payments.map((p) => {
+                                        const isPT = p.notes?.toLowerCase().includes('pt');
+                                        return (
+                                            <tr key={p.id} className="hover:bg-white/5 transition-colors group">
+                                                <td className="px-6 py-4">
+                                                    <div className="font-bold text-white group-hover:text-primary transition-colors">
+                                                        {p.students?.full_name || (p.notes?.split(' - ')[1] || 'Guest Gymnast')}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${isPT
+                                                        ? 'bg-primary/10 text-primary border-primary/20'
+                                                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                        }`}>
+                                                        {isPT ? 'Personal Training' : 'Gymnast'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-white/60 text-xs font-mono">{format(new Date(p.payment_date), 'MMM dd, yyyy')}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className="px-2 py-1 rounded-lg bg-white/5 text-[9px] font-black uppercase tracking-wider text-white/40 border border-white/5">
+                                                        {p.payment_method.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-black text-emerald-400 tracking-tight">
+                                                    +{Number(p.amount).toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -85,22 +123,138 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                             <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
                                 <tr>
                                     <th className="px-6 py-4">Coach</th>
-                                    <th className="px-6 py-4 text-center">Sessions</th>
                                     <th className="px-6 py-4 text-center">Base Salary</th>
-                                    <th className="px-6 py-4 text-right">Unpaid Liability</th>
+                                    <th className="px-6 py-4 text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {payroll.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No payroll records</td></tr>
+                                    <tr><td colSpan={3} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No payroll records</td></tr>
                                 ) : (
                                     payroll.map((p, i) => (
                                         <tr key={i} className="hover:bg-white/5 transition-colors group">
                                             <td className="px-6 py-4 font-bold text-white group-hover:text-orange-400 transition-colors">{p.coach_name}</td>
-                                            <td className="px-6 py-4 text-center text-white/60 font-bold">{p.total_pt_sessions}</td>
-                                            <td className="px-6 py-4 text-center text-white/40 text-xs font-mono">{p.salary.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-center text-white/60 font-bold">{p.salary.toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span></td>
                                             <td className="px-6 py-4 text-right font-black text-orange-400 tracking-tight">
-                                                -{p.total_earnings.toLocaleString()} <span className="text-[9px] text-white/20">EGP</span>
+                                                -{p.salary.toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+
+            case 'pt_sessions':
+                const ptPayroll = data as PayrollEntry[];
+                return (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
+                                <tr>
+                                    <th className="px-6 py-4">Coach</th>
+                                    <th className="px-6 py-4 text-center">PT Sessions</th>
+                                    <th className="px-6 py-4 text-center">Rate/Session</th>
+                                    <th className="px-6 py-4 text-right">Total Earnings</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {ptPayroll.length === 0 ? (
+                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No PT sessions</td></tr>
+                                ) : (
+                                    ptPayroll.map((p, i) => {
+                                        const ptEarnings = p.total_pt_sessions * (p.pt_rate || 0);
+                                        if (ptEarnings === 0) return null;
+                                        return (
+                                            <tr key={i} className="hover:bg-white/5 transition-colors group">
+                                                <td className="px-6 py-4 font-bold text-white group-hover:text-purple-400 transition-colors">{p.coach_name}</td>
+                                                <td className="px-6 py-4 text-center text-white/60 font-bold">{p.total_pt_sessions}</td>
+                                                <td className="px-6 py-4 text-center text-white/40 text-xs font-mono">{(p.pt_rate || 0).toLocaleString()} {currency.code}</td>
+                                                <td className="px-6 py-4 text-right font-black text-purple-400 tracking-tight">
+                                                    -{ptEarnings.toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+
+            case 'refunds':
+                const refunds = data as Refund[];
+                return (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
+                                <tr>
+                                    <th className="px-6 py-4">Student</th>
+                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Reason</th>
+                                    <th className="px-6 py-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {refunds.length === 0 ? (
+                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No refunds</td></tr>
+                                ) : (
+                                    refunds.map((r) => (
+                                        <tr key={r.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-6 py-4 font-bold text-white group-hover:text-rose-400 transition-colors">
+                                                {r.students?.full_name || 'Unknown'}
+                                            </td>
+                                            <td className="px-6 py-4 text-white/60 text-xs font-mono">{format(new Date(r.refund_date), 'MMM dd, yyyy')}</td>
+                                            <td className="px-6 py-4 text-white/40 text-xs">{r.reason || 'No reason provided'}</td>
+                                            <td className="px-6 py-4 text-right font-black text-rose-400 tracking-tight">
+                                                -{Number(r.amount).toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+
+            case 'general_expenses':
+                const expenses = data as Expense[];
+                const categoryLabels: Record<string, string> = {
+                    rent: 'Rent',
+                    equipment: 'Equipment',
+                    utilities: 'Utilities',
+                    salaries: 'Salaries',
+                    other: 'Other'
+                };
+                return (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
+                                <tr>
+                                    <th className="px-6 py-4">Description</th>
+                                    <th className="px-6 py-4">Category</th>
+                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {expenses.length === 0 ? (
+                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No expenses</td></tr>
+                                ) : (
+                                    expenses.map((e) => (
+                                        <tr key={e.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-6 py-4 font-bold text-white group-hover:text-orange-400 transition-colors">
+                                                {e.description}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-[9px] font-black uppercase tracking-wider border border-orange-500/20">
+                                                    {categoryLabels[e.category] || e.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-white/60 text-xs font-mono">{format(new Date(e.expense_date), 'MMM dd, yyyy')}</td>
+                                            <td className="px-6 py-4 text-right font-black text-orange-400 tracking-tight">
+                                                -{Number(e.amount).toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
                                             </td>
                                         </tr>
                                     ))
@@ -118,11 +272,11 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-2">Total Revenue</p>
-                                <p className="text-2xl font-black text-white">{profitData.revenue.toLocaleString()} <span className="text-[10px] text-white/20">EGP</span></p>
+                                <p className="text-2xl font-black text-white">{profitData.revenue.toLocaleString()} <span className="text-[10px] text-white/20">{currency.code}</span></p>
                             </div>
                             <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-2">Total Expenses</p>
-                                <p className="text-2xl font-black text-white">{profitData.expenses.toLocaleString()} <span className="text-[10px] text-white/20">EGP</span></p>
+                                <p className="text-2xl font-black text-white">{profitData.expenses.toLocaleString()} <span className="text-[10px] text-white/20">{currency.code}</span></p>
                             </div>
                         </div>
 
@@ -133,7 +287,7 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                     <p className={`text-5xl font-black tracking-tighter ${isProfitable ? 'text-white' : 'text-white'}`}>
                                         {isProfitable ? '+' : ''}{profitData.profit.toLocaleString()}
                                     </p>
-                                    <p className="text-[10px] font-black text-white/40 mt-2 uppercase tracking-widest">EGP</p>
+                                    <p className="text-[10px] font-black text-white/40 mt-2 uppercase tracking-widest">{currency.code}</p>
                                 </div>
                             </div>
                             {isProfitable ? (
@@ -159,11 +313,17 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                     <div className="flex items-center gap-4">
                         <div className={`p-3 rounded-2xl ${type === 'expenses' ? 'bg-orange-500/20 text-orange-400' :
                             type === 'profit' ? 'bg-emerald-500/20 text-emerald-400' :
-                                'bg-primary/20 text-primary'
+                                type === 'refunds' ? 'bg-rose-500/20 text-rose-400' :
+                                    type === 'general_expenses' ? 'bg-orange-500/20 text-orange-400' :
+                                        type === 'pt_sessions' ? 'bg-purple-500/20 text-purple-400' :
+                                            'bg-primary/20 text-primary'
                             }`}>
                             {type === 'expenses' ? <Wallet className="w-6 h-6" /> :
                                 type === 'profit' ? <TrendingUp className="w-6 h-6" /> :
-                                    <Calendar className="w-6 h-6" />}
+                                    type === 'refunds' ? <DollarSign className="w-6 h-6" /> :
+                                        type === 'general_expenses' ? <Receipt className="w-6 h-6" /> :
+                                            type === 'pt_sessions' ? <Dumbbell className="w-6 h-6" /> :
+                                                <Calendar className="w-6 h-6" />}
                         </div>
                         <div>
                             <h2 className="text-2xl font-black text-white uppercase tracking-tight">{title}</h2>
