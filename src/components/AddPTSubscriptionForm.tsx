@@ -184,7 +184,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                                 }`}
                             required
                         >
-                            <option value="" disabled hidden>Select Student</option>
+                            <option value="" disabled hidden></option>
                             {students.map(student => (
                                 <option key={student.id} value={student.id} className="bg-gray-900 text-white text-base font-medium">
                                     {student.full_name}
@@ -206,7 +206,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                                 }`}
                             required
                         >
-                            <option value="" disabled hidden>Select Coach</option>
+                            <option value="" disabled hidden></option>
                             {coaches.map(coach => (
                                 <option key={coach.id} value={coach.id} className="bg-gray-900 text-white text-base font-medium">
                                     {coach.full_name} - ${coach.pt_rate}/session
@@ -223,7 +223,6 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                         <input
                             type="number"
                             min="1"
-                            placeholder={t('pt.sessionCount') || 'Number of Sessions'}
                             value={formData.sessions_total}
                             onChange={(e) => setFormData({ ...formData, sessions_total: e.target.value })}
                             className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
@@ -256,7 +255,6 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                             <input
                                 type="number"
                                 min="0"
-                                placeholder={t('common.price') || 'Price'}
                                 value={formData.price}
                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                 className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-black text-2xl premium-gradient-text"
