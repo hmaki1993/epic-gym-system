@@ -362,21 +362,14 @@ export default function Schedule() {
                                     {format(day, 'd')}
                                 </span>
 
-                                <div className="mt-4 space-y-1.5">
-                                    {daySessions.slice(0, 3).map((session, idx) => (
+                                <div className="mt-4 space-y-1.5 flex flex-col gap-1">
+                                    {daySessions.map((session, idx) => (
                                         <div
                                             key={session.id || idx}
-                                            className="text-[9px] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 truncate group-hover:bg-primary/20 transition-colors"
-                                            title={session.title || session.name}
-                                        >
-                                            {session.title || session.name}
-                                        </div>
+                                            className="h-1.5 rounded-full bg-primary/40 hover:bg-primary transition-colors w-full"
+                                            title={`${session.title || session.name} (${session.coaches?.full_name})`}
+                                        ></div>
                                     ))}
-                                    {daySessions.length > 3 && (
-                                        <div className="text-[9px] font-black uppercase tracking-widest text-white/20 pl-2 mt-2">
-                                            + {daySessions.length - 3} more
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         );

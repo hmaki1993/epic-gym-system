@@ -13,7 +13,9 @@ export default function CoachDashboard() {
     const [checkInTime, setCheckInTime] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [ptStudentName, setPtStudentName] = useState('');
-    const [savedSessions, setSavedSessions] = useState<any[]>([]);
+    const [ptSessionCount, setPtSessionCount] = useState(1);
+    const [savedSessions, setSavedSessions] = useState<any[]>([]); // Restore savedSessions
+    const [todaySessions, setTodaySessions] = useState<any[]>([]);
     const [syncLoading, setSyncLoading] = useState(true);
     const [dailyTotalSeconds, setDailyTotalSeconds] = useState(0);
     const [ptSubscriptions, setPtSubscriptions] = useState<any[]>([]);
@@ -499,6 +501,18 @@ export default function CoachDashboard() {
                                 placeholder={i18n.language.startsWith('ar') ? 'مثال: أحمد محمد' : 'e.g. John Doe'}
                             />
                         </div>
+                        <div className="group">
+                            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors">
+                                {t('pt.sessionCount') || 'Count'}
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={ptSessionCount}
+                                onChange={(e) => setPtSessionCount(parseInt(e.target.value) || 1)}
+                                className="w-24 px-6 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-black text-xl text-center"
+                            />
+                        </div>
                         <button
                             onClick={async () => {
                                 if (!ptStudentName.trim()) {
@@ -536,7 +550,7 @@ export default function CoachDashboard() {
                                         .insert({
                                             coach_id: user.id,
                                             date: today,
-                                            sessions_count: 1,
+                                            sessions_count: ptSessionCount,
                                             student_name: ptStudentName,
                                         });
 
@@ -569,7 +583,7 @@ export default function CoachDashboard() {
                                             if (rate > 0) {
                                                 await supabase.from('payments').insert({
                                                     student_id: studentId,
-                                                    amount: rate,
+                                                    amount: rate * ptSessionCount,
                                                     payment_date: new Date().toISOString(),
                                                     payment_method: 'cash',
                                                     notes: `PT Session - ${ptStudentName}`
@@ -586,6 +600,7 @@ export default function CoachDashboard() {
                                     }
 
                                     setPtStudentName('');
+                                    setPtSessionCount(1);
                                     fetchTodaySessions();
                                     toast.success(t('common.saveSuccess'));
                                 } catch (error: any) {
