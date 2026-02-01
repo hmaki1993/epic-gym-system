@@ -175,6 +175,18 @@ input:-webkit-autofill:active {
   border-radius: 4px;
 }
 
+
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* Hide spin buttons for number inputs */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
 }
