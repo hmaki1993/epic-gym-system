@@ -725,14 +725,14 @@ export default function CoachDashboard() {
                                         {/* Student Info */}
                                         <div className="flex items-center gap-4 mb-6">
                                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-accent/20 group-hover:scale-110 transition-transform">
-                                                {subscription.students?.full_name?.[0] || 'S'}
+                                                {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
                                             </div>
                                             <div className="flex-1">
                                                 <h3 className="font-black text-white text-xl tracking-tight group-hover:text-accent transition-colors">
-                                                    {subscription.students?.full_name || 'Unknown'}
+                                                    {subscription.students?.full_name || subscription.student_name || 'Unknown'}
                                                 </h3>
                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">
-                                                    PT Student
+                                                    {subscription.student_name && !subscription.students ? 'Guest Student' : 'PT Student'}
                                                 </p>
                                             </div>
                                         </div>
