@@ -173,19 +173,20 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                 <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                     {/* Student Selection */}
                     <div className="group">
-                        <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
                             <User className="w-3 h-3" />
                             {t('common.student') || 'Student'}
                         </label>
                         <select
                             value={formData.student_id}
                             onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                            className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg appearance-none cursor-pointer"
+                            className={`w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                                }`}
                             required
                         >
-                            <option value="">Select Student</option>
+                            <option value="" disabled hidden>Select Student</option>
                             {students.map(student => (
-                                <option key={student.id} value={student.id} className="bg-gray-900">
+                                <option key={student.id} value={student.id} className="bg-gray-900 text-white text-base font-medium">
                                     {student.full_name}
                                 </option>
                             ))}
@@ -194,19 +195,20 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
 
                     {/* Coach Selection */}
                     <div className="group">
-                        <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
                             <User className="w-3 h-3" />
                             {t('common.coach') || 'Coach'}
                         </label>
                         <select
                             value={formData.coach_id}
                             onChange={(e) => setFormData({ ...formData, coach_id: e.target.value })}
-                            className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg appearance-none cursor-pointer"
+                            className={`w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.coach_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                                }`}
                             required
                         >
-                            <option value="">Select Coach</option>
+                            <option value="" disabled hidden>Select Coach</option>
                             {coaches.map(coach => (
-                                <option key={coach.id} value={coach.id} className="bg-gray-900">
+                                <option key={coach.id} value={coach.id} className="bg-gray-900 text-white text-base font-medium">
                                     {coach.full_name} - ${coach.pt_rate}/session
                                 </option>
                             ))}
