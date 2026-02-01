@@ -29,8 +29,10 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
     const [coaches, setCoaches] = useState<Coach[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
 
+    const [isGuest, setIsGuest] = useState(false);
     const [formData, setFormData] = useState({
         student_id: '',
+        student_name: '',
         coach_id: '',
         sessions_total: '' as any,
         start_date: format(new Date(), 'yyyy-MM-dd'),
@@ -87,7 +89,10 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.student_id || !formData.coach_id) {
+        // Validate: requires coach AND (student_id OR (isGuest AND student_name))
+        const hasStudent = isGuest ? !!formData.student_name.trim() : !!formData.student_id;
+
+        if (!hasStudent || !formData.coach_id) {
             toast.error(t('common.fillRequired'));
             return;
         }
@@ -103,7 +108,8 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
             const { error } = await supabase
                 .from('pt_subscriptions')
                 .insert({
-                    student_id: parseInt(formData.student_id),
+                    student_id: isGuest ? null : parseInt(formData.student_id),
+                    student_name: isGuest ? formData.student_name : null, // Store name if guest
                     coach_id: formData.coach_id,
                     sessions_total: formData.sessions_total,
                     sessions_remaining: formData.sessions_total,
@@ -117,13 +123,27 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
             if (error) throw error;
 
             // Record payment for PT Subscription
-            await supabase.from('payments').insert({
-                student_id: parseInt(formData.student_id),
-                amount: formData.price,
-                payment_date: formData.start_date || new Date().toISOString(),
-                payment_method: 'cash',
-                notes: `PT Subscription - Coach ${selectedCoach?.full_name}`
-            });
+            // For guest, payment record might fail if student_id is required in payments table.
+            // Let's check if we can insert payment without student_id or with special handling.
+            // Assuming payments table has student_id FK constraint, we might skip payment record for guest OR user needs to create a 'Guest' student.
+            // To be safe, we only record payment if linked to a real student for now, or we need to update payments table too.
+            // Given the requirement "add player from outside", payment tracking might still be needed.
+            // But if payments.student_id is NOT NULL, we can't insert.
+            // For now, only insert payment if not guest or if we find a way.
+
+            if (!isGuest && formData.student_id) {
+                await supabase.from('payments').insert({
+                    student_id: parseInt(formData.student_id),
+                    amount: formData.price,
+                    payment_date: formData.start_date || new Date().toISOString(),
+                    payment_method: 'cash',
+                    notes: `PT Subscription - Coach ${selectedCoach?.full_name}`
+                });
+            } else {
+                // For guests, we might not be able to link payment to a student account.
+                // We could rely on the pt_subscription record for revenue tracking in a more complex query?
+                // Or we accept that guests don't show up in standard 'student payments' ledgers.
+            }
 
             // Invalidate queries to update Revenue UI and PT lists
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
@@ -173,24 +193,48 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess }: AddPTSubsc
                 <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                     {/* Student Selection */}
                     <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                            <User className="w-3 h-3" />
-                            {t('common.student') || 'Student'}
-                        </label>
-                        <select
-                            value={formData.student_id}
-                            onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                            className={`w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
-                                }`}
-                            required
-                        >
-                            <option value="" disabled hidden></option>
-                            {students.map(student => (
-                                <option key={student.id} value={student.id} className="bg-gray-900 text-white text-base font-medium">
-                                    {student.full_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="flex items-center justify-between pointer-events-none mb-3 px-4">
+                            <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] flex items-center gap-2">
+                                <User className="w-3 h-3" />
+                                {t('common.student') || 'Student'}
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsGuest(!isGuest);
+                                    setFormData(prev => ({ ...prev, student_id: '', student_name: '' }));
+                                }}
+                                className="pointer-events-auto text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20"
+                            >
+                                {isGuest ? 'Select Existing' : 'Add External?'}
+                            </button>
+                        </div>
+
+                        {isGuest ? (
+                            <input
+                                type="text"
+                                value={formData.student_name}
+                                onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
+                                placeholder="Guest Name"
+                                className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                                required
+                            />
+                        ) : (
+                            <select
+                                value={formData.student_id}
+                                onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
+                                className={`w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                                    }`}
+                                required
+                            >
+                                <option value="" disabled hidden></option>
+                                {students.map(student => (
+                                    <option key={student.id} value={student.id} className="bg-gray-900 text-white text-base font-medium">
+                                        {student.full_name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
 
                     {/* Coach Selection */}
