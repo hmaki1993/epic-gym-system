@@ -1,6 +1,6 @@
 
 
-import { X, TrendingUp, Calendar, Wallet, AlertTriangle, DollarSign, Receipt, Dumbbell } from 'lucide-react';
+import { X, TrendingUp, Calendar, Wallet, AlertTriangle, DollarSign, Receipt, Dumbbell, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCurrency } from '../context/CurrencyContext';
 
@@ -53,9 +53,10 @@ interface FinanceDetailModalProps {
     type: 'revenue' | 'income' | 'expenses' | 'profit' | 'refunds' | 'general_expenses' | 'pt_sessions' | null;
     title: string;
     data: Payment[] | PayrollEntry[] | Refund[] | Expense[] | ProfitData | null;
+    onDelete?: (id: string, table: string) => void;
 }
 
-export default function FinanceDetailModal({ isOpen, onClose, type, title, data }: FinanceDetailModalProps) {
+export default function FinanceDetailModal({ isOpen, onClose, type, title, data, onDelete }: FinanceDetailModalProps) {
     const { currency } = useCurrency();
     if (!isOpen || !type || !data) return null;
 
@@ -69,16 +70,17 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                         <table className="w-full text-left">
                             <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
                                 <tr>
-                                    <th className="px-6 py-4">Student</th>
+                                    <th className="px-6 py-6">GYMNAST</th>
                                     <th className="px-6 py-4">Type</th>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">Method</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
+                                    {onDelete && <th className="px-6 py-4 w-12"></th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {payments.length === 0 ? (
-                                    <tr><td colSpan={5} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No records found</td></tr>
+                                    <tr><td colSpan={onDelete ? 6 : 5} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No records found</td></tr>
                                 ) : (
                                     payments.map((p) => {
                                         const isPT = p.notes?.toLowerCase().includes('pt');
@@ -103,9 +105,19 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                                         {p.payment_method.replace('_', ' ')}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-black text-emerald-400 tracking-tight">
-                                                    +{Number(p.amount).toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
+                                                <td className="px-6 py-6 text-right font-black text-emerald-400 tracking-tighter text-3xl drop-shadow-[0_0_10px_rgba(52,211,153,0.2)]">
+                                                    +{Number(p.amount).toLocaleString()} <span className="text-[10px] text-white/10 font-black italic">{currency.code}</span>
                                                 </td>
+                                                {onDelete && (
+                                                    <td className="px-6 py-4">
+                                                        <button
+                                                            onClick={() => onDelete(p.id, 'payments')}
+                                                            className="p-2 bg-white/5 hover:bg-rose-500/10 text-white/20 hover:text-rose-400 rounded-lg transition-all active:scale-95 group/del"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                )}
                                             </tr>
                                         );
                                     })
@@ -194,11 +206,12 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">Reason</th>
                                     <th className="px-6 py-4 text-right">Amount</th>
+                                    {onDelete && <th className="px-6 py-4 w-12"></th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {refunds.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No refunds</td></tr>
+                                    <tr><td colSpan={onDelete ? 5 : 4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No refunds</td></tr>
                                 ) : (
                                     refunds.map((r) => (
                                         <tr key={r.id} className="hover:bg-white/5 transition-colors group">
@@ -210,6 +223,16 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                             <td className="px-6 py-4 text-right font-black text-rose-400 tracking-tight">
                                                 -{Number(r.amount).toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
                                             </td>
+                                            {onDelete && (
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => onDelete(r.id, 'refunds')}
+                                                        className="p-2 bg-white/5 hover:bg-rose-500/10 text-white/20 hover:text-rose-400 rounded-lg transition-all active:scale-95"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}
@@ -233,14 +256,15 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                             <thead className="text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/5">
                                 <tr>
                                     <th className="px-6 py-4">Description</th>
-                                    <th className="px-6 py-4">Category</th>
-                                    <th className="px-6 py-4">Date</th>
-                                    <th className="px-6 py-4 text-right">Amount</th>
+                                    <th className="px-6 py-6">CATEGORY</th>
+                                    <th className="px-6 py-6">DATE</th>
+                                    <th className="px-6 py-6 text-right">AMOUNT</th>
+                                    {onDelete && <th className="px-6 py-4 w-12"></th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {expenses.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No expenses</td></tr>
+                                    <tr><td colSpan={onDelete ? 5 : 4} className="px-6 py-8 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No expenses</td></tr>
                                 ) : (
                                     expenses.map((e) => (
                                         <tr key={e.id} className="hover:bg-white/5 transition-colors group">
@@ -253,9 +277,19 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-white/60 text-xs font-mono">{format(new Date(e.expense_date), 'MMM dd, yyyy')}</td>
-                                            <td className="px-6 py-4 text-right font-black text-orange-400 tracking-tight">
-                                                -{Number(e.amount).toLocaleString()} <span className="text-[9px] text-white/20">{currency.code}</span>
+                                            <td className="px-6 py-4 text-right font-black text-orange-400 tracking-tight text-xl">
+                                                -{Number(e.amount).toLocaleString()} <span className="text-[10px] text-white/10 uppercase tracking-widest">{currency.code}</span>
                                             </td>
+                                            {onDelete && (
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => onDelete(e.id, 'expenses')}
+                                                        className="p-2 bg-white/5 hover:bg-rose-500/10 text-white/20 hover:text-rose-400 rounded-lg transition-all active:scale-95"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}
@@ -270,13 +304,13 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                 return (
                     <div className="space-y-8 py-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-2">Total Revenue</p>
-                                <p className="text-2xl font-black text-white">{profitData.revenue.toLocaleString()} <span className="text-[10px] text-white/20">{currency.code}</span></p>
+                            <div className="p-6 rounded-2xl bg-emerald-500/5 border border-white/10 text-center group hover:border-emerald-500/30 transition-all">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400/60 mb-2">Revenue</p>
+                                <p className="text-3xl font-black text-white tracking-tighter">{profitData.revenue.toLocaleString()} <span className="text-[10px] text-white/10 italic">{currency.code}</span></p>
                             </div>
-                            <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-2">Total Expenses</p>
-                                <p className="text-2xl font-black text-white">{profitData.expenses.toLocaleString()} <span className="text-[10px] text-white/20">{currency.code}</span></p>
+                            <div className="p-6 rounded-2xl bg-rose-500/5 border border-white/10 text-center group hover:border-rose-500/30 transition-all">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400/60 mb-2">Expenses</p>
+                                <p className="text-3xl font-black text-white tracking-tighter">{profitData.expenses.toLocaleString()} <span className="text-[10px] text-white/10 italic">{currency.code}</span></p>
                             </div>
                         </div>
 
@@ -326,8 +360,8 @@ export default function FinanceDetailModal({ isOpen, onClose, type, title, data 
                                                 <Calendar className="w-6 h-6" />}
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-white uppercase tracking-tight">{title}</h2>
-                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Detailed Breakdown</p>
+                            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">{title}</h2>
+                            <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.3em]">Institutional Records</p>
                         </div>
                     </div>
                     <button

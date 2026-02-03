@@ -130,51 +130,8 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                 ? formData.subscription_expiry
                 : calculateExpiry(formData.subscription_start, formData.subscription_type);
 
-            // 1. Determine Group (Auto-Grouping Logic)
-            let trainingGroupId = null;
-            if (formData.coach_id && formData.training_schedule.length > 0) {
-                // Generate Schedule Key: "day:start:end|day:start:end" (sorted)
-                const scheduleKey = formData.training_schedule
-                    .map((s: any) => `${s.day}:${s.start}:${s.end}`)
-                    .sort()
-                    .join('|');
-
-                // Generate Group Name: "Sat/Mon 4PM"
-                // Generate Group Name: "Sat/Mon 4PM"
-                const days = formData.training_days.map((d: string) => {
-                    const translated = t(`days.${d}`);
-                    // If translation returns the key (e.g. days.saturday) or is undefined, fallback to capitalization
-                    return (translated && !translated.startsWith('days.')) ? translated.substring(0, 3) : d.substring(0, 3).toUpperCase();
-                }).join('/');
-                const time = formData.training_schedule[0]?.start ? format(parseISO(`2000-01-01T${formData.training_schedule[0].start}`), 'h a') : '';
-                const groupName = `${days} ${time}`;
-
-                // Check if group exists
-                const { data: existingGroup } = await supabase
-                    .from('training_groups')
-                    .select('id')
-                    .eq('coach_id', formData.coach_id)
-                    .eq('schedule_key', scheduleKey)
-                    .maybeSingle();
-
-                if (existingGroup) {
-                    trainingGroupId = existingGroup.id;
-                } else {
-                    // Create new group
-                    const { data: newGroup, error: groupError } = await supabase
-                        .from('training_groups')
-                        .insert({
-                            coach_id: formData.coach_id,
-                            name: groupName,
-                            schedule_key: scheduleKey
-                        })
-                        .select()
-                        .single();
-
-                    if (groupError) throw groupError;
-                    trainingGroupId = newGroup.id;
-                }
-            }
+            // 1. Determine Group (Auto-Grouping Logic Disabled)
+            const trainingGroupId = null;
 
             const studentData = {
                 full_name: formData.full_name,
@@ -293,6 +250,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                 }]);
                         }
                     }
+
                 }
             }
 

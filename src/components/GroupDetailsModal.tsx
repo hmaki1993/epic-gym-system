@@ -14,20 +14,25 @@ interface Group {
     name: string;
     schedule_key: string;
     students: Student[];
+    coaches?: {
+        full_name: string;
+    };
 }
 
 interface GroupDetailsModalProps {
     group: Group;
     onClose: () => void;
+    onEdit?: () => void;
 }
 
-export default function GroupDetailsModal({ group, onClose }: GroupDetailsModalProps) {
+export default function GroupDetailsModal({ group, onClose, onEdit }: GroupDetailsModalProps) {
     const { t, i18n } = useTranslation();
 
     const calculateAge = (dob: string) => {
         if (!dob) return 'N/A';
         try {
-            return differenceInYears(new Date(), parseISO(dob));
+            const age = differenceInYears(new Date(), parseISO(dob));
+            return age >= 0 ? age : 'N/A';
         } catch {
             return 'N/A';
         }
@@ -37,104 +42,122 @@ export default function GroupDetailsModal({ group, onClose }: GroupDetailsModalP
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
             {/* Ultra Premium Backdrop */}
             <div
-                className="absolute inset-0 bg-[#020617]/60 backdrop-blur-3xl animate-in fade-in duration-700"
+                className="absolute inset-0 bg-[#020617]/80 backdrop-blur-2xl animate-in fade-in duration-700"
                 onClick={onClose}
             >
                 {/* Dynamic Aura Effects */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[100vh] pointer-events-none">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] opacity-50 animate-pulse"></div>
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] opacity-30"></div>
-                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] opacity-30"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[100vh] pointer-events-none overflow-hidden">
+                    <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] mix-blend-screen opacity-50 animate-pulse"></div>
+                    <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-accent/20 rounded-full blur-[120px] mix-blend-screen opacity-50 animate-pulse delay-700"></div>
                 </div>
             </div>
 
-            <div className="w-full max-w-2xl bg-white/[0.02] backdrop-blur-md rounded-[3.5rem] border border-white/10 shadow-[0_32px_128px_rgba(0,0,0,0.8)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 relative">
-                {/* Inner Glows */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            <div className="w-full max-w-lg bg-[#0d1117]/80 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.9)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 relative">
+                {/* Visual Accent - Top Light Beam */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
 
-                {/* Header */}
-                <div className="relative z-10 p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                    <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 rounded-[1.8rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-xl shadow-primary/20 group-hover:rotate-3 transition-transform">
-                            <Users className="w-8 h-8" />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-black text-white uppercase tracking-tight premium-gradient-text leading-tight">{group.name}</h2>
-                            <div className="flex items-center gap-3 mt-1.5">
-                                <span className="px-3 py-1 bg-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-primary/30">
-                                    {group.students.length} {t('common.students', 'Gymnasts')}
-                                </span>
-                                <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                                <span className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
-                                    Active Group
-                                </span>
+                {/* Modal Header Section */}
+                <div className="relative z-10 px-8 py-8 bg-gradient-to-b from-white/[0.05] to-transparent">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-5">
+                            <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-tr from-primary to-accent rounded-2xl blur opacity-40 group-hover:opacity-100 transition duration-500"></div>
+                                <div className="relative w-16 h-16 rounded-2xl bg-[#161b22] flex items-center justify-center text-white border border-white/10 shadow-2xl">
+                                    {group.coaches?.full_name ? (
+                                        <span className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-white to-white/40">
+                                            {group.coaches.full_name.charAt(0).toUpperCase()}
+                                        </span>
+                                    ) : (
+                                        <Users className="w-8 h-8 text-primary" />
+                                    )}
+                                </div>
                             </div>
+
+                            <div className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">
+                                    {group.name}
+                                </h2>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
+                                        <span className="text-[9px] font-black text-primary uppercase tracking-widest">
+                                            {group.students.length} {t('common.members')}
+                                        </span>
+                                    </div>
+                                    {group.coaches?.full_name && (
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                                            {t('common.coachPrefix')} {group.coaches.full_name.split(' ')[0]}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {onEdit && (
+                                <button
+                                    onClick={onEdit}
+                                    className="p-2.5 rounded-xl bg-white/5 hover:bg-primary/20 text-white/40 hover:text-primary transition-all border border-white/10 hover:border-primary/40 active:scale-90"
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                </button>
+                            )}
+                            <button
+                                onClick={onClose}
+                                className="p-2.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-500 transition-all border border-white/10 hover:border-rose-500/40 active:scale-90"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all hover:scale-110 active:scale-90"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
                 </div>
 
-                {/* Body */}
-                <div className="relative z-10 p-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                {/* Body - Student List */}
+                <div className="relative z-10 px-6 pb-8 max-h-[45vh] overflow-y-auto custom-scrollbar">
                     {group.students.length === 0 ? (
-                        <div className="text-center py-24 flex flex-col items-center gap-8">
-                            <div className="w-24 h-24 rounded-[2.5rem] bg-white/5 border border-white/5 flex items-center justify-center text-white/10 shadow-inner">
-                                <Users className="w-12 h-12" />
+                        <div className="text-center py-12 flex flex-col items-center gap-6">
+                            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/10">
+                                <Users className="w-8 h-8" />
                             </div>
-                            <div>
-                                <p className="text-xl font-black text-white/30 uppercase tracking-[0.3em]">
-                                    Empty Group
-                                </p>
-                                <p className="text-sm text-white/20 font-bold mt-3 max-w-[280px] mx-auto leading-relaxed">
-                                    Assign students to this group from the students management panel.
-                                </p>
-                            </div>
+                            <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em]">{t('common.rosterEmpty')}</p>
                         </div>
                     ) : (
-                        <div className="grid gap-6">
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between px-2 mb-2">
+                                <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.4em]">{t('common.studentList')}</span>
+                                <span className="w-full mx-4 h-px bg-white/5"></span>
+                            </div>
                             {group.students.map((student, idx) => (
                                 <div
                                     key={student.id}
-                                    className="relative group/item p-7 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.08] hover:border-primary/40 transition-all duration-500 hover:scale-[1.02] shadow-2xl overflow-hidden"
-                                    style={{ animationDelay: `${idx * 50}ms` }}
+                                    className="group/item relative p-1.5 rounded-[1.8rem] bg-gradient-to-r from-white/[0.03] to-transparent border border-white/5 hover:border-white/10 transition-all duration-500"
+                                    style={{ animationDelay: `${idx * 80}ms` }}
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity pointer-events-none"></div>
-
-                                    <div className="relative z-10 flex items-center justify-between gap-6">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-16 h-16 rounded-[1.2rem] bg-gradient-to-br from-slate-800 to-slate-950 border border-white/10 flex items-center justify-center text-white font-black text-2xl shadow-2xl group-hover/item:scale-110 transition-transform">
+                                    <div className="relative flex items-center justify-between p-3 bg-[#161b22]/40 backdrop-blur-md rounded-[1.5rem] border border-white/5 group-hover/item:border-primary/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#1c2128] to-[#0d1117] border border-white/10 flex items-center justify-center text-white/60 font-black text-lg shadow-xl group-hover/item:scale-105 transition-transform">
                                                 {student.full_name.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <h3 className="text-xl font-black text-white group-hover/item:text-primary transition-colors tracking-tight">
+                                                <h3 className="text-sm font-black text-white group-hover/item:text-primary transition-colors tracking-tight">
                                                     {student.full_name}
                                                 </h3>
-                                                <div className="flex items-center gap-4 mt-2">
-                                                    <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/30 bg-white/5 px-3 py-1 rounded-lg">
-                                                        <Calendar className="w-3.5 h-3.5 text-primary/50" />
-                                                        {student.birth_date}
-                                                    </span>
-                                                </div>
+                                                <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest mt-0.5">
+                                                    {t('common.born')} {student.birth_date}
+                                                </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-10">
-                                            <div className="text-right">
-                                                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-1.5">Age</p>
-                                                <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-3xl font-black text-white tracking-tighter shrink-0">
+                                        <div className="flex items-center gap-6 pr-2">
+                                            <div className="flex flex-col items-end">
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-xl font-black text-white tracking-tighter leading-none">
                                                         {calculateAge(student.birth_date)}
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded-md">yrs</span>
+                                                    <span className="text-[7px] font-black text-primary/60 uppercase tracking-widest">{t('common.yrs')}</span>
                                                 </div>
                                             </div>
-                                            <div className="p-4 rounded-2xl bg-white/5 text-white/10 group-hover/item:text-primary group-hover/item:bg-primary/20 transition-all border border-white/5 group-hover/item:border-primary/20 shadow-lg">
-                                                <ArrowRight className="w-6 h-6 -rotate-45 group-hover/item:rotate-0 transition-transform duration-500" />
+                                            <div className="w-10 h-10 rounded-[1rem] bg-white/5 flex items-center justify-center text-white/10 group-hover/item:text-primary group-hover/item:bg-primary/20 border border-white/5 group-hover/item:border-primary/20 transition-all">
+                                                <ArrowRight className="w-4 h-4 group-hover/item:translate-x-0.5 transition-transform" />
                                             </div>
                                         </div>
                                     </div>
@@ -144,17 +167,19 @@ export default function GroupDetailsModal({ group, onClose }: GroupDetailsModalP
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="relative z-10 p-10 border-t border-white/5 bg-white/[0.03] flex items-center justify-between">
-                    <div className="hidden sm:flex items-center gap-3 text-white/10 group-hover:text-white/20 transition-colors">
-                        <Sparkles className="w-5 h-5 text-primary/30" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em]">Epic Management Student Roster</span>
+                {/* Action Footer */}
+                <div className="relative z-10 px-8 py-6 bg-gradient-to-t from-black/40 to-transparent flex items-center justify-between border-t border-white/5">
+                    <div className="hidden sm:flex items-center gap-2 opacity-20">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        <span className="text-[7px] font-black text-white uppercase tracking-[0.5em]">Roster Panel</span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-full sm:w-auto px-12 py-5 rounded-[2rem] bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/10 hover:border-white/20 text-white font-black uppercase tracking-[0.3em] text-xs transition-all duration-300 shadow-2xl hover:scale-105"
+                        className="w-full sm:w-auto px-10 py-3 rounded-2xl bg-white group hover:bg-primary transition-all duration-300 shadow-2xl active:scale-95"
                     >
-                        {t('common.close', 'Close')}
+                        <span className="text-black group-hover:text-white font-black uppercase tracking-[0.2em] text-[10px] transition-colors">
+                            {t('common.dismiss')}
+                        </span>
                     </button>
                 </div>
             </div>

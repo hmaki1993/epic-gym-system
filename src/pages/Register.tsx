@@ -37,6 +37,19 @@ export default function Register() {
 
             // 2. If signup successful, automatically sign in
             if (data.user) {
+                // 2.5 Create a profile record (CRITICAL: Dashboard depends on this)
+                const { error: profileError } = await supabase.from('profiles').insert({
+                    id: data.user.id,
+                    full_name: fullName,
+                    role: role,
+                });
+
+                if (profileError) {
+                    console.error('Error creating profile:', profileError);
+                    // We don't throw here to avoid blocking sign-in, 
+                    // but the user might have empty dashboard until fixed
+                }
+
                 const { error: signInError } = await supabase.auth.signInWithPassword({
                     email,
                     password,

@@ -151,7 +151,7 @@ export default function AddSessionForm({ onClose, onSuccess, initialData }: AddS
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Class Title</label>
                         <input
                             required
-                            placeholder="e.g. Gymnastics Level 1"
+                            placeholder=""
                             className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}

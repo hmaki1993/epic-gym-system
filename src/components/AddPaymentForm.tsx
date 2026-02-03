@@ -117,7 +117,7 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
                                 className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.amount}
                                 onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                                placeholder="0.00"
+                                placeholder=""
                             />
                         </div>
                         <div className="space-y-2">
@@ -160,7 +160,7 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
                             className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all h-24 resize-none text-white placeholder:text-white/20"
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                            placeholder="Add payment details..."
+                            placeholder=""
                         ></textarea>
                     </div>
 

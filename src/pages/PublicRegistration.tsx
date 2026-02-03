@@ -96,46 +96,8 @@ export default function PublicRegistration() {
                 ? format(addMonths(new Date(), selectedPlan.duration_months), 'yyyy-MM-dd')
                 : null;
 
-            // 2. Determine Group (Auto-Grouping Logic)
-            let trainingGroupId = null;
-            if (formData.coach_id && formData.training_schedule.length > 0) {
-                const scheduleKey = formData.training_schedule
-                    .map(s => `${s.day}:${s.start}:${s.end}`)
-                    .sort()
-                    .join('|');
-
-                // Generate Group Name: "Sat/Mon 4PM"
-                const dayMap: { [key: string]: string } = { sat: 'Sat', sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri' };
-                const shortDays = formData.training_days.map(d => dayMap[d] || d.toUpperCase()).join('/');
-                const timeLabel = formData.training_schedule[0]?.start
-                    ? format(parseISO(`2000-01-01T${formData.training_schedule[0].start}`), 'h a')
-                    : '';
-                const groupName = `${shortDays} ${timeLabel}`;
-
-                // Find or Create Group
-                const { data: existingGroup } = await supabase
-                    .from('training_groups')
-                    .select('id')
-                    .eq('coach_id', formData.coach_id)
-                    .eq('schedule_key', scheduleKey)
-                    .maybeSingle();
-
-                if (existingGroup) {
-                    trainingGroupId = existingGroup.id;
-                } else {
-                    const { data: newGroup, error: groupError } = await supabase
-                        .from('training_groups')
-                        .insert({
-                            coach_id: formData.coach_id,
-                            name: groupName,
-                            schedule_key: scheduleKey
-                        })
-                        .select()
-                        .single();
-                    if (groupError) throw groupError;
-                    trainingGroupId = newGroup.id;
-                }
-            }
+            // 2. Determine Group (Auto-Grouping Logic Disabled)
+            const trainingGroupId = null;
 
             // 3. Insert Student
             const { data: student, error: studentError } = await supabase

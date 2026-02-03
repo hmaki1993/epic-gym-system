@@ -79,7 +79,7 @@ export default function AddExpenseForm({ onClose, onSuccess, onAdd }: AddExpense
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-orange-500/50 transition-all font-bold"
-                            placeholder="e.g., Monthly Rent, New Equipment, Electricity Bill..."
+                            placeholder=""
                             required
                         />
                     </div>
@@ -94,7 +94,7 @@ export default function AddExpenseForm({ onClose, onSuccess, onAdd }: AddExpense
                                 value={formData.amount}
                                 onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                 className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-orange-500/50 transition-all font-bold"
-                                placeholder="0.00"
+                                placeholder=""
                                 required
                             />
                         </div>

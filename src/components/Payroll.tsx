@@ -7,6 +7,7 @@ import { useCurrency } from '../context/CurrencyContext';
 interface PayrollEntry {
     coach_id: string;
     coach_name: string;
+    role?: string;
     total_pt_sessions: number;
     pt_rate: number;
     salary: number;
@@ -24,6 +25,18 @@ export default function Payroll({ onViewAttendance }: PayrollProps) {
     const { currency } = useCurrency();
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
+    // Helper for role badge colors
+    const getRoleBadgeStyles = (role: string) => {
+        const styles: Record<string, string> = {
+            admin: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.15)]',
+            head_coach: 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]',
+            coach: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]',
+            reception: 'bg-blue-500/20 text-blue-300 border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.15)]',
+            cleaner: 'bg-slate-500/20 text-slate-300 border-slate-500/30 shadow-[0_0_10px_rgba(148,163,184,0.15)]'
+        };
+        return styles[role?.toLowerCase()] || 'bg-white/10 text-white/50 border-white/10';
+    };
+
     // Use the shared hook for calculations
     const { data, isLoading: loading } = useMonthlyPayroll(month);
     const payrollData = data?.payrollData || [];
@@ -39,12 +52,16 @@ export default function Payroll({ onViewAttendance }: PayrollProps) {
                     {t('coaches.payrollTitle')}
                 </h3>
                 <div className="relative group w-full sm:w-auto">
-                    <input
-                        type="month"
-                        value={month}
-                        onChange={(e) => setMonth(e.target.value)}
-                        className="w-full sm:w-auto bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-black uppercase tracking-widest text-xs appearance-none cursor-pointer hover:bg-white/10"
-                    />
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={month}
+                            onChange={(e) => setMonth(e.target.value)}
+                            placeholder="YYYY-MM"
+                            className="w-32 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-black uppercase tracking-widest text-xs text-center placeholder:text-white/20"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                    </div>
                 </div>
             </div>
 
@@ -74,7 +91,16 @@ export default function Payroll({ onViewAttendance }: PayrollProps) {
                                                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-xs font-black text-white/40 group-hover:bg-primary/20 group-hover:text-primary transition-all duration-500 shadow-inner">
                                                     {row.coach_name?.[0] || '?'}
                                                 </div>
-                                                <span className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors">{row.coach_name}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors">{row.coach_name}</span>
+                                                    {row.role && (
+                                                        <div className={`mt-2 px-3 py-1 rounded-lg flex items-center self-start border transition-all duration-300 ${getRoleBadgeStyles(row.role)}`}>
+                                                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+                                                                {t(`roles.${row.role}`)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                             {onViewAttendance && (
                                                 <button

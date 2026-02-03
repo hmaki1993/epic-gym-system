@@ -10,11 +10,11 @@ interface Currency {
 }
 
 export const CURRENCIES: Record<CurrencyCode, Currency> = {
-    EGP: { code: 'EGP', symbol: 'EGP', name: 'Egyptian Pound', locale: 'ar-EG' },
+    EGP: { code: 'EGP', symbol: 'EGP', name: 'Egyptian Pound', locale: 'en-EG' },
     USD: { code: 'USD', symbol: '$', name: 'US Dollar', locale: 'en-US' },
-    EUR: { code: 'EUR', symbol: '€', name: 'Euro', locale: 'de-DE' },
-    AED: { code: 'AED', symbol: 'AED', name: 'UAE Dirham', locale: 'ar-AE' },
-    KWD: { code: 'KWD', symbol: 'KWD', name: 'Kuwaiti Dinar', locale: 'ar-KW' },
+    EUR: { code: 'EUR', symbol: '€', name: 'Euro', locale: 'en-IE' },
+    AED: { code: 'AED', symbol: 'AED', name: 'UAE Dirham', locale: 'en-AE' },
+    KWD: { code: 'KWD', symbol: 'KWD', name: 'Kuwaiti Dinar', locale: 'en-KW' },
 };
 
 interface CurrencyContextType {

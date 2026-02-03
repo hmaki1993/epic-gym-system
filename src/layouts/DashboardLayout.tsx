@@ -15,28 +15,30 @@ import {
     LogOut,
     Wrench,
     Building2,
-    Search,
     Bell,
     ChevronDown,
     MessageSquare,
     Globe
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
+import { useTheme } from '../context/ThemeContext';
+import PremiumClock from '../components/PremiumClock';
 
 export default function DashboardLayout() {
     const { t, i18n } = useTranslation();
+    const { settings, updateSettings, userProfile } = useTheme();
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
-    const [role, setRole] = useState<string | null>(null);
-    const [fullName, setFullName] = useState<string | null>(null);
-    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    // Derived states from unified userProfile
+    const userId = userProfile?.id || null; // Wait, I didn't add id to userProfile in ThemeContext. I should.
+    const role = userProfile?.role || null;
+    const fullName = userProfile?.full_name || null;
+    const userEmail = userProfile?.email || null; // I should add email too.
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [userStatus, setUserStatus] = useState<'online' | 'busy'>('online');
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<{ id: string, name: string, type: 'student' | 'coach' }[]>([]);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
 
@@ -45,15 +47,15 @@ export default function DashboardLayout() {
         try {
             const saved = localStorage.getItem('gymProfile');
             return saved ? JSON.parse(saved) : {
-                name: 'Epic Gym Academy',
+                name: t('common.gymNameFallback'),
                 phone: '+20 123 456 7890',
-                address: 'Cairo, Egypt',
+                address: t('common.gymAddressFallback'),
             };
         } catch (e) {
             return {
-                name: 'Epic Gym Academy',
+                name: t('common.gymNameFallback'),
                 phone: '+20 123 456 7890',
-                address: 'Cairo, Egypt',
+                address: t('common.gymAddressFallback'),
             };
         }
     });
@@ -64,19 +66,37 @@ export default function DashboardLayout() {
         title: string;
         message: string;
         created_at: string;
-        type: 'student' | 'payment' | 'schedule';
+        type: 'student' | 'payment' | 'schedule' | 'coach' | 'check_in' | 'attendance_absence' | 'pt_subscription';
         is_read: boolean;
+        user_id?: string;
+        related_coach_id?: string;
+        related_student_id?: string;
+        target_role?: string;
     }[]>([]);
 
     useEffect(() => {
         // Fetch initial notifications
         const fetchNotifications = async () => {
-            const { data } = await supabase
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Get role from profile to filter target_role
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            const userRole = profile?.role?.toLowerCase().trim();
+
+            let query = supabase
                 .from('notifications')
                 .select('*')
+                .or(`user_id.eq.${user.id},user_id.is.null`)
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(20);
 
+            const { data } = await query;
             if (data) setNotifications(data);
         };
 
@@ -92,9 +112,35 @@ export default function DashboardLayout() {
                     schema: 'public',
                     table: 'notifications'
                 },
+                async (payload) => {
+                    const newNote = payload.new as any;
+
+                    // We need a fresh userId from Auth if it's not available in closure
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+
+                    // Only add if it's for this user OR global
+                    if (!newNote.user_id || newNote.user_id === user.id) {
+                        setNotifications(prev => {
+                            // Prevent duplicates
+                            if (prev.some(n => n.id === newNote.id)) return prev;
+                            return [newNote, ...prev];
+                        });
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'DELETE',
+                    schema: 'public',
+                    table: 'notifications'
+                },
                 (payload) => {
-                    setNotifications(prev => [payload.new as any, ...prev]);
-                    // Optional: Play sound or show browser notification here
+                    const deletedId = (payload.old as any).id;
+                    if (deletedId) {
+                        setNotifications(prev => prev.filter(n => n.id !== deletedId));
+                    }
                 }
             )
             .subscribe();
@@ -105,72 +151,45 @@ export default function DashboardLayout() {
     }, []);
 
     useEffect(() => {
-        const fetchUserRole = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUserId(user.id);
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role, full_name, avatar_url')
-                    .eq('id', user.id)
-                    .single();
-                setRole(profile?.role || null);
-                setFullName(profile?.full_name || null);
-                setUserEmail(user.email || null);
-                setUserStatus(user.user_metadata?.status || 'online');
+        if (userProfile?.avatar_url) {
+            setAvatarUrl(userProfile.avatar_url);
+        } else if (userId) {
+            // If avatar is missing in profile, try fetching from coaches table (linked by profile_id)
+            const fetchCoachAvatar = async () => {
+                const { data: coachData } = await supabase
+                    .from('coaches')
+                    .select('avatar_url')
+                    .eq('profile_id', userId)
+                    .maybeSingle();
+                setAvatarUrl(coachData?.avatar_url || null);
+            };
+            fetchCoachAvatar();
+        }
+    }, [userProfile, userId]);
 
-                // If avatar is missing in profile, try fetching from coaches table (linked by profile_id)
-                if (!profile?.avatar_url) {
-                    const { data: coachData } = await supabase
-                        .from('coaches')
-                        .select('avatar_url')
-                        .eq('profile_id', user.id)
-                        .maybeSingle();
-                    setAvatarUrl(coachData?.avatar_url || null);
-                } else {
-                    setAvatarUrl(profile.avatar_url);
-                }
-            }
+    useEffect(() => {
+        const fetchStatus = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) setUserStatus(user.user_metadata?.status || 'online');
         };
-        fetchUserRole();
+        fetchStatus();
 
         const handleProfileUpdate = () => {
             const saved = localStorage.getItem('gymProfile');
             if (saved) setGymProfile(JSON.parse(saved));
         };
 
+        // Debugging: Monitor Role
+        if (role) console.log('Current User Role:', role);
+
         // Also refresh user profile on event
         window.addEventListener('gymProfileUpdated', handleProfileUpdate);
-        window.addEventListener('userProfileUpdated', fetchUserRole);
         return () => {
             window.removeEventListener('gymProfileUpdated', handleProfileUpdate);
-            window.removeEventListener('userProfileUpdated', fetchUserRole);
         };
     }, []);
 
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setSearchResults([]);
-            return;
-        }
 
-        const timer = setTimeout(async () => {
-            const [students, coaches] = await Promise.all([
-                supabase.from('students').select('id, full_name').ilike('full_name', `%${searchQuery}%`).limit(5),
-                supabase.from('coaches').select('id, full_name').ilike('full_name', `%${searchQuery}%`).limit(5)
-            ]);
-
-            const results = [
-                ...(students.data?.map(s => ({ id: s.id, name: s.full_name, type: 'student' as const })) || []),
-                ...(coaches.data?.map(c => ({ id: c.id, name: c.full_name, type: 'coach' as const })) || [])
-            ];
-            setSearchResults(results);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
-
-    // Close dropdowns on click outside
     useEffect(() => {
         const handleClickOutside = () => {
             setNotificationsOpen(false);
@@ -200,12 +219,90 @@ export default function DashboardLayout() {
         { to: '/coaches', icon: UserCircle, label: t('common.coaches'), roles: ['admin', 'head_coach'] },
         { to: '/schedule', icon: Calendar, label: t('common.schedule'), roles: ['admin', 'head_coach', 'reception'] },
         { to: '/finance', icon: Wallet, label: t('common.finance'), roles: ['admin'] },
-        { to: '/calculator', icon: Wrench, label: t('common.calculator'), roles: ['admin', 'head_coach', 'coach', 'reception'] },
         { to: '/settings', icon: Settings, label: t('common.settings'), roles: ['admin', 'head_coach', 'coach', 'reception'] },
         { to: '/admin/cameras', icon: Video, label: t('common.cameras'), roles: ['admin'] },
     ];
 
-    const navItems = allNavItems.filter(item => !role || item.roles.includes(role));
+    const navItems = allNavItems.filter(item => {
+        if (!role) return true; // Show everything while loading if no role
+        const normalizedRole = role.toLowerCase().trim();
+        if (normalizedRole === 'admin') return true; // Admin sees all
+        return item.roles.includes(normalizedRole);
+    });
+
+    // Filter notifications based on role and user_id
+    const filteredNotifications = notifications.filter(note => {
+        if (!role) return false;
+
+        // If targeted to a specific user, only they should see it
+        if (note.user_id) {
+            return note.user_id === userId;
+        }
+
+        if (role === 'admin') return true; // Admin sees all global ones
+
+        // Head Coach Filtering
+        if (role === 'head_coach') {
+            const allowedTypes = ['coach', 'check_in', 'attendance_absence', 'pt_subscription', 'student'];
+            if (note.target_role === 'head_coach') return true;
+            if (allowedTypes.includes(note.type)) return true;
+            return false;
+        }
+
+        // Coach Filtering
+        if (role === 'coach') {
+            if (note.user_id === userId) return true; // Targeted to this coach
+            if (note.target_role === 'coach') return true; // Global coach notification
+            return false;
+        }
+
+        // Reception Filtering
+        if (role === 'reception') {
+            const allowedTypes = ['payment', 'student'];
+            if (note.target_role === 'reception' || note.target_role === 'admin_reception') return true;
+            if (allowedTypes.includes(note.type)) return true;
+            return false;
+        }
+
+        return false;
+    });
+
+    const unreadCount = filteredNotifications.filter(n => !n.is_read).length;
+
+    const handleClearAllNotifications = async () => {
+        if (!filteredNotifications.length) return;
+
+        // Optimistic update
+        const ids = filteredNotifications.map(n => n.id);
+        const oldNotifications = [...notifications];
+        setNotifications(prev => prev.filter(n => !ids.includes(n.id)));
+
+        try {
+            const { error } = await supabase
+                .from('notifications')
+                .delete()
+                .in('id', ids);
+
+            if (error) throw error;
+            toast.success('Notifications cleared');
+        } catch (error) {
+            console.error('Error clearing notifications:', error);
+            setNotifications(oldNotifications);
+            toast.error('Failed to clear notifications. Please try again.');
+        }
+    };
+
+    const handleMarkAsRead = async (id: string) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+        try {
+            await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', id);
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
 
     return (
         <div className="min-h-screen flex bg-background font-cairo">
@@ -239,7 +336,7 @@ export default function DashboardLayout() {
                     {/* User Profile Section in Sidebar */}
                     <div className="mt-8 px-6 flex flex-col items-center">
                         <div className="text-center">
-                            <h3 className="font-extrabold text-white uppercase tracking-tight text-sm truncate max-w-[200px]">{fullName || role || 'Admin'}</h3>
+                            <h3 className="font-extrabold text-white uppercase tracking-tight text-sm truncate max-w-[200px]">{fullName || role || t('common.adminRole')}</h3>
                             <p className="text-[10px] text-white/40 font-bold truncate lowercase mt-1 max-w-[200px]">{userEmail}</p>
                         </div>
                     </div>
@@ -277,6 +374,9 @@ export default function DashboardLayout() {
                                 const newLang = i18n.language === 'en' ? 'ar' : 'en';
                                 i18n.changeLanguage(newLang);
                                 document.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+
+                                // Persist language choice privately
+                                updateSettings({ language: newLang });
                             }}
                             className="flex items-center w-full px-4 py-3.5 text-sm font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-2xl transition-all duration-300 group"
                         >
@@ -306,76 +406,12 @@ export default function DashboardLayout() {
                         >
                             <Menu className="w-6 h-6" />
                         </button>
-
-                        {/* Search Section */}
-                        <div className="relative">
-                            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 w-96 group focus-within:ring-2 focus-within:ring-primary/20 transition-all cursor-pointer"
-                                onClick={() => setSearchOpen(true)}>
-                                <Search className="w-5 h-5 text-white/40 group-focus-within:text-primary transition-colors" />
-                                <span className="text-sm text-white/30">{t('common.search')}</span>
-                            </div>
-
-                            {/* Global Search Modal overlay */}
-                            {searchOpen && (
-                                <div className="fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4">
-                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setSearchOpen(false)}></div>
-                                    <div className="relative w-full max-w-2xl glass-card rounded-[3rem] border border-white/10 shadow-premium overflow-hidden animate-in zoom-in-95 duration-300">
-                                        <div className="p-8 border-b border-white/5 flex items-center gap-4">
-                                            <Search className="w-6 h-6 text-primary" />
-                                            <input
-                                                autoFocus
-                                                type="text"
-                                                placeholder={t('common.search')}
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="bg-transparent border-none text-2xl text-white placeholder-white/20 w-full focus:outline-none font-black uppercase tracking-tight"
-                                            />
-                                            <button onClick={() => setSearchOpen(false)} className="p-2 hover:bg-white/5 rounded-xl text-white/40 hover:text-white transition-all">
-                                                <X className="w-6 h-6" />
-                                            </button>
-                                        </div>
-                                        <div className="max-h-[60vh] overflow-y-auto p-4 space-y-2">
-                                            {searchResults.length > 0 ? (
-                                                searchResults.map(result => (
-                                                    <div
-                                                        key={`${result.type}-${result.id}`}
-                                                        onClick={() => {
-                                                            navigate(`/${result.type === 'student' ? 'students' : 'coaches'}`);
-                                                            setSearchOpen(false);
-                                                        }}
-                                                        className="flex items-center justify-between p-6 hover:bg-white/5 rounded-[2rem] cursor-pointer group transition-all"
-                                                    >
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`p-4 rounded-2xl shadow-inner ${result.type === 'student' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'}`}>
-                                                                {result.type === 'student' ? <Users className="w-6 h-6" /> : <UserCircle className="w-6 h-6" />}
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-black text-white text-lg">{result.name}</h4>
-                                                                <p className="text-[10px] uppercase tracking-[.2em] font-black text-white/20 group-hover:text-white/40 transition-colors">
-                                                                    {result.type === 'student' ? t('common.students') : t('common.coaches')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <ChevronDown className={`w-6 h-6 text-white/10 group-hover:text-primary transition-all ${isRtl ? 'rotate-90' : '-rotate-90'}`} />
-                                                    </div>
-                                                ))
-                                            ) : searchQuery ? (
-                                                <div className="p-20 text-center">
-                                                    <p className="text-white/20 font-black uppercase tracking-widest">{t('common.noResults')}</p>
-                                                </div>
-                                            ) : (
-                                                <div className="p-20 text-center">
-                                                    <p className="text-white/20 font-black uppercase tracking-widest">{t('common.dashboard.searchPlaceholder') || 'Start typing to search gymnasts or coaches...'}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {settings.clock_position === 'header' && (
+                            <PremiumClock className="hidden md:flex" />
+                        )}
 
                         <div className="h-10 w-[1px] bg-white/10 mx-2 hidden sm:block"></div>
 
@@ -386,37 +422,49 @@ export default function DashboardLayout() {
                                 className={`p-3 rounded-2xl transition-all relative ${notificationsOpen ? 'bg-primary/20 text-primary shadow-inner' : 'text-white/70 hover:bg-white/5'}`}
                             >
                                 <Bell className="w-6 h-6" />
-                                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-accent border-2 border-background rounded-full animate-pulse"></span>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 border border-white/20 animate-in zoom-in duration-300">
+                                        {unreadCount > 9 ? '+9' : unreadCount}
+                                    </span>
+                                )}
                             </button>
 
                             {notificationsOpen && (
                                 <div className={`absolute top-full mt-4 ${isRtl ? 'left-0' : 'right-0'} w-96 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in slide-in-from-top-4 duration-300`}>
                                     <div className="p-8 border-b border-white/5 bg-white/[0.02]">
-                                        <h3 className="font-black text-white uppercase tracking-tight text-lg">{t('common.notifications') || 'Recent Activity'}</h3>
+                                        <h3 className="font-black text-white uppercase tracking-tight text-lg">{t('common.notifications') || t('common.recentActivity')}</h3>
                                     </div>
                                     <div className="max-h-[70vh] overflow-y-auto">
-                                        {notifications.length === 0 ? (
+                                        {filteredNotifications.length === 0 ? (
                                             <div className="p-8 text-center text-white/20 font-black uppercase tracking-widest text-xs">
-                                                No notifications yet
+                                                {t('common.noNotifications')}
                                             </div>
                                         ) : (
-                                            notifications.map(note => {
+                                            filteredNotifications.map(note => {
                                                 let Icon = Bell;
                                                 let color = 'text-white';
 
                                                 if (note.type === 'student') { Icon = Users; color = 'text-primary'; }
                                                 else if (note.type === 'payment') { Icon = Wallet; color = 'text-emerald-400'; }
                                                 else if (note.type === 'schedule') { Icon = Calendar; color = 'text-accent'; }
+                                                else if (note.type === 'coach') { Icon = UserCircle; color = 'text-purple-400'; }
+                                                else if (note.type === 'check_in') { Icon = Calendar; color = 'text-green-400'; }
+                                                else if (note.type === 'attendance_absence') { Icon = Calendar; color = 'text-red-400'; }
+                                                else if (note.type === 'pt_subscription') { Icon = Wallet; color = 'text-amber-400'; }
 
                                                 const timeAgo = (dateStr: string) => {
                                                     const diff = (new Date().getTime() - new Date(dateStr).getTime()) / 1000 / 60;
-                                                    if (diff < 60) return `${Math.floor(diff)}m ago`;
-                                                    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-                                                    return `${Math.floor(diff / 1440)}d ago`;
+                                                    if (diff < 60) return `${Math.floor(diff)}${t('common.minutesAgoShort')}`;
+                                                    if (diff < 1440) return `${Math.floor(diff / 60)}${t('common.hoursAgoShort')}`;
+                                                    return `${Math.floor(diff / 1440)}${t('common.daysAgoShort')}`;
                                                 };
 
                                                 return (
-                                                    <div key={note.id} className={`p-6 border-b border-white/5 hover:bg-white/[0.02] transition-all group cursor-pointer ${!note.is_read ? 'bg-primary/5' : ''}`}>
+                                                    <div
+                                                        key={note.id}
+                                                        onClick={() => handleMarkAsRead(note.id)}
+                                                        className={`p-6 border-b border-white/5 hover:bg-white/[0.02] transition-all group cursor-pointer ${!note.is_read ? 'bg-primary/5' : ''}`}
+                                                    >
                                                         <div className="flex gap-4">
                                                             <div className={`p-3 rounded-2xl bg-white/5 shadow-inner ${color} group-hover:scale-110 transition-transform`}>
                                                                 <Icon className="w-5 h-5" />
@@ -434,9 +482,16 @@ export default function DashboardLayout() {
                                             })
                                         )}
                                     </div>
-                                    <button className="w-full p-6 text-[10px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-primary transition-colors bg-white/[0.01]">
-                                        {t('common.viewAll') || 'View All Notifications'}
-                                    </button>
+                                    <div className="p-4 border-t border-white/5 bg-white/[0.01]">
+                                        {filteredNotifications.length > 0 && (
+                                            <button
+                                                onClick={handleClearAllNotifications}
+                                                className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-[0.3em] transition-all"
+                                            >
+                                                {t('common.notificationsClearAll')}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -452,7 +507,7 @@ export default function DashboardLayout() {
                                 <div className="text-right text-sm">
                                     <p className={`text-[10px] ${userStatus === 'online' ? 'text-emerald-400' : 'text-orange-400'} font-black uppercase tracking-[0.3em] flex items-center justify-end gap-2.5`}>
                                         <span className={`w-2 h-2 rounded-full ${userStatus === 'online' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]'} animate-pulse`}></span>
-                                        {userStatus.toUpperCase()}
+                                        {userStatus === 'online' ? t('common.onlineLabel') : t('common.busyLabel')}
                                     </p>
                                 </div>
                                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
@@ -470,21 +525,21 @@ export default function DashboardLayout() {
                             {profileOpen && (
                                 <div className={`absolute top-full mt-4 ${isRtl ? 'left-0' : 'right-0'} w-64 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in slide-in-from-top-4 duration-300`}>
                                     <div className="p-6 space-y-2 border-b border-white/5">
-                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] px-4 mb-4">Set Status</p>
+                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] px-4 mb-4">{t('common.setStatus')}</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 onClick={() => handleStatusChange('online')}
                                                 className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${userStatus === 'online' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
                                             >
                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                                Online
+                                                {t('common.onlineLabel')}
                                             </button>
                                             <button
                                                 onClick={() => handleStatusChange('busy')}
                                                 className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${userStatus === 'busy' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
                                             >
                                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                                                Busy
+                                                {t('common.busyLabel')}
                                             </button>
                                         </div>
                                     </div>
@@ -522,7 +577,7 @@ export default function DashboardLayout() {
                         currentUserName={fullName}
                     />
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

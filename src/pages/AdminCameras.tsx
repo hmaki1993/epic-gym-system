@@ -56,15 +56,15 @@ export default function AdminCameras() {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                 </span>
-                                LIVE FEED
+                                {t('cameras.liveFeed')}
                             </div>
                         )}
 
                         {/* Glass Overlay on Hover */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none p-12 flex items-end">
                             <div className="space-y-2">
-                                <h4 className="text-white font-black text-2xl uppercase tracking-tighter">HD SECURITY FEED 01</h4>
-                                <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">STABLE CONNECTION • {new Date().toLocaleTimeString()}</p>
+                                <h4 className="text-white font-black text-2xl uppercase tracking-tighter">{t('cameras.hdFeed')}</h4>
+                                <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">{t('cameras.stableConnection')} • {new Date().toLocaleTimeString()}</p>
                             </div>
                         </div>
                     </div>
@@ -92,13 +92,10 @@ export default function AdminCameras() {
                                         type="text"
                                         value={streamUrl}
                                         onChange={(e) => setStreamUrl(e.target.value)}
-                                        placeholder="https://ip-camera-link.com/..."
+                                        placeholder=""
                                         className="w-full bg-white/5 border border-white/10 rounded-[1.5rem] px-8 py-5 text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold text-sm tracking-tight"
                                     />
                                 </div>
-                                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest leading-relaxed px-2">
-                                    {t('cameras.enterLinkNote')}
-                                </p>
                             </div>
 
                             <button

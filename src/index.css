@@ -14,9 +14,15 @@
   /* Minddazzle Dark BG */
   --color-surface: #122E34;
   /* Minddazzle Surface */
+  --color-hover: rgba(18, 46, 52, 0.8);
+  --color-hover-border: rgba(16, 185, 129, 0.3);
+  --color-input-bg: #0f172a;
 
   --shadow-premium: 0 20px 40px -5px rgba(0, 0, 0, 0.4), 0 10px 20px -5px rgba(16, 185, 129, 0.1);
   --shadow-glass: 0 8px 32px 0 rgba(14, 29, 33, 0.5);
+
+  --radius: 1.5rem;
+  --glass-opacity: 0.6;
 }
 
 :root {
@@ -24,9 +30,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: #f1f5f9;
-  background-color: #0E1D21;
+  color-scheme: light dark;
+  color: var(--color-text-base);
+  background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -38,12 +44,10 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #0E1D21;
-  /* Minddazzle Base */
+  background-color: var(--color-background);
   background-image:
-    radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(18, 46, 52, 0.5), transparent 25%);
-  color: #f1f5f9;
+    radial-gradient(circle at 85% 30%, color-mix(in srgb, var(--color-surface), transparent 50%), transparent 25%);
+  color: var(--color-text-base);
   overflow-x: hidden;
 }
 
@@ -51,26 +55,27 @@ body {
   PREMIUM UTILITIES 
 */
 .glass-card {
-  background: rgba(18, 46, 52, 0.6) !important;
-  /* #122E34 with opacity */
+  background: color-mix(in srgb, var(--color-surface), transparent calc(100% - var(--glass-opacity) * 100%)) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-premium) !important;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .glass-card:hover {
-  background: rgba(18, 46, 52, 0.8) !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
-  /* Emerald border on hover */
+  background: var(--color-hover) !important;
+  border-color: var(--color-hover-border) !important;
+  /* Custom hover border */
   transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(16, 185, 129, 0.1) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(16, 185, 129, 0.1) !important;
 }
 
 .premium-gradient-text {
   background: linear-gradient(to right, var(--color-primary), var(--color-accent));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -81,17 +86,20 @@ body {
 /* High contrast text overrides */
 .text-gray-400,
 .text-white\/60,
-.text-white\/50 {
-  color: rgba(255, 255, 255, 0.6) !important;
+.text-white\/50,
+.text-white\/40,
+.text-white\/30 {
+  color: var(--color-text-muted) !important;
 }
 
 .text-gray-500,
 .text-gray-600 {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: var(--color-text-muted) !important;
 }
 
-.text-secondary {
-  color: #ffffff !important;
+.text-secondary,
+.text-white {
+  color: var(--color-text-base) !important;
 }
 
 .opacity-80,
@@ -99,7 +107,7 @@ body {
 .opacity-60,
 .opacity-50 {
   opacity: 1 !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--color-text-muted) !important;
 }
 
 /* Force headings to be clear and premium */
@@ -109,7 +117,7 @@ h3,
 h4,
 h5,
 h6 {
-  color: #ffffff !important;
+  color: var(--color-text-base) !important;
   font-weight: 700 !important;
   letter-spacing: -0.025em !important;
 }
@@ -121,21 +129,21 @@ h6 {
 input,
 select,
 textarea {
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: var(--color-input-bg, #0f172a);
+  color: var(--color-text-base);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
   padding: 0.625rem 1rem;
   opacity: 1;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-text-fill-color: #f8fafc;
+  -webkit-text-fill-color: var(--color-text-base);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15);
+  box-shadow: 0 0 0 4px var(--color-primary, rgba(255, 255, 255, 0.1));
   outline: none;
 }
 
@@ -156,8 +164,8 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
-  -webkit-text-fill-color: #f8fafc !important;
+  -webkit-box-shadow: 0 0 0 30px var(--color-input-bg) inset !important;
+  -webkit-text-fill-color: var(--color-text-base) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -186,17 +194,17 @@ input:-webkit-autofill:active {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: color-mix(in srgb, var(--color-background), transparent 50%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: color-mix(in srgb, var(--color-text-muted), transparent 70%);
   border-radius: 4px;
 }
 
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: color-mix(in srgb, var(--color-primary), white 20%);
 }
 
 /* Hide spin buttons for number inputs */

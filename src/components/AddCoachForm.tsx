@@ -94,18 +94,51 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             const isEmailChanging = formData.email !== initialData?.email;
             const isPasswordChanging = !!formData.password;
 
-            if (isNewCoach || isEmailChanging || isPasswordChanging) {
+            if (isNewCoach || isEmailChanging || isPasswordChanging || !profileId) {
                 const { data: functionData, error: functionError } = await supabase.functions.invoke('staff-management', {
                     body: {
                         userId: profileId,
                         email: formData.email,
-                        password: formData.password || (isNewCoach ? Math.random().toString(36).slice(-8) : undefined),
+                        password: formData.password || (!profileId ? Math.random().toString(36).slice(-8) : undefined),
                         fullName: formData.full_name,
                         role: formData.role
                     }
                 });
 
-                if (functionError) throw functionError;
+                if (functionError) {
+                    let customErrorMessage = null;
+
+                    if ((functionError as any).context?.response) {
+                        try {
+                            const response = (functionError as any).context.response;
+                            const responseText = await response.text();
+
+                            try {
+                                const errorBody = JSON.parse(responseText);
+                                if (errorBody.error) customErrorMessage = errorBody.error;
+                                else if (errorBody.message) customErrorMessage = errorBody.message;
+                            } catch (parseError: any) {
+                                if (responseText && responseText.length < 100) {
+                                    customErrorMessage = responseText;
+                                }
+                            }
+                        } catch (resError) {
+                            // Ignore
+                        }
+                    }
+
+                    if (customErrorMessage) {
+                        throw new Error(customErrorMessage);
+                    } else {
+                        // Hard fallback if we know it failed but couldn't parse why
+                        const response = (functionError as any).context?.response;
+                        let detail = "";
+                        if (response) {
+                            detail = ` (Status: ${response.status})`;
+                        }
+                        throw new Error(`Server Error${detail}. Please check console or try different email.`);
+                    }
+                }
                 if (functionData?.user_id) profileId = functionData.user_id;
             }
 
@@ -113,6 +146,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                 full_name: formData.full_name,
                 email: formData.email,
                 specialty: formData.specialty,
+                role: formData.role,
                 pt_rate: parseFloat(formData.pt_rate) || 0,
                 salary: parseFloat(formData.salary) || 0,
                 avatar_url: formData.avatar_url,
@@ -151,6 +185,17 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                     .from('coaches')
                     .insert([coachData]);
                 error = insertError;
+
+                // --- NEW NOTIFICATION TRIGGER ---
+                if (!error) {
+                    await supabase.from('notifications').insert({
+                        title: 'New Staff Member',
+                        message: `${formData.full_name} has joined as ${t(`roles.${formData.role}`)}.`,
+                        type: 'coach',
+                        target_role: 'admin', // Admins and Head Coaches see these
+                        is_read: false
+                    });
+                }
             }
 
             if (error) throw error;
@@ -158,7 +203,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             onSuccess();
             onClose();
         } catch (error: any) {
-            console.error('Error saving coach:', error);
             toast.error(error.message || 'Error saving coach');
         } finally {
             setLoading(false);
@@ -205,7 +249,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                             : prev.email
                                     }));
                                 }}
-                                placeholder="Anis..."
                             />
                         </div>
                         <div className="space-y-2">
@@ -271,26 +314,30 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Specialty</label>
-                        <div className="relative group/specialty">
-                            <select
-                                required
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
-                                value={formData.specialty}
-                                onChange={e => setFormData({ ...formData, specialty: e.target.value })}
-                            >
-                                <option value="" disabled className="bg-slate-900">Select Specialty</option>
-                                <option value="Artistic Gymnastics (Boys)" className="bg-slate-900">Artistic Gymnastics (Boys)</option>
-                                <option value="Artistic Gymnastics (Girls)" className="bg-slate-900">Artistic Gymnastics (Girls)</option>
-                                <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
-                                <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
-                            </select>
-                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/specialty:opacity-100 transition-opacity">
-                                <ChevronDown className="w-4 h-4 text-white" />
+
+                    {!['reception', 'cleaner'].includes(formData.role) && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Specialty</label>
+                            <div className="relative group/specialty">
+                                <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl opacity-0 group-hover/specialty:opacity-20 transition-opacity blur"></div>
+                                <select
+                                    required={!['reception', 'cleaner'].includes(formData.role)}
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12 relative z-10"
+                                    value={formData.specialty}
+                                    onChange={e => setFormData({ ...formData, specialty: e.target.value })}
+                                >
+                                    <option value="" disabled className="bg-slate-900">Select Specialty</option>
+                                    <option value="Artistic Gymnastics (Boys)" className="bg-slate-900">Artistic Gymnastics (Boys)</option>
+                                    <option value="Artistic Gymnastics (Girls)" className="bg-slate-900">Artistic Gymnastics (Girls)</option>
+                                    <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
+                                    <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/specialty:opacity-100 transition-opacity z-20">
+                                    <ChevronDown className="w-4 h-4 text-white" />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
@@ -301,7 +348,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="coach@epicgym.com"
                             />
                         </div>
                         <div className="space-y-2">
@@ -314,7 +360,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
                                 value={formData.password}
                                 onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                placeholder="••••••••"
                             />
                         </div>
                     </div>
@@ -322,9 +367,10 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">System Access Role</label>
                         <div className="relative group/role">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl opacity-0 group-hover/role:opacity-20 transition-opacity blur"></div>
                             <select
                                 required
-                                className="w-full px-5 py-3 bg-[#1e2330] border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white font-black uppercase tracking-[0.2em] text-center appearance-none cursor-pointer"
+                                className="w-full px-5 py-3 bg-[#1e2330] border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white font-black uppercase tracking-[0.2em] text-center appearance-none cursor-pointer relative z-10"
                                 value={formData.role}
                                 onChange={e => setFormData({ ...formData, role: e.target.value })}
                             >
@@ -332,25 +378,27 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 <option value="head_coach" className="bg-[#1e2330]">{t('roles.head_coach')}</option>
                                 <option value="admin" className="bg-[#1e2330]">{t('roles.admin')}</option>
                                 <option value="reception" className="bg-[#1e2330]">{t('roles.reception')}</option>
+                                <option value="cleaner" className="bg-[#1e2330]">{t('roles.cleaner')}</option>
                             </select>
-                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity">
+                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity z-20">
                                 <ChevronDown className="w-4 h-4 text-white" />
                             </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">PT Rate (per session)</label>
-                            <input
-                                required
-                                type="number"
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
-                                value={formData.pt_rate}
-                                onChange={e => setFormData({ ...formData, pt_rate: e.target.value })}
-                                placeholder="0.00"
-                            />
-                        </div>
+                        {!['reception', 'cleaner'].includes(formData.role) && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">PT Rate (per session)</label>
+                                <input
+                                    required={!['reception', 'cleaner'].includes(formData.role)}
+                                    type="number"
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                    value={formData.pt_rate}
+                                    onChange={e => setFormData({ ...formData, pt_rate: e.target.value })}
+                                />
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Monthly Salary</label>
                             <input
@@ -359,7 +407,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
                                 value={formData.salary}
                                 onChange={e => setFormData({ ...formData, salary: e.target.value })}
-                                placeholder="0.00"
                             />
                         </div>
                     </div>

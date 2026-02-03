@@ -93,7 +93,6 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
                                 value={formData.amount}
                                 onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                 className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-rose-500/50 transition-all font-bold"
-                                placeholder="0.00"
                                 required
                             />
                         </div>
@@ -120,7 +119,7 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
                             onChange={e => setFormData({ ...formData, reason: e.target.value })}
                             className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-rose-500/50 transition-all font-bold resize-none"
                             rows={3}
-                            placeholder="e.g., Injury, Relocation, Dissatisfaction..."
+                            placeholder=""
                         />
                     </div>
 

@@ -10,7 +10,10 @@ export function useStudents() {
                 .from('students')
                 .select('*, coaches ( full_name ), subscription_plans ( name, price ), training_groups ( name )')
                 .order('created_at', { ascending: false });
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching students:', error);
+                throw error;
+            }
             return data;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
@@ -30,7 +33,10 @@ export function useCoaches() {
                 .select('*, profiles(role)')
                 .order('created_at', { ascending: false });
 
-            if (coachesError) throw coachesError;
+            if (coachesError) {
+                console.error('Error fetching coaches:', coachesError);
+                throw coachesError;
+            }
 
             // Get today's attendance for status
             const { data: attendanceData, error: attendanceError } = await supabase
@@ -47,6 +53,9 @@ export function useCoaches() {
                 .eq('date', today);
 
             if (ptError) console.error('Error fetching PT sessions:', ptError);
+
+            // Safety check for map
+            if (!coaches) return [];
 
             // Merge everything
             const enrichedCoaches = coaches?.map(coach => {
@@ -77,7 +86,7 @@ export function useCoaches() {
 
                 return {
                     ...coach,
-                    role: coach.profiles?.role,
+                    role: coach.role || (coach as any).profiles?.role,
                     pt_sessions_today: totalSessions,
                     pt_student_name: studentNames,
                     attendance_status: status,
@@ -194,7 +203,7 @@ export function useMonthlyPayroll(month: string) {
             // 1. Get all coaches
             const { data: coaches, error: coachError } = await supabase
                 .from('coaches')
-                .select('id, full_name, pt_rate, salary');
+                .select('id, full_name, pt_rate, salary, role');
 
             if (coachError) throw coachError;
 
@@ -236,12 +245,14 @@ export function useMonthlyPayroll(month: string) {
                 });
                 const totalHours = Number((totalSeconds / 3600).toFixed(1));
 
-                // Calculate total PT sessions (Prioritize table sessions; fallback to attendance count for legacy)
+                // Calculate total PT sessions (Accurate counting from pt_sessions table)
                 const tableSessions = coachSessions.reduce((sum, s) => sum + (Number(s.sessions_count ?? 1)), 0);
-                const attSessions = coachAttendance.reduce((sum, r) => sum + (Number(r.pt_sessions_count) || 0), 0);
 
-                // We use table sessions if present, otherwise fallback to the simpler attendance count
-                const totalSessions = tableSessions > 0 ? tableSessions : attSessions;
+                // For legacy or fallback, we might still have sessions logged in attendancept_sessions_count
+                // but we should avoid double counting if the same session is in both.
+                // In the current implementation, CoachDashboard adds to both or just table.
+                // Let's stick to the sessions table as the primary source of truth for modern records.
+                const totalSessions = tableSessions;
 
                 const salary = coach.salary || 0;
                 const ptEarnings = totalSessions * (coach.pt_rate || 0);
@@ -252,6 +263,7 @@ export function useMonthlyPayroll(month: string) {
                 return {
                     coach_id: coach.id,
                     coach_name: coach.full_name,
+                    role: coach.role,
                     pt_rate: coach.pt_rate || 0,
                     salary: salary,
                     total_pt_sessions: totalSessions,

@@ -1,20 +1,26 @@
-import { useState, useEffect } from 'react';
-import { Clock, Calendar, CheckCircle, XCircle, Globe, User, ChevronRight, TrendingUp, Wallet } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Clock, Calendar, CheckCircle, XCircle, Globe, User, Users, ChevronRight, TrendingUp, Wallet, RotateCcw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import GroupDetailsModal from '../components/GroupDetailsModal';
+import GroupsList from '../components/GroupsList';
+import LiveStudentsWidget from '../components/LiveStudentsWidget';
+import ConfirmModal from '../components/ConfirmModal';
 import { useCurrency } from '../context/CurrencyContext';
+import PremiumClock from '../components/PremiumClock';
+import { useTheme } from '../context/ThemeContext';
 
 export default function CoachDashboard() {
     const { t, i18n } = useTranslation();
+    const { settings } = useTheme();
     const { currency } = useCurrency();
     const { role, fullName } = useOutletContext<{ role: string, fullName: string }>() || { role: null, fullName: null };
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [checkInTime, setCheckInTime] = useState<string | null>(null);
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [currentTime] = useState(new Date());
     const [savedSessions, setSavedSessions] = useState<any[]>([]);
     const [syncLoading, setSyncLoading] = useState(true);
     const [dailyTotalSeconds, setDailyTotalSeconds] = useState(0);
@@ -22,12 +28,18 @@ export default function CoachDashboard() {
     const [ptRate, setPtRate] = useState<number>(0);
     const [totalEarnings, setTotalEarnings] = useState<number>(0);
     const [baseSalary, setBaseSalary] = useState<number>(0);
-    const [coachId, setCoachId] = useState<number | null>(null);
+    const [recordingId, setRecordingId] = useState<string | null>(null);
+    const [coachId, setCoachId] = useState<string | null>(null);
+    const [subToClear, setSubToClear] = useState<any>(null);
+    const [showClearModal, setShowClearModal] = useState(false);
+    const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
 
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
+    // No longer need interval here as PremiumClock handles it
+    // But we might need currentTime for the date display if we don't want it to be static
+    // Actually, format(new Date(), ...) is fine for a static date if it doesn't cross midnight during the session.
+    // Let's keep a simple static date or use the clock's time if possible.
+    // For now, I'll just use format(new Date(), ...) below.
+
 
     const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -105,16 +117,30 @@ export default function CoachDashboard() {
         };
 
         initializeDashboard();
+    }, []);
 
-        const ptSessionsSubscription = supabase.channel('pt_sessions_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_sessions' }, () => {
-                if (coachId) fetchTodaySessions(coachId);
+    useEffect(() => {
+        if (!coachId) return;
+
+        const ptSessionsSubscription = supabase.channel(`pt_sessions_changes_${coachId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'pt_sessions',
+                filter: `coach_id=eq.${coachId}`
+            }, () => {
+                fetchTodaySessions(coachId);
             })
             .subscribe();
 
-        const ptSubscriptionsChannel = supabase.channel('coach_pt_subscriptions_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pt_subscriptions' }, () => {
-                if (coachId) fetchPTSubscriptions(coachId, ptRate);
+        const ptSubscriptionsChannel = supabase.channel(`pt_subscriptions_changes_${coachId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'pt_subscriptions',
+                filter: `coach_id=eq.${coachId}`
+            }, () => {
+                fetchPTSubscriptions(coachId, ptRate);
             })
             .subscribe();
 
@@ -122,24 +148,73 @@ export default function CoachDashboard() {
             ptSessionsSubscription.unsubscribe();
             ptSubscriptionsChannel.unsubscribe();
         };
-    }, []);
+    }, [coachId, ptRate]);
 
-    const fetchTodaySessions = async (id: number) => {
-        try {
+    const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent' | 'idle'>('idle');
+
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            if (!coachId) return;
             const today = format(new Date(), 'yyyy-MM-dd');
+            const { data } = await supabase
+                .from('coach_attendance')
+                .select('*')
+                .eq('coach_id', coachId)
+                .eq('date', today)
+                .maybeSingle();
+
+            if (data) {
+                if (data.status === 'absent') {
+                    setAttendanceStatus('absent');
+                    setIsCheckedIn(false);
+                } else if (data.check_in_time && !data.check_out_time) {
+                    setAttendanceStatus('present');
+                    setIsCheckedIn(true);
+                } else {
+                    setAttendanceStatus('idle');
+                    setIsCheckedIn(false);
+                }
+            } else {
+                setAttendanceStatus('idle');
+                setIsCheckedIn(false);
+            }
+        };
+
+        checkStatus();
+    }, [coachId]);
+
+    const fetchSavedSessions = async (id: string) => {
+        try {
+            // Fetch last 100 sessions for history log
             const { data } = await supabase
                 .from('pt_sessions')
                 .select('*')
                 .eq('coach_id', id)
-                .eq('date', today)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(100);
             setSavedSessions(data || []);
         } catch (error) {
             console.error('Error fetching sessions:', error);
         }
     };
 
-    const fetchPTSubscriptions = async (id: number, rate: number) => {
+    const fetchTodaySessions = async (id: string) => {
+        try {
+            const { data } = await supabase
+                .from('pt_sessions')
+                .select('*')
+                .eq('coach_id', id)
+                .order('created_at', { ascending: false })
+                .limit(100);
+            setSavedSessions(data || []);
+        } catch (error) {
+            console.error('Error fetching sessions:', error);
+        }
+    };
+
+
+    const fetchPTSubscriptions = async (id: string, rate: number) => {
         try {
             const startOfMonth = format(new Date(), 'yyyy-MM-01');
             const { data: sessionsData } = await supabase
@@ -157,7 +232,9 @@ export default function CoachDashboard() {
                 .eq('coach_id', id)
                 .order('status', { ascending: true });
 
-            setPtSubscriptions(data || []);
+            if (data) {
+                setPtSubscriptions(data);
+            }
         } catch (error) {
             console.error('Error fetching PT subscriptions:', error);
         }
@@ -208,17 +285,22 @@ export default function CoachDashboard() {
     };
 
     const handleRecordSession = async (sub: any) => {
-        if (!coachId) return;
+        if (!coachId || recordingId) return;
         if (sub.sessions_remaining <= 0) return toast.error('No sessions remaining');
 
+        setRecordingId(sub.id);
         const loadingToast = toast.loading('Recording session...');
         try {
             // 1. Record the session
+            const studentData = Array.isArray(sub.students) ? sub.students[0] : sub.students;
+            const studentName = (studentData?.full_name || sub.student_name || '').trim();
+
             const { error: sessionError } = await supabase.from('pt_sessions').insert({
                 coach_id: coachId,
                 date: format(new Date(), 'yyyy-MM-dd'),
                 sessions_count: 1,
-                student_name: sub.students?.full_name || sub.student_name
+                student_name: studentName,
+                subscription_id: sub.id
             });
             if (sessionError) throw sessionError;
 
@@ -228,20 +310,143 @@ export default function CoachDashboard() {
                 .from('pt_subscriptions')
                 .update({
                     sessions_remaining: newRemaining,
-                    status: newRemaining === 0 ? 'expired' : sub.status
+                    status: newRemaining === 0 ? 'expired' : sub.status,
+                    updated_at: new Date().toISOString()
                 })
                 .eq('id', sub.id);
             if (subError) throw subError;
 
             // 3. Refresh data
-            fetchTodaySessions(coachId);
-            fetchPTSubscriptions(coachId, ptRate);
+            await Promise.all([
+                fetchTodaySessions(coachId),
+                fetchPTSubscriptions(coachId, ptRate)
+            ]);
             toast.success('Session recorded!', { id: loadingToast });
         } catch (error) {
             console.error('Error recording session:', error);
             toast.error('Failed to record session', { id: loadingToast });
+        } finally {
+            setRecordingId(null);
         }
     };
+
+    const handleClearHistory = async () => {
+        if (!coachId) return;
+
+        const loadingToast = toast.loading('Clearing history...');
+        try {
+            const { error } = await supabase
+                .from('pt_sessions')
+                .delete()
+                .eq('coach_id', coachId);
+
+            if (error) throw error;
+
+            await Promise.all([
+                fetchTodaySessions(coachId),
+                fetchPTSubscriptions(coachId, ptRate)
+            ]);
+
+            toast.success('History cleared!', { id: loadingToast });
+            setShowClearHistoryModal(false);
+        } catch (error) {
+            console.error('Clear history failed:', error);
+            toast.error('Failed to clear history', { id: loadingToast });
+        }
+    };
+
+    const handleClearSessions = async () => {
+        if (!coachId || !subToClear) return;
+
+        const loadingToast = toast.loading('Clearing sessions...');
+        try {
+            const { error } = await supabase
+                .from('pt_subscriptions')
+                .update({
+                    sessions_remaining: 0,
+                    status: 'expired',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', subToClear.id);
+
+            if (error) throw error;
+
+            await Promise.all([
+                fetchTodaySessions(coachId),
+                fetchPTSubscriptions(coachId, ptRate)
+            ]);
+
+            toast.success('All sessions cleared!', { id: loadingToast });
+            setShowClearModal(false);
+            setSubToClear(null);
+        } catch (error) {
+            console.error('Clear failed:', error);
+            toast.error('Failed to clear sessions', { id: loadingToast });
+        }
+    };
+
+    const handleResetSession = async (sub: any) => {
+        if (!coachId || recordingId) return;
+
+        // Find the most recent session for THIS specific subscription in the last 24h
+        const recentSession = savedSessions.find(s =>
+            s.subscription_id === sub.id &&
+            (new Date().getTime() - new Date(s.created_at).getTime()) < (24 * 60 * 60 * 1000)
+        );
+
+        if (!recentSession) {
+            return toast.error('No recent record found to reset');
+        }
+
+        setRecordingId(sub.id);
+        const loadingToast = toast.loading('Resetting record...');
+        try {
+            // 1. Delete the specific session
+            const { error: deleteError } = await supabase
+                .from('pt_sessions')
+                .delete()
+                .eq('id', recentSession.id);
+
+            if (deleteError) throw deleteError;
+
+            // 2. Refund the session and set status back to active
+            const newRemaining = sub.sessions_remaining + 1;
+            const { error: subError } = await supabase
+                .from('pt_subscriptions')
+                .update({
+                    sessions_remaining: newRemaining,
+                    status: 'active',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', sub.id);
+
+            if (subError) throw subError;
+
+            // 3. Refresh data
+            await Promise.all([
+                fetchTodaySessions(coachId),
+                fetchPTSubscriptions(coachId, ptRate)
+            ]);
+            toast.success('Session reset successfully', { id: loadingToast });
+        } catch (error) {
+            console.error('Reset failed:', error);
+            toast.error('Reset failed', { id: loadingToast });
+        } finally {
+            setRecordingId(null);
+        }
+    };
+
+    // Helper to group sessions by date
+    const groupedSessions = savedSessions.reduce((acc: any, session) => {
+        const date = format(new Date(session.created_at), 'yyyy-MM-dd');
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(session);
+        return acc;
+    }, {});
+
+    const sortedDates = Object.keys(groupedSessions).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -251,13 +456,17 @@ export default function CoachDashboard() {
                     <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
                         {t('dashboard.welcome')}, COACH! 👋
                     </h1>
-                    <p className="text-white/60 mt-4 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
-                        {format(currentTime, 'EEEE, dd MMMM yyyy')}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 shadow-inner group">
-                    <Clock className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">{format(currentTime, 'HH:mm:ss')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
+                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
+                            {format(new Date(), 'EEEE, dd MMMM yyyy')}
+                        </p>
+                        {settings.clock_position === 'dashboard' && (
+                            <>
+                                <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
+                                <PremiumClock className="scale-110 !px-6 !py-3" />
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -267,10 +476,9 @@ export default function CoachDashboard() {
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl transition-all duration-700"></div>
                     <div className="flex items-center justify-between mb-8 relative z-10">
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tight">{t('coach.attendance')}</h2>
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${isCheckedIn ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></span>
-                                <span className={isCheckedIn ? 'text-emerald-400' : 'text-white/40'}>
+                                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isCheckedIn ? 'bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.8)] animate-pulse' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'}`}></span>
+                                <span className={isCheckedIn ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]'}>
                                     {isCheckedIn ? t('coaches.workingNow') : t('coaches.away')}
                                 </span>
                             </p>
@@ -341,40 +549,68 @@ export default function CoachDashboard() {
             {/* PT Sessions Recording Card */}
             <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative overflow-hidden">
                 <div className="relative z-10">
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
-                        <div className="p-3 bg-primary/20 rounded-2xl text-primary"><User className="w-6 h-6" /></div>
-                        {t('coach.ptSessions')}
-                    </h2>
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                            <div className="p-3 bg-primary/20 rounded-2xl text-primary"><User className="w-6 h-6" /></div>
+                            {t('coach.ptSessions', 'PT History Log')}
+                        </h2>
+
+                        {savedSessions.length > 0 && (
+                            <button
+                                onClick={() => setShowClearHistoryModal(true)}
+                                className="flex items-center gap-2 px-6 py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] group"
+                            >
+                                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                Clear All
+                            </button>
+                        )}
+                    </div>
+
                     {savedSessions.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {savedSessions.map((session) => (
-                                <div key={session.id} className="flex items-center justify-between p-6 rounded-[2rem] bg-white/[0.02] border border-white/10 group hover:border-primary/50 transition-all">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary"><User className="w-6 h-6" /></div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-black text-white text-lg tracking-tight">{session.student_name}</p>
-                                                <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-md border border-primary/20">
-                                                    {session.sessions_count || 1} {t('common.sessions', 'Sessions')}
+                        <div className="space-y-8">
+                            {sortedDates.map((date) => {
+                                const sessions = groupedSessions[date];
+                                const isToday = date === format(new Date(), 'yyyy-MM-dd');
+
+                                return (
+                                    <div key={date} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className={`px-4 py-2 rounded-xl border border-white/5 shadow-inner ${isToday ? 'bg-accent/20 text-accent' : 'bg-white/5 text-white/60'}`}>
+                                                <span className="font-black uppercase tracking-widest text-xs">
+                                                    {isToday ? 'Today' : format(new Date(date), 'EEEE, MMM dd')}
                                                 </span>
                                             </div>
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{session.created_at ? format(new Date(session.created_at), 'hh:mm a') : '--:--'}</p>
+                                            <div className="h-px flex-1 bg-white/5"></div>
+                                            <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/40 font-mono text-xs font-bold">
+                                                {sessions.length} Session{sessions.length !== 1 ? 's' : ''}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {sessions.map((session: any) => (
+                                                <div key={session.id} className="flex items-center justify-between p-5 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary/80"><User className="w-5 h-5" /></div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-bold text-white text-sm tracking-tight">{session.student_name}</p>
+                                                            </div>
+                                                            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{format(new Date(session.created_at), 'hh:mm a')}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                    <button onClick={async () => {
-                                        await supabase.from('pt_sessions').delete().eq('id', session.id);
-                                        if (coachId) {
-                                            fetchTodaySessions(coachId);
-                                            fetchPTSubscriptions(coachId, ptRate);
-                                        }
-                                        toast.success(t('common.deleteSuccess'));
-                                    }} className="text-white/10 hover:text-rose-500"><XCircle className="w-5 h-5" /></button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
-                        <div className="py-10 text-center">
-                            <p className="text-white/20 font-black uppercase tracking-widest text-[10px]">No sessions recorded yet today</p>
+                        <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+                            <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 flex items-center justify-center text-white/20">
+                                <User className="w-10 h-10" />
+                            </div>
+                            <p className="text-white/30 font-bold uppercase tracking-widest text-xs">No history found</p>
                         </div>
                     )}
                 </div>
@@ -386,111 +622,146 @@ export default function CoachDashboard() {
                     <div className="p-3 bg-accent/20 rounded-2xl text-accent"><User className="w-6 h-6" /></div>
                     {t('dashboard.myGroups', 'My Groups')}
                 </h2>
-                <GroupsList />
+                <GroupsList coachId={coachId || undefined} />
             </div>
 
-            {/* My PT Students Section */}
-            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative bg-gradient-to-br from-white/[0.02] to-transparent">
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-br from-accent to-primary rounded-2xl text-white shadow-lg"><User className="w-6 h-6" /></div>
-                    My PT Students
-                </h2>
+            {/* My PT Students Section & Live Floor */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <div className="xl:col-span-2 glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative bg-gradient-to-br from-white/[0.02] to-transparent">
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
+                        <div className="p-3 bg-gradient-to-br from-accent to-primary rounded-2xl text-white shadow-lg"><User className="w-6 h-6" /></div>
+                        My PT Students
+                    </h2>
 
-                {ptSubscriptions.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {ptSubscriptions.map((subscription) => (
-                            <div key={subscription.id} className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-accent/30 transition-all group relative overflow-hidden">
-                                <div className="relative z-10">
-                                    <div className="flex items-center gap-4 mb-6">
-                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-black text-2xl">
-                                            {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-black text-white text-xl tracking-tight">{subscription.students?.full_name || subscription.student_name || 'Unknown'}</h3>
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">PT Student</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="text-xs font-black text-white/60 uppercase tracking-wider">Progress</span>
-                                                <span className="text-xs font-black text-accent">{subscription.sessions_remaining}/{subscription.sessions_total}</span>
+                    {ptSubscriptions.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {ptSubscriptions.map((subscription) => (
+                                <div key={subscription.id} className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-accent/30 transition-all group relative overflow-hidden">
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-black text-2xl">
+                                                {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
                                             </div>
-                                            <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                                                <div className="h-full bg-gradient-to-r from-accent to-primary transition-all rounded-full" style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}></div>
+                                            <div className="flex-1">
+                                                <h3 className="font-black text-white text-xl tracking-tight">{subscription.students?.full_name || subscription.student_name || 'Unknown'}</h3>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">PT Student</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => handleRecordSession(subscription)}
-                                            disabled={subscription.sessions_remaining <= 0}
-                                            className="ml-6 p-4 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-2xl transition-all disabled:opacity-20 disabled:cursor-not-allowed group/record"
-                                            title="Record Session"
-                                        >
-                                            <CheckCircle className="w-6 h-6 group-active/record:scale-90 transition-transform" />
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Remaining</p><p className="text-3xl font-black text-accent">{subscription.sessions_remaining}</p></div>
-                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Rate</p><p className="text-2xl font-black text-white">{ptRate} {currency.code}</p></div>
-                                    </div>
-                                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                        <div><p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Expires</p><p className="text-sm font-bold text-white/80">{format(new Date(subscription.expiry_date), 'MMM dd, yyyy')}</p></div>
-                                        <div className={`px-4 py-2 rounded-full border text-xs font-black uppercase ${(new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired') ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-accent/10 border-accent/20 text-accent'}`}>
-                                            {(new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired') ? 'Expired' : 'Active'}
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <span className="text-xs font-black text-white/60 uppercase tracking-wider">Progress</span>
+                                                    <span className="text-xs font-black text-accent">{subscription.sessions_remaining}/{subscription.sessions_total}</span>
+                                                </div>
+                                                <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                                                    <div className="h-full bg-gradient-to-r from-accent to-primary transition-all rounded-full" style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}></div>
+                                                </div>
+                                            </div>
+                                            {(() => {
+                                                // Robust tracking using subscription_id
+                                                const recentSession = savedSessions.find(s => {
+                                                    const isMatch = s.subscription_id === subscription.id;
+                                                    const sDate = new Date(s.created_at);
+                                                    const hoursAgo = (new Date().getTime() - sDate.getTime()) / (1000 * 60 * 60);
+                                                    return isMatch && hoursAgo < 24;
+                                                });
+                                                const isRecentlyRecorded = !!recentSession;
+                                                const isLoading = recordingId === subscription.id;
+
+                                                return (
+                                                    <div className="flex items-center gap-2 ml-6">
+                                                        <button
+                                                            onClick={() => isRecentlyRecorded ? handleResetSession(subscription) : handleRecordSession(subscription)}
+                                                            disabled={isLoading || (subscription.sessions_remaining <= 0 && !isRecentlyRecorded)}
+                                                            className={`p-4 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed group/record relative
+                                                                ${isRecentlyRecorded
+                                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                                                    : 'bg-primary/10 hover:bg-primary text-primary hover:text-white'}`}
+                                                            title={isRecentlyRecorded ? "Reset Session" : "Record Session"}
+                                                        >
+                                                            {isLoading ? (
+                                                                <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                            ) : isRecentlyRecorded ? (
+                                                                <RotateCcw className="w-6 h-6 transition-transform group-active/record:rotate-[-45deg]" />
+                                                            ) : (
+                                                                <CheckCircle className="w-6 h-6 transition-transform group-active/record:scale-90" />
+                                                            )}
+                                                            {isRecentlyRecorded && (
+                                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0E1D21]" />
+                                                            )}
+                                                        </button>
+
+                                                        {!isRecentlyRecorded && subscription.sessions_remaining > 0 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSubToClear(subscription);
+                                                                    setShowClearModal(true);
+                                                                }}
+                                                                className="p-4 rounded-2xl bg-white/5 text-white/20 hover:text-rose-500 hover:bg-rose-500/10 border border-white/5 transition-all"
+                                                                title="Clear All Sessions"
+                                                            >
+                                                                <Trash2 className="w-5 h-5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Remaining</p><p className="text-3xl font-black text-accent">{subscription.sessions_remaining}</p></div>
+                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Rate</p><p className="text-2xl font-black text-white">{ptRate} {currency.code}</p></div>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                            <div><p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Expires</p><p className="text-sm font-bold text-white/80">{format(new Date(subscription.expiry_date), 'MMM dd, yyyy')}</p></div>
+                                            <div className={`px-4 py-2 rounded-full border text-xs font-black uppercase ${(new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired') ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-accent/10 border-accent/20 text-accent'}`}>
+                                                {(new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired') ? 'Expired' : 'Active'}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-16">
-                        <div className="w-24 h-24 mx-auto mb-6 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center text-white/20"><User className="w-12 h-12" /></div>
-                        <p className="text-white/40 font-black uppercase tracking-widest text-sm">No PT Students Yet</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
-function GroupsList() {
-    const { t } = useTranslation();
-    const [groups, setGroups] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedGroup, setSelectedGroup] = useState<any>(null);
-
-    useEffect(() => {
-        const fetchGroups = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { data: coachData } = await supabase.from('coaches').select('id').eq('profile_id', user.id).single();
-            if (!coachData) { setLoading(false); return; }
-            const { data } = await supabase.from('groups').select('*, levels(name)').eq('coach_id', coachData.id);
-            setGroups(data || []);
-            setLoading(false);
-        };
-        fetchGroups();
-    }, []);
-
-    if (loading) return <div className="text-center py-10"><div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div></div>;
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groups.map((group) => (
-                <div key={group.id} onClick={() => setSelectedGroup(group)} className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-accent/30 transition-all cursor-pointer group relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="p-4 bg-accent/20 rounded-2xl text-accent"><Calendar className="w-6 h-6" /></div>
-                        <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                    </div>
-                    <h3 className="font-black text-white text-xl tracking-tight mb-2 uppercase">{group.name}</h3>
-                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">{group.levels?.name || 'Level undefined'}</p>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16">
+                            <div className="w-24 h-24 mx-auto mb-6 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center text-white/20"><User className="w-12 h-12" /></div>
+                            <p className="text-white/40 font-black uppercase tracking-widest text-sm">No PT Students Yet</p>
+                        </div>
+                    )}
                 </div>
-            ))}
-            {selectedGroup && <GroupDetailsModal group={selectedGroup} onClose={() => setSelectedGroup(null)} />}
+
+                {/* Live Floor Widget - Takes up 1 column on large screens */}
+                <div className="xl:col-span-1 h-full min-h-[500px]">
+                    <LiveStudentsWidget coachId={coachId} />
+                </div>
+            </div>
+
+            {showClearModal && (
+                <ConfirmModal
+                    isOpen={showClearModal}
+                    onClose={() => {
+                        setShowClearModal(false);
+                        setSubToClear(null);
+                    }}
+                    onConfirm={handleClearSessions}
+                    title="Clear All Sessions"
+                    message={`Are you sure you want to clear all remaining sessions for ${subToClear?.students?.full_name || subToClear?.student_name || 'this student'}? This will mark the subscription as completed.`}
+                />
+            )}
+
+            {showClearHistoryModal && (
+                <ConfirmModal
+                    isOpen={showClearHistoryModal}
+                    onClose={() => setShowClearHistoryModal(false)}
+                    onConfirm={handleClearHistory}
+                    title="Clear Session History"
+                    message="Are you sure you want to clear ALL recorded PT sessions? This action cannot be undone and will affect earnings calculations."
+                />
+            )}
         </div>
     );
 }
+
+
 
 function formatTimer(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '00:00:00';

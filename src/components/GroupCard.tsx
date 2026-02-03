@@ -13,7 +13,7 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
     onEdit?: (group: any) => void;
     onDelete?: (group: any) => void;
 }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const getScheduleInfo = (key: string) => {
         if (!key) return { days: [], time: '' };
@@ -28,24 +28,33 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
 
             // Format time in 12h format
             const formatTime = (timeStr: string) => {
-                if (!timeStr) return '';
-                const [h, m] = timeStr.split(':');
-                const hour = parseInt(h);
-                const ampm = hour >= 12 ? 'PM' : 'AM';
+                if (!timeStr || timeStr.toLowerCase().includes('undefined')) return '';
+                const parts = timeStr.split(':');
+                if (parts.length < 1) return '';
+
+                let hour = parseInt(parts[0]);
+                let minute = parts[1] || '00';
+
+                if (isNaN(hour)) return '';
+
+                const ampm = hour >= 12 ? (i18n.language === 'ar' ? 'م' : 'PM') : (i18n.language === 'ar' ? 'ص' : 'AM');
                 const hour12 = hour % 12 || 12;
-                return `${hour12}:${m} ${ampm}`;
+                return `${hour12}:${minute} ${ampm}`;
             };
 
-            const timeRange = startTime && endTime
-                ? `${formatTime(startTime)} - ${formatTime(endTime)}`
-                : '';
+            const fStart = formatTime(startTime);
+            const fEnd = formatTime(endTime);
+
+            const timeRange = fStart && fEnd
+                ? `${fStart} - ${fEnd}`
+                : fStart || fEnd || '';
 
             return {
-                days: parts.map((p: string) => p.split(':')[0]), // ['monday', 'wednesday']
+                days: parts.map((p: string) => p.split(':')[0]).filter(Boolean),
                 time: timeRange
             };
         } catch (e) {
-            console.error(e);
+            console.error('Schedule parsing error:', e);
             return { days: [], time: '' };
         }
     };
@@ -58,7 +67,7 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
             <div className="relative z-10 flex-1">
                 <div className="flex justify-between items-start mb-4">
                     <span className="px-3 py-1 bg-white/5 rounded-lg text-xs font-black text-white/60 uppercase tracking-widest border border-white/5">
-                        {group.students?.length || group.students?.[0]?.count || 0} Gymnasts
+                        {group.students?.length || group.students?.[0]?.count || 0} {t('common.students')}
                     </span>
                     {(onEdit || onDelete) && (
                         <div className="flex items-center gap-1">
@@ -85,6 +94,17 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
                     {group.name}
                 </h3>
 
+                {group.coaches?.full_name && (
+                    <div className="flex items-center gap-2 mt-2 mb-4">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 flex items-center justify-center border border-white/10 shadow-lg shadow-primary/10">
+                            <User className="w-3 h-3 text-primary" />
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">
+                            {group.coaches.full_name}
+                        </span>
+                    </div>
+                )}
+
                 {group.schedule_key && (
                     <div className="flex flex-col gap-2 mt-3 mb-6">
                         <div className="flex items-center gap-2 text-white/40 text-xs font-mono tracking-widest uppercase">
@@ -93,7 +113,7 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
                         </div>
                         <div className="flex items-center gap-2 text-white/40 text-xs font-mono tracking-widest uppercase">
                             <Calendar className="w-3 h-3 text-primary" />
-                            <span>{days.map(d => d.substring(0, 3)).join(' / ')}</span>
+                            <span>{days.map(d => t(`students.days.${d.toLowerCase().substring(0, 3)}`)).join(' / ')}</span>
                         </div>
                     </div>
                 )}
@@ -103,7 +123,7 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
                     onClick={() => onViewDetails(group)}
                     className="w-full py-3 rounded-xl bg-white/5 hover:bg-primary hover:text-white border border-white/10 hover:border-primary/20 text-white/60 font-black text-xs uppercase tracking-widest transition-all duration-300 group/btn flex items-center justify-center gap-2 mt-auto"
                 >
-                    View Gymnasts
+                    {t('dashboard.viewAll')}
                     <ChevronRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 -translate-x-2 group-hover/btn:translate-x-0 transition-all" />
                 </button>
             </div>

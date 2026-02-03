@@ -16,7 +16,7 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/70 z-[300] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
             <div
                 className="glass-card rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20"
             >
@@ -28,7 +28,7 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
                         </div>
                         <div>
                             <h3 className="font-black text-xl text-white uppercase tracking-tight">{title}</h3>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-0.5">Confirmation Required</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-0.5">{t('common.confirmationRequired')}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Filter, Mail, Phone, MapPin, Medal, DollarSign, Clock, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Filter, Mail, Phone, MapPin, Medal, DollarSign, Clock, Edit, Trash2, X } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
 import ConfirmModal from '../components/ConfirmModal';
 import Payroll from '../components/Payroll';
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useCoaches } from '../hooks/useData';
 import toast from 'react-hot-toast';
 import { useCurrency } from '../context/CurrencyContext';
+import { useOutletContext } from 'react-router-dom';
 
 interface Coach {
     id: string;
@@ -20,13 +21,24 @@ interface Coach {
     image_pos_x?: number;
     image_pos_y?: number;
     profiles?: { role: string };
+    admin_only_info?: boolean; // Type hint
 }
 
 export default function Coaches() {
     const { t } = useTranslation();
     const { currency } = useCurrency();
+    const { role } = useOutletContext<{ role: string }>() || { role: null };
     const { data: coachesData, isLoading: loading, refetch } = useCoaches();
-    const coaches = coachesData || [];
+
+    // Filter coaches based on current user role
+    const coaches = (coachesData || []).filter(coach => {
+        if (role === 'head_coach') {
+            const cRole = coach.role || (coach as any).profiles?.role;
+            const normalizedRole = cRole?.toLowerCase().trim();
+            return normalizedRole !== 'reception' && normalizedRole !== 'receptionist' && normalizedRole !== 'cleaner';
+        }
+        return true;
+    });
 
     const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -71,6 +83,27 @@ export default function Coaches() {
     const handleDelete = async () => {
         if (!coachToDelete) return;
 
+        const coach = coaches.find(c => c.id === coachToDelete);
+        const profileId = coach?.profile_id;
+
+        // 1. Attempt to delete Auth User via Edge Function (Best Effort)
+        if (profileId) {
+            try {
+                const { error: funcError } = await supabase.functions.invoke('staff-management', {
+                    method: 'DELETE',
+                    body: { userId: profileId }
+                });
+
+                if (funcError) {
+                    console.warn('Edge Function delete warning:', funcError);
+                    // We continue even if this fails, as the DB delete is critical
+                }
+            } catch (e) {
+                console.warn('Edge Function delete failed:', e);
+            }
+        }
+
+        // 2. Delete from Database
         const { error } = await supabase.from('coaches').delete().eq('id', coachToDelete);
         if (error) {
             console.error('Error deleting:', error);
@@ -89,17 +122,19 @@ export default function Coaches() {
                     <h1 className="text-3xl sm:text-4xl font-extrabold premium-gradient-text tracking-tight uppercase">{t('coaches.title')}</h1>
                     <p className="text-white/60 mt-2 text-sm sm:text-base font-bold tracking-wide uppercase opacity-100">{t('coaches.subtitle')}</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingCoach(null);
-                        setShowAddModal(true);
-                    }}
-                    className="group flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-8 py-4 rounded-[1.5rem] shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto overflow-hidden relative"
-                >
-                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                    <Plus className="w-5 h-5 relative z-10" />
-                    <span className="font-extrabold uppercase tracking-widest text-sm relative z-10">{t('dashboard.addCoach')}</span>
-                </button>
+                {role?.toLowerCase().trim() === 'admin' && (
+                    <button
+                        onClick={() => {
+                            setEditingCoach(null);
+                            setShowAddModal(true);
+                        }}
+                        className="group flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-8 py-4 rounded-[1.5rem] shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto overflow-hidden relative"
+                    >
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        <Plus className="w-5 h-5 relative z-10" />
+                        <span className="font-extrabold uppercase tracking-widest text-sm relative z-10">{t('dashboard.addCoach')}</span>
+                    </button>
+                )}
             </div>
 
             {/* Coach List */}
@@ -121,25 +156,29 @@ export default function Coaches() {
                                         fetchAttendance(coach.id);
                                     }}
                                     className="p-3 bg-white/5 text-white/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                                    title="View Attendance"
+                                    title={t('coaches.viewAttendance')}
                                 >
                                     <Clock className="w-4 h-4" />
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        setEditingCoach(coach);
-                                        setShowAddModal(true);
-                                    }}
-                                    className="p-3 bg-white/5 text-white/40 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all"
-                                >
-                                    <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => confirmDelete(coach.id)}
-                                    className="p-3 bg-white/5 text-white/40 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                                {role?.toLowerCase().trim() === 'admin' && (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setEditingCoach(coach);
+                                                setShowAddModal(true);
+                                            }}
+                                            className="p-3 bg-white/5 text-white/40 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => confirmDelete(coach.id)}
+                                            className="p-3 bg-white/5 text-white/40 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </>
+                                )}
                             </div>
 
                             <div className="flex items-start justify-between mb-6">
@@ -169,26 +208,26 @@ export default function Coaches() {
                                                 'bg-white/5 text-white/40 border-white/10'
                                             }`}>
                                             <span className={`w-1.5 h-1.5 rounded-full mr-2 ${(coach as any).attendance_status === 'working' ? 'bg-emerald-400 animate-pulse' : (coach as any).attendance_status === 'done' ? 'bg-blue-400' : 'bg-white/20'}`}></span>
-                                            {(coach as any).attendance_status === 'working' ? 'ACTIVE / ONLINE' :
-                                                (coach as any).attendance_status === 'done' ? 'COMPLETED' :
-                                                    'AWAY'}
+                                            {(coach as any).attendance_status === 'working' ? t('coaches.active') :
+                                                (coach as any).attendance_status === 'done' ? t('coaches.completed') :
+                                                    t('coaches.away')}
                                         </span>
                                         {(coach as any).daily_total_seconds > 0 && (
                                             <span className="text-[10px] font-black text-white/30 uppercase tracking-widest font-mono">
-                                                {Math.floor((coach as any).daily_total_seconds / 3600)}h {Math.floor(((coach as any).daily_total_seconds % 3600) / 60)}m worked
+                                                {Math.floor((coach as any).daily_total_seconds / 3600)}h {Math.floor(((coach as any).daily_total_seconds % 3600) / 60)}m {t('coaches.worked')}
                                             </span>
                                         )}
                                     </div>
                                 )}
                             </div>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-white/60 mt-2 font-bold uppercase tracking-wider text-[10px]">
-                                <div className="flex items-center">
-                                    <Medal className="w-3 h-3 mr-1.5 text-primary" />
+                            <div className="flex flex-col gap-3 mt-4">
+                                <div className="flex items-center text-white/40 font-bold uppercase tracking-wider text-[10px]">
+                                    <Medal className="w-3.5 h-3.5 mr-2 text-primary/60" />
                                     <span>{coach.specialty}</span>
                                 </div>
                                 {coach.role && (
-                                    <div className="bg-[#1e2330] px-3 py-1.5 rounded-xl border border-white/5 flex items-center justify-center">
-                                        <span className="text-white font-black uppercase tracking-[0.2em]">{t(`roles.${coach.role}`)}</span>
+                                    <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5 flex items-center self-start group-hover:bg-white/10 transition-colors">
+                                        <span className="text-white font-black uppercase tracking-[0.2em] text-[9px]">{t(`roles.${coach.role}`)}</span>
                                     </div>
                                 )}
                             </div>
@@ -201,7 +240,7 @@ export default function Coaches() {
                                             <Clock className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Shift Time</p>
+                                            <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{t('coaches.shiftTime')}</p>
                                             <p className="text-xs font-black text-white/70 font-mono tracking-tighter">
                                                 {new Date((coach as any).check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 {(coach as any).check_out_time && ` - ${new Date((coach as any).check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
@@ -211,32 +250,36 @@ export default function Coaches() {
                                     {(coach as any).attendance_status === 'working' && (
                                         <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-lg">
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">LIVE</span>
+                                            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{t('coaches.live')}</span>
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">PT Rate:</span>
-                                    <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[10px] opacity-40">{currency.code}/hr</span></span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Sessions:</span>
-                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-black">
-                                        {(coach as any).pt_sessions_today || 0} 💪
-                                    </span>
-                                </div>
-                                {(coach as any).pt_student_name && (
-                                    <div className="flex items-center justify-between pt-2">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Active Player:</span>
-                                        <span className="text-xs font-bold text-white italic truncate ml-4">
-                                            {(coach as any).pt_student_name}
+                            {!['reception', 'cleaner'].includes(coach.role) && (
+                                <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                                    {role?.toLowerCase().trim() === 'admin' && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{t('coaches.ptRate')}:</span>
+                                            <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[10px] opacity-40">{currency.code}/{t('common.hour')}</span></span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{t('coaches.sessions')}:</span>
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-black">
+                                            {(coach as any).pt_sessions_today || 0} 💪
                                         </span>
                                     </div>
-                                )}
-                            </div>
+                                    {(coach as any).pt_student_name && (
+                                        <div className="flex items-center justify-between pt-2">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{t('coaches.activePlayer')}:</span>
+                                            <span className="text-xs font-bold text-white italic truncate ml-4">
+                                                {(coach as any).pt_student_name}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -246,20 +289,21 @@ export default function Coaches() {
             <div className="pt-12 pb-6">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                     <span className="w-2 h-8 bg-primary rounded-full"></span>
-                    Payroll Management
                 </h2>
             </div>
-            <Payroll
-                refreshTrigger={refreshTrigger}
-                onViewAttendance={(coachId: string) => {
-                    const coach = coaches.find(c => c.id === coachId);
-                    if (coach) {
-                        setSelectedCoachForAttendance(coach);
-                        setShowAttendanceModal(true);
-                        fetchAttendance(coachId);
-                    }
-                }}
-            />
+            {role?.toLowerCase().trim() === 'admin' && (
+                <Payroll
+                    refreshTrigger={refreshTrigger}
+                    onViewAttendance={(coachId: string) => {
+                        const coach = coaches.find(c => c.id === coachId);
+                        if (coach) {
+                            setSelectedCoachForAttendance(coach);
+                            setShowAttendanceModal(true);
+                            fetchAttendance(coachId);
+                        }
+                    }}
+                />
+            )}
 
             {/* Add/Edit Modal */}
             {showAddModal && (
@@ -283,7 +327,7 @@ export default function Coaches() {
                         <div className="p-10 border-b border-white/5 flex justify-between items-center bg-white/5">
                             <div>
                                 <h2 className="text-3xl font-black text-white uppercase tracking-tight">{selectedCoachForAttendance.full_name}</h2>
-                                <p className="text-primary text-xs font-black uppercase tracking-[0.2em] mt-1">Attendance History</p>
+                                <p className="text-primary text-xs font-black uppercase tracking-[0.2em] mt-1">{t('coaches.attendanceHistory')}</p>
                             </div>
                             <button onClick={() => setShowAttendanceModal(false)} className="p-4 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
                                 <X className="w-6 h-6" />

@@ -14,12 +14,12 @@ export const applyThemeStyles = (themeId: string) => {
             root.style.setProperty('color', '#f1f5f9');
         } else if (themeId === 'obsidian') {
             // Polished Obsidian - Sleek Black
-            root.style.setProperty('--color-primary', '#f472b6'); // Pink 400
+            root.style.setProperty('--color-primary', '#a78bfa'); // Purple
             root.style.setProperty('--color-primary-foreground', '#ffffff');
             root.style.setProperty('--color-secondary', '#18181b'); // Zinc 900
             root.style.setProperty('--color-background', '#09090b'); // Zinc 950
             root.style.setProperty('--color-surface', 'rgba(24, 24, 27, 0.7)');
-            root.style.setProperty('--color-accent', '#fb7185'); // Rose 400
+            root.style.setProperty('--color-accent', '#a78bfa'); // Purple
             root.style.setProperty('color', '#fafafa');
         } else if (themeId === 'emerald') {
             // Deep Emerald - Professional Green
@@ -48,7 +48,7 @@ export const applyThemeStyles = (themeId: string) => {
             root.style.setProperty('--color-surface', 'rgba(69, 26, 3, 0.7)');
             root.style.setProperty('--color-accent', '#f59e0b'); // Amber 500
             root.style.setProperty('color', '#fffbeb');
-        } else if (themeId === 'ocean') {
+        } else if (themeId === 'deepsea') {
             // Deep Ocean - Royal Teal
             root.style.setProperty('--color-primary', '#22d3ee'); // Cyan 400
             root.style.setProperty('--color-primary-foreground', '#0f172a');

@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from './layouts/DashboardLayout';
 import Students from './pages/Students';
+import StudentDetails from './pages/StudentDetails';
 import Coaches from './pages/Coaches';
+import CoachDetails from './pages/CoachDetails';
 import Finance from './pages/Finance';
 import Dashboard from './pages/Dashboard';
 import Schedule from './pages/Schedule';
@@ -19,8 +21,10 @@ import AdminCameras from './pages/AdminCameras';
 
 import { initializeTheme } from './utils/theme';
 import { CurrencyProvider } from './context/CurrencyContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
+  console.log('App: Rendering component');
   const { i18n } = useTranslation();
 
   useEffect(() => {
@@ -30,65 +34,66 @@ function App() {
     }
   }, [i18n, i18n?.language]);
 
-  // Theme Restoration Logic
-  useEffect(() => {
-    initializeTheme();
-  }, []);
+
 
   return (
     <CurrencyProvider>
-      <BrowserRouter>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: 'var(--color-surface)',
-              color: 'inherit', // Uses body color which adapts to theme
-              boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-              border: '1px solid rgba(128,128,128,0.1)',
-              borderRadius: '12px',
-              padding: '16px',
-              fontSize: '15px',
-              fontWeight: '500',
-            },
-            success: {
-              iconTheme: {
-                primary: 'var(--color-primary)',
-                secondary: 'var(--color-surface)',
+      <ThemeProvider>
+        <BrowserRouter>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'var(--color-surface)',
+                color: 'inherit', // Uses body color which adapts to theme
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                border: '1px solid rgba(128,128,128,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                fontSize: '15px',
+                fontWeight: '500',
               },
-            },
-            error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: 'var(--color-surface)',
+              success: {
+                iconTheme: {
+                  primary: 'var(--color-primary)',
+                  secondary: 'var(--color-surface)',
+                },
               },
-            },
-          }}
-        />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/registration" element={<PublicRegistration />} />
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: 'var(--color-surface)',
+                },
+              },
+            }}
+          />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/registration" element={<PublicRegistration />} />
 
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<DashboardLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="students" element={<Students />} />
-              <Route path="coaches" element={<Coaches />} />
-              <Route path="finance" element={<Finance />} />
-              <Route path="calculator" element={<Calculator />} />
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<DashboardLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="students" element={<Students />} />
+                <Route path="students/:id" element={<StudentDetails />} />
+                <Route path="coaches" element={<Coaches />} />
+                <Route path="coaches/:id" element={<CoachDetails />} />
+                <Route path="finance" element={<Finance />} />
+                <Route path="calculator" element={<Calculator />} />
 
-              <Route path="schedule" element={<Schedule />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="admin/cameras" element={<AdminCameras />} />
+                <Route path="schedule" element={<Schedule />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="admin/cameras" element={<AdminCameras />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
     </CurrencyProvider>
   )
 }

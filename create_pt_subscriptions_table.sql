@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS pt_subscriptions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     student_id BIGINT REFERENCES students(id) ON DELETE CASCADE,
+    student_name TEXT, -- Denormalized for convenience
     coach_id UUID REFERENCES coaches(id) ON DELETE CASCADE,
     sessions_total INTEGER NOT NULL CHECK (sessions_total > 0),
     sessions_remaining INTEGER NOT NULL CHECK (sessions_remaining >= 0),

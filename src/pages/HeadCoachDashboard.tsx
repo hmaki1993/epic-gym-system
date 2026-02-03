@@ -1,0 +1,295 @@
+import { useState, useEffect } from 'react';
+import { Clock, Calendar, CheckCircle, XCircle, User, Plus, Users, Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useOutletContext, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
+import GroupsList from '../components/GroupsList';
+import LiveStudentsWidget from '../components/LiveStudentsWidget';
+import GroupFormModal from '../components/GroupFormModal'; // Need this to create groups
+import AddStudentForm from '../components/AddStudentForm'; // Need this to add students
+import { useCurrency } from '../context/CurrencyContext';
+import PremiumClock from '../components/PremiumClock';
+import { useTheme } from '../context/ThemeContext';
+
+export default function HeadCoachDashboard() {
+    const { t, i18n } = useTranslation();
+    const { settings } = useTheme();
+    const { currency } = useCurrency();
+    const { role, fullName } = useOutletContext<{ role: string, fullName: string }>() || { role: null, fullName: null };
+    const navigate = useNavigate();
+
+    // Check-in State
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [checkInTime, setCheckInTime] = useState<string | null>(null);
+    const [currentTime] = useState(new Date());
+    const [dailyTotalSeconds, setDailyTotalSeconds] = useState(0);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [coachId, setCoachId] = useState<string | null>(null);
+
+    // Modals
+    const [showGroupModal, setShowGroupModal] = useState(false);
+    const [showStudentModal, setShowStudentModal] = useState(false);
+
+    // Earnings (Optional for Head Coach, but good to have)
+    const [baseSalary, setBaseSalary] = useState<number>(0);
+    const [totalEarnings, setTotalEarnings] = useState<number>(0);
+
+    // setInterval removed as PremiumClock handles it.
+    // currentTime is kept static for the date display.
+
+    useEffect(() => {
+        let interval: any;
+        if (isCheckedIn) {
+            interval = setInterval(() => {
+                const today = format(new Date(), 'yyyy-MM-dd');
+                const startTime = localStorage.getItem(`checkInStart_${today}`);
+                if (startTime) {
+                    const params = JSON.parse(startTime);
+                    const now = new Date().getTime();
+                    setElapsedTime(Math.floor((now - params.timestamp) / 1000));
+                }
+            }, 1000);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => clearInterval(interval);
+    }, [isCheckedIn]);
+
+    useEffect(() => {
+        const initializeDashboard = async () => {
+            const todayStr = format(new Date(), 'yyyy-MM-dd');
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    // Fetch Coach Data
+                    const { data: coachData } = await supabase
+                        .from('coaches')
+                        .select('id, pt_rate, salary')
+                        .eq('profile_id', user.id)
+                        .single();
+
+                    if (coachData) {
+                        setCoachId(coachData.id);
+                        setBaseSalary(Number(coachData.salary) || 0);
+
+                        // Sync Attendance
+                        const { data: attendance } = await supabase
+                            .from('coach_attendance')
+                            .select('*')
+                            .eq('coach_id', coachData.id)
+                            .eq('date', todayStr)
+                            .maybeSingle();
+
+                        if (attendance) {
+                            const start = new Date(attendance.check_in_time);
+                            if (!attendance.check_out_time) {
+                                setIsCheckedIn(true);
+                                setCheckInTime(format(start, 'HH:mm:ss'));
+                                setElapsedTime(Math.floor((new Date().getTime() - start.getTime()) / 1000));
+                                localStorage.setItem(`checkInStart_${todayStr}`, JSON.stringify({
+                                    timestamp: start.getTime(),
+                                    recordId: attendance.id
+                                }));
+                            } else {
+                                setIsCheckedIn(false);
+                                const end = new Date(attendance.check_out_time);
+                                setDailyTotalSeconds(Math.floor((end.getTime() - start.getTime()) / 1000));
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Initialization failed:', err);
+            }
+        };
+
+        initializeDashboard();
+    }, []);
+
+    const handleCheckIn = async () => {
+        if (!coachId) return toast.error(t('common.error'));
+        const now = new Date();
+        const todayStr = format(now, 'yyyy-MM-dd');
+        try {
+            const { data, error } = await supabase
+                .from('coach_attendance')
+                .upsert({
+                    coach_id: coachId,
+                    date: todayStr,
+                    check_in_time: now.toISOString()
+                }, { onConflict: 'coach_id,date' })
+                .select().single();
+
+            if (error) throw error;
+            setIsCheckedIn(true);
+            setCheckInTime(format(now, 'HH:mm:ss'));
+            localStorage.setItem(`checkInStart_${todayStr}`, JSON.stringify({ timestamp: now.getTime(), recordId: data.id }));
+            toast.success(t('coach.checkInSuccess'));
+        } catch (error: any) {
+            toast.error(error.message || t('common.error'));
+        }
+    };
+
+    const handleCheckOut = async () => {
+        const now = new Date();
+        const today = format(now, 'yyyy-MM-dd');
+        const savedStart = localStorage.getItem(`checkInStart_${today}`);
+        try {
+            if (savedStart) {
+                const { recordId, timestamp } = JSON.parse(savedStart);
+                await supabase.from('coach_attendance').update({ check_out_time: now.toISOString() }).eq('id', recordId);
+                setDailyTotalSeconds(Math.floor((now.getTime() - timestamp) / 1000));
+            }
+            setIsCheckedIn(false);
+            setCheckInTime(null);
+            setElapsedTime(0);
+            localStorage.removeItem(`checkInStart_${today}`);
+            toast.success(t('coach.checkOutSuccess'));
+        } catch (error) {
+            toast.error(t('common.error'));
+        }
+    };
+
+    return (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Welcome Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
+                <div className="text-center sm:text-left">
+                    <h1 className="text-xl sm:text-2xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
+                        {t('dashboard.welcome')} {fullName || 'HEAD COACH'}
+                    </h1>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
+                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
+                            {format(new Date(), 'EEEE, dd MMMM yyyy')}
+                        </p>
+                        {settings.clock_position === 'dashboard' && (
+                            <>
+                                <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
+                                <PremiumClock className="scale-110 !px-6 !py-3" />
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {/* Attendance Card */}
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl transition-all duration-700"></div>
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isCheckedIn ? 'bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.8)] animate-pulse' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'}`}></span>
+                                <span className={isCheckedIn ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]'}>
+                                    {isCheckedIn ? t('coaches.workingNow') : t('coaches.away')}
+                                </span>
+                            </p>
+                        </div>
+                        <div className="p-4 bg-primary/20 rounded-2xl text-primary">
+                            <Clock className="w-6 h-6" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-8 relative z-10">
+                        {isCheckedIn ? (
+                            <div className="text-6xl font-black text-white tracking-widest font-mono animate-in zoom-in-95 duration-500">
+                                {formatTimer(elapsedTime)}
+                            </div>
+                        ) : dailyTotalSeconds > 0 ? (
+                            <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-700">
+                                <div className="text-6xl font-black text-emerald-400 tracking-widest font-mono drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+                                    {formatTimer(dailyTotalSeconds)}
+                                </div>
+                                <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Daily Work Summary</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-6xl font-black text-white/10 tracking-widest font-mono">00:00:00</div>
+                        )}
+                        <button
+                            onClick={isCheckedIn ? handleCheckOut : handleCheckIn}
+                            className={`group/btn w-full py-6 rounded-[2rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-premium ${isCheckedIn ? 'bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white' : 'bg-primary text-white hover:bg-primary/90'}`}
+                        >
+                            {isCheckedIn ? <XCircle className="w-6 h-6" /> : <CheckCircle className="w-6 h-6" />}
+                            {isCheckedIn ? t('coach.checkOut') : t('coach.checkIn')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Quick Actions Actions */}
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <div>
+                            <h2 className="text-xl font-black text-white uppercase tracking-tight">Quick Actions</h2>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mt-2">Manage Academy</p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => setShowStudentModal(true)}
+                            className="p-6 rounded-[2rem] bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
+                        >
+                            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent group-hover/action:scale-110 transition-transform">
+                                <Plus className="w-6 h-6" />
+                            </div>
+                            <span className="text-xs font-black text-white uppercase tracking-widest">Add Student</span>
+                        </button>
+                        <button
+                            onClick={() => setShowGroupModal(true)}
+                            className="p-6 rounded-[2rem] bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
+                        >
+                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover/action:scale-110 transition-transform">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <span className="text-xs font-black text-white uppercase tracking-widest">Create Group</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Live Floor View (Admin Mode) */}
+            <LiveStudentsWidget />
+
+            {/* All Groups Management */}
+            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium">
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
+                    <div className="p-3 bg-accent/20 rounded-2xl text-accent"><Users className="w-6 h-6" /></div>
+                    All Academy Groups
+                </h2>
+                <GroupsList showAll={true} />
+            </div>
+
+            {/* Modals */}
+            {showGroupModal && (
+                <GroupFormModal
+                    onClose={() => setShowGroupModal(false)}
+                    onSuccess={() => {
+                        setShowGroupModal(false);
+                        // Trigger group list refresh ideally, but GroupsList has realtime
+                        toast.success('Group created successfully');
+                    }}
+                />
+            )}
+
+            {showStudentModal && (
+                <AddStudentForm
+                    onClose={() => setShowStudentModal(false)}
+                    onSuccess={() => {
+                        setShowStudentModal(false);
+                        toast.success('Student added successfully');
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+function formatTimer(seconds: number) {
+    if (isNaN(seconds) || seconds < 0) return '00:00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
