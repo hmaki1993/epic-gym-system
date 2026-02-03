@@ -206,7 +206,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             let finalSettings = { ...defaultSettings };
             if (globalData) {
                 console.log('📥 Loaded global defaults from gym_settings');
-                finalSettings = { ...finalSettings, ...globalData };
+                // Filter out nulls from globalData
+                const filteredGlobal = Object.fromEntries(
+                    Object.entries(globalData).filter(([_, v]) => v !== null)
+                );
+                finalSettings = { ...finalSettings, ...filteredGlobal };
             }
 
             // 2. Overlay User Personal Settings & Fetch Profile
@@ -230,7 +234,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
                 if (userSettingsRes.data) {
                     console.log('📥 Found user personal settings:', userSettingsRes.data);
-                    finalSettings = { ...finalSettings, ...userSettingsRes.data };
+                    // Filter out nulls from user settings
+                    const filteredUser = Object.fromEntries(
+                        Object.entries(userSettingsRes.data).filter(([_, v]) => v !== null)
+                    );
+                    finalSettings = { ...finalSettings, ...filteredUser };
                 }
 
                 if (profileRes.data) {

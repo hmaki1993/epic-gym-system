@@ -52,7 +52,8 @@ export default function Settings() {
     const [publishProgress, setPublishProgress] = useState(0);
     const [publishStep, setPublishStep] = useState('');
     const { t, i18n } = useTranslation();
-    const { role } = useOutletContext<{ role: string }>() || { role: null };
+    const context = useOutletContext<{ role: string }>() || { role: null };
+    const role = context.role?.toLowerCase()?.trim();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -414,77 +415,78 @@ export default function Settings() {
             </div>
 
             <div className="grid grid-cols-1 gap-8">
-                {/* Theme Customization */}
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-                    <div className="relative z-10">
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
-                            <div className="p-3 bg-primary/20 rounded-2xl text-primary">
-                                <Palette className="w-6 h-6" />
-                            </div>
-                            {t('settings.theme')}
-                        </h2>
-
-                        {/* Base Theme Mode */}
-                        <div className="mb-10 p-6 bg-white/5 rounded-3xl border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
-                            <div className="text-center sm:text-left">
-                                <h3 className="text-sm font-black text-white uppercase tracking-widest">{t('settings.baseAppearance')}</h3>
-                                <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider mt-1">{t('settings.themeDescription')}</p>
-                            </div>
-                            <div className="flex bg-black/20 p-1.5 rounded-2xl">
-                                <button
-                                    onClick={() => setDraftSettings(prev => ({ ...prev, secondary_color: '#F8FAFC', surface_color: '#ffffff', input_bg_color: '#ffffff', search_bg_color: '#f1f5f9', search_text_color: '#0f172a' }))}
-                                    className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${draftSettings.secondary_color === '#F8FAFC' ? 'bg-white text-slate-900 shadow-lg' : 'text-white/40 hover:text-white'}`}
-                                >
-                                    <Sun className="w-4 h-4" />
-                                    {t('settings.light')}
-                                </button>
-                                <button
-                                    onClick={() => setDraftSettings(prev => ({ ...prev, secondary_color: '#0E1D21', surface_color: 'rgba(18, 46, 52, 0.7)', input_bg_color: '#0f172a', search_bg_color: 'rgba(255, 255, 255, 0.05)', search_text_color: '#ffffff' }))}
-                                    className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${draftSettings.secondary_color !== '#F8FAFC' ? 'bg-secondary text-primary shadow-lg ring-1 ring-white/10' : 'text-white/40 hover:text-white'}`}
-                                >
-                                    <Moon className="w-4 h-4" />
-                                    {t('settings.dark')}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                            {themes.map(theme => (
-                                <button
-                                    key={theme.id}
-                                    onClick={() => applyPreset(theme)}
-                                    className={`group relative p-4 rounded-3xl border-2 transition-all duration-500 hover:scale-[1.05] active:scale-95 ${currentTheme === theme.id
-                                        ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                                        : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'
-                                        }`}
-                                >
-                                    <div className="aspect-video rounded-xl mb-3 overflow-hidden border border-white/10 relative">
-                                        <div className="absolute inset-0 flex flex-col">
-                                            <div className="h-full" style={{ backgroundColor: theme.bg }}></div>
-                                            <div className="absolute top-0 right-0 w-1/2 h-full opacity-20" style={{ backgroundColor: theme.primary, clipPath: 'polygon(100% 0, 0% 100%, 100% 100%)' }}></div>
-                                        </div>
-                                        <div className="absolute bottom-2 left-2 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: theme.primary }}></div>
-                                        <div className="absolute bottom-2 left-6 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: theme.secondary }}></div>
-                                        <div className="absolute bottom-2 left-10 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: theme.accent }}></div>
-                                        <div className="absolute bottom-2 left-14 w-3 h-3 rounded-full shadow-lg border border-white/20" style={{ backgroundColor: theme.surface }}></div>
-                                    </div>
-                                    <span className={`block text-center font-black text-[9px] uppercase tracking-widest transition-colors ${currentTheme === theme.id ? 'text-white' : 'text-white/40 group-hover:text-white'}`}>
-                                        {t(`settings.themes.${theme.id}`)}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Appearance Settings - Visible to All Users */}
+                {/* Appearance Settings */}
                 {activeTab === 'appearance' && (
                     <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500 pb-20">
-                        {true && (
+                        {/* Theme Customization - Available to all roles */}
+                        <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
+                            <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+                            <div className="relative z-10">
+                                <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
+                                    <div className="p-3 bg-primary/20 rounded-2xl text-primary">
+                                        <Palette className="w-6 h-6" />
+                                    </div>
+                                    {t('settings.theme')}
+                                </h2>
+
+                                {/* Base Theme Mode */}
+                                <div className="mb-10 p-6 bg-white/5 rounded-3xl border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="text-center sm:text-left">
+                                        <h3 className="text-sm font-black text-white uppercase tracking-widest">{t('settings.baseAppearance')}</h3>
+                                        <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider mt-1">{t('settings.themeDescription')}</p>
+                                    </div>
+                                    <div className="flex bg-black/20 p-1.5 rounded-2xl">
+                                        <button
+                                            onClick={() => setDraftSettings(prev => ({ ...prev, secondary_color: '#F8FAFC', surface_color: '#ffffff', input_bg_color: '#ffffff', search_bg_color: '#f1f5f9', search_text_color: '#0f172a' }))}
+                                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${draftSettings.secondary_color === '#F8FAFC' ? 'bg-white text-slate-900 shadow-lg' : 'text-white/40 hover:text-white'}`}
+                                        >
+                                            <Sun className="w-4 h-4" />
+                                            {t('settings.light')}
+                                        </button>
+                                        <button
+                                            onClick={() => setDraftSettings(prev => ({ ...prev, secondary_color: '#0E1D21', surface_color: 'rgba(18, 46, 52, 0.7)', input_bg_color: '#0f172a', search_bg_color: 'rgba(255, 255, 255, 0.05)', search_text_color: '#ffffff' }))}
+                                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${draftSettings.secondary_color !== '#F8FAFC' ? 'bg-secondary text-primary shadow-lg ring-1 ring-white/10' : 'text-white/40 hover:text-white'}`}
+                                        >
+                                            <Moon className="w-4 h-4" />
+                                            {t('settings.dark')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                                    {themes.map(theme => (
+                                        <button
+                                            key={theme.id}
+                                            onClick={() => applyPreset(theme)}
+                                            className={`group relative p-4 rounded-3xl border-2 transition-all duration-500 hover:scale-[1.05] active:scale-95 ${currentTheme === theme.id
+                                                ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                                                : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                                                }`}
+                                        >
+                                            <div className="aspect-video rounded-xl mb-3 overflow-hidden border border-white/10 relative">
+                                                <div className="absolute inset-0 flex flex-col">
+                                                    <div className="h-full" style={{ backgroundColor: theme.bg }}></div>
+                                                    <div className="absolute top-0 right-0 w-1/2 h-full opacity-20" style={{ backgroundColor: theme.primary, clipPath: 'polygon(100% 0, 0% 100%, 100% 100%)' }}></div>
+                                                </div>
+                                                <div className="absolute bottom-2 left-2 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: theme.primary }}></div>
+                                                <div className="absolute bottom-2 left-6 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: theme.secondary }}></div>
+                                                <div className="absolute bottom-2 left-10 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: theme.accent }}></div>
+                                                <div className="absolute bottom-2 left-14 w-3 h-3 rounded-full shadow-lg border border-white/20" style={{ backgroundColor: theme.surface }}></div>
+                                            </div>
+                                            <span className={`block text-center font-black text-[9px] uppercase tracking-widest transition-colors ${currentTheme === theme.id ? 'text-white' : 'text-white/40 group-hover:text-white'}`}>
+                                                {t(`settings.themes.${theme.id}`)}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Granular Design Customization - Restricted to Admins */}
+                        {role === 'admin' && (
                             <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8">
-                                    <span className="px-2 py-0.5 rounded-lg bg-primary/20 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-widest">{t('settings.premiumMember')}</span>
+                                <div className="absolute top-0 right-0 p-8 text-white/40 text-[10px] uppercase font-bold tracking-widest">
+                                    <span className="px-2 py-0.5 rounded-lg bg-primary/20 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-widest mr-2">{t('settings.premiumMember')}</span>
                                     {t('settings.premiumOptions')}
                                 </div>
                                 <div className="absolute -top-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"></div>
@@ -703,7 +705,6 @@ export default function Settings() {
                                                 </div>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
@@ -747,9 +748,10 @@ export default function Settings() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* Gym Profile - Only for Admin */}
-                            {role === 'admin' && (
+                        {/* Admin Sections: Gym Profile & Subscriptions */}
+                        {role === 'admin' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Gym Profile */}
                                 <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium lg:col-span-1">
                                     <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-8">
                                         <div className="p-3 bg-primary/20 rounded-2xl text-primary">
@@ -808,9 +810,11 @@ export default function Settings() {
                                         </div>
                                     </form>
                                 </div>
-                            )}
 
-                        </div>
+                                {/* Subscription Plans Manager */}
+                                <SubscriptionPlansManager />
+                            </div>
+                        )}
 
                         {/* Personal Account Settings - Visible to All */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -915,11 +919,9 @@ export default function Settings() {
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 }
-
-
 
 // --- Color Utilities for Premium Customization ---
 
@@ -954,7 +956,7 @@ function rgbaToHex8(r: number, g: number, b: number, a: number) {
  * Returns a 6-character hex from an 8-character hex
  */
 function stripAlpha(hex: string) {
-    return hex.length === 9 ? hex.slice(0, 7) : hex;
+    return hex.length === 9 || hex.length === 8 ? hex.slice(0, 7) : hex;
 }
 
 function PremiumColorPicker({
@@ -963,10 +965,10 @@ function PremiumColorPicker({
     onChange,
     description
 }: {
-    label: string,
-    value: string,
-    onChange: (val: string) => void,
-    description?: string
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+    description?: string;
 }) {
     const [opacity, setOpacity] = useState(hexToRgba(value || '#000000ff').a);
     const [baseColor, setBaseColor] = useState(stripAlpha(value || '#000000'));
@@ -1000,7 +1002,6 @@ function PremiumColorPicker({
             </div>
 
             <div className="flex items-start gap-4">
-                {/* Checkerboard Preview Circle - Slightly smaller for better fit */}
                 <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0 select-none group-hover/picker:scale-105 transition-transform duration-500">
                     <div className="absolute inset-0" style={{
                         backgroundImage: 'conic-gradient(#333 0.25turn, #444 0.25turn 0.5turn, #333 0.5turn 0.75turn, #444 0.75turn)',
@@ -1016,7 +1017,6 @@ function PremiumColorPicker({
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-3">
-                    {/* Vertically stacked info to prevent horizontal collision */}
                     <div className="flex flex-col gap-0.5">
                         <div className="text-sm font-black text-white tracking-[0.15em] font-mono leading-none">
                             {value.toUpperCase()}
@@ -1047,7 +1047,6 @@ function PremiumColorPicker({
                     {description}
                 </div>
             )}
-
         </div>
     );
 }
@@ -1179,7 +1178,6 @@ function SubscriptionPlansManager() {
                 {t('settings.planDeleteNote')}
             </p>
 
-            {/* Custom Premium Modal */}
             {planToDelete && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="glass-card max-w-md w-full p-10 rounded-[2.5rem] border border-white/10 shadow-2xl relative animate-in zoom-in duration-300">
@@ -1219,10 +1217,10 @@ function PremiumSwitch({
     checked,
     onChange
 }: {
-    label: string,
-    description?: string,
-    checked: boolean,
-    onChange: (checked: boolean) => void
+    label: string;
+    description?: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
 }) {
     return (
         <label className="flex items-center justify-between p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-all cursor-pointer group">
@@ -1242,3 +1240,4 @@ function PremiumSwitch({
         </label>
     );
 }
+

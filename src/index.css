@@ -61,7 +61,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius) !important;
   box-shadow: var(--shadow-premium) !important;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform, opacity;
 }
 
 .glass-card:hover {
@@ -216,4 +220,19 @@ input::-webkit-inner-spin-button {
 
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  .glass-card {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  --shadow-premium: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+
+  * {
+    transition-duration: 0.2s !important;
+  }
 }

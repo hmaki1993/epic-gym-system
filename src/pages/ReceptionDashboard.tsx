@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, subMonths, addMonths, isToday } from 'date-fns';
@@ -66,6 +66,39 @@ export default function ReceptionDashboard() {
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [checkInTime, setCheckInTime] = useState<string | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
+
+    // Search State for Filtering
+    const [searchGymnast, setSearchGymnast] = useState('');
+    const [searchStaff, setSearchStaff] = useState('');
+    const [searchPT, setSearchPT] = useState('');
+
+    // --- Memoized Filtered Lists for Performance ---
+    const filteredGymnasts = useMemo(() => {
+        if (!searchGymnast.trim()) return todaysClasses;
+        const query = searchGymnast.toLowerCase().trim();
+        return todaysClasses.filter(s =>
+            s.full_name?.toLowerCase().includes(query) ||
+            s.coaches?.full_name?.toLowerCase().includes(query)
+        );
+    }, [todaysClasses, searchGymnast]);
+
+    const filteredCoaches = useMemo(() => {
+        if (!searchStaff.trim()) return coachesList;
+        const query = searchStaff.toLowerCase().trim();
+        return coachesList.filter(c =>
+            c.full_name?.toLowerCase().includes(query) ||
+            c.email?.toLowerCase().includes(query)
+        );
+    }, [coachesList, searchStaff]);
+
+    const filteredPT = useMemo(() => {
+        if (!searchPT.trim()) return ptList;
+        const query = searchPT.toLowerCase().trim();
+        return ptList.filter(s =>
+            s.full_name?.toLowerCase().includes(query) ||
+            s.coach_name?.toLowerCase().includes(query)
+        );
+    }, [ptList, searchPT]);
 
     // Refs for stale closures
     const myCoachIdRef = useRef<string | null>(null);
@@ -934,9 +967,9 @@ export default function ReceptionDashboard() {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-4 pb-12">
-                                {todaysClasses.map((student, index) => (
+                                {filteredGymnasts.map((student, index) => (
                                     <div key={student.id}
-                                        style={{ zIndex: todaysClasses.length - index }}
+                                        style={{ zIndex: filteredGymnasts.length - index }}
                                         className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500 cursor-pointer
                                             hover:-translate-y-2 hover:z-[100] hover:shadow-2xl hover:shadow-emerald-500/20
                                             ${student.status === 'present' ? 'bg-emerald-500/5 backdrop-blur-xl border-emerald-500/20' :
@@ -1120,16 +1153,16 @@ export default function ReceptionDashboard() {
                         </h2>
                         <div className="flex items-center gap-2">
                             <span className="px-3 py-1 bg-white/5 text-xs font-bold uppercase tracking-wider rounded-lg text-white/50">
-                                {coachesList.filter(c => c.status === 'present').length} / {coachesList.length} Present
+                                {filteredCoaches.filter(c => c.status === 'present').length} / {filteredCoaches.length} Present
                             </span>
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         <div className="flex flex-col gap-4 pb-12">
-                            {coachesList.map((coach, index) => (
+                            {filteredCoaches.map((coach, index) => (
                                 <div key={coach.id}
-                                    style={{ zIndex: coachesList.length - index }}
+                                    style={{ zIndex: filteredCoaches.length - index }}
                                     className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500 cursor-pointer
                                             hover:-translate-y-2 hover:z-[100] hover:shadow-2xl hover:shadow-emerald-500/20
                                             ${coach.status === 'present' ? 'bg-[#152b24]/60 backdrop-blur-xl border-emerald-500/30' :
@@ -1293,16 +1326,16 @@ export default function ReceptionDashboard() {
                         </h2>
                         <div className="flex items-center gap-2">
                             <span className="px-3 py-1 bg-white/5 text-xs font-bold uppercase tracking-wider rounded-lg text-white/50">
-                                {ptList.filter(s => s.status === 'present').length} Active
+                                {filteredPT.filter(s => s.status === 'present').length} Active
                             </span>
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                         <div className="flex flex-col gap-4 pb-12">
-                            {ptList.map((item, index) => (
+                            {filteredPT.map((item, index) => (
                                 <div key={item.id}
-                                    style={{ zIndex: ptList.length - index }}
+                                    style={{ zIndex: filteredPT.length - index }}
                                     className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500 cursor-pointer
                                             hover:-translate-y-2 hover:z-[100] hover:shadow-2xl hover:shadow-accent/20
                                             ${item.status === 'present' ? 'bg-emerald-500/5 backdrop-blur-xl border-emerald-500/20' :
