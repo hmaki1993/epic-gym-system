@@ -575,7 +575,7 @@ export default function Settings() {
                                                             <PremiumSwitch
                                                                 label={t('settings.weatherIntegration')}
                                                                 description={t('settings.weatherIntegrationDescription')}
-                                                                checked={draftSettings.weather_integration}
+                                                                checked={draftSettings.weather_integration || false}
                                                                 onChange={(checked) => setDraftSettings({ ...draftSettings, weather_integration: checked })}
                                                             />
                                                         </div>
