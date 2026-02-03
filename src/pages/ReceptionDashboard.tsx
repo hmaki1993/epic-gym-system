@@ -18,7 +18,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Search,
-    RotateCcw
+    RotateCcw,
+    ArrowUpRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AddStudentForm from '../components/AddStudentForm';
@@ -839,16 +840,35 @@ export default function ReceptionDashboard() {
                     <h1 className="text-4xl font-extrabold premium-gradient-text uppercase tracking-tight">
                         {t('reception.dashboard') || 'Reception Dashboard'}
                     </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
-                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
-                            {format(new Date(), 'EEEE, dd MMMM yyyy')}
-                        </p>
-                        {settings.clock_position === 'dashboard' && (
-                            <>
-                                <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-                                <PremiumClock className="scale-110 !px-6 !py-3" />
-                            </>
-                        )}
+                    <div className="mt-6 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
+                                {format(new Date(), 'EEEE, dd MMMM yyyy')}
+                            </p>
+                            {settings.clock_position === 'dashboard' && (
+                                <>
+                                    <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
+                                    <PremiumClock className="scale-110 !px-6 !py-3" />
+                                </>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                            <p className="text-white/40 text-sm font-bold uppercase tracking-widest">{t('dashboard.welcome')}, {contextRole?.replace('_', ' ') || 'Staff'}.</p>
+
+                            {(contextRole === 'admin' || contextRole === 'reception') && (
+                                <a
+                                    href="/registration"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/5 hover:scale-105 hover:bg-emerald-500/20 transition-all group self-start sm:self-auto"
+                                >
+                                    <UserPlus className="w-3.5 h-3.5" />
+                                    {t('common.registrationPage')}
+                                    <ArrowUpRight className="w-3 h-3 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
+                                </a>
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -18,7 +18,9 @@ import {
     Bell,
     ChevronDown,
     MessageSquare,
-    Globe
+    Globe,
+    UserPlus,
+    ExternalLink
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -411,6 +413,19 @@ export default function DashboardLayout() {
                     <div className="flex items-center gap-3">
                         {settings.clock_position === 'header' && (
                             <PremiumClock className="hidden md:flex" />
+                        )}
+
+                        {role === 'admin' && (
+                            <a
+                                href="/registration"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hidden sm:flex items-center justify-center p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all group relative border border-emerald-500/10"
+                                title={t('common.registrationPage')}
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+                            </a>
                         )}
 
                         <div className="h-10 w-[1px] bg-white/10 mx-2 hidden sm:block"></div>

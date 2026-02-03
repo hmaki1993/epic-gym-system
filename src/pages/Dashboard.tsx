@@ -1,4 +1,4 @@
-import { Users, DollarSign, Medal, Calendar, TrendingUp, TrendingDown, Clock, Scale, ArrowUpRight } from 'lucide-react';
+import { Users, DollarSign, Medal, Calendar, TrendingUp, TrendingDown, Clock, Scale, ArrowUpRight, UserPlus, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { useOutletContext, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -90,7 +90,22 @@ export default function Dashboard() {
                             )}
                         </div>
                     </div>
-                    <p className="text-white/60 mt-4 text-sm sm:text-lg font-bold tracking-wide uppercase opacity-100">{t('dashboard.welcome')}, {fullName || role?.replace('_', ' ') || 'Admin'}.</p>
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-4">
+                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-wide uppercase opacity-100">{t('dashboard.welcome')}, {fullName || role?.replace('_', ' ') || 'Admin'}.</p>
+
+                        {role === 'admin' && (
+                            <a
+                                href="/registration"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/5 hover:scale-105 hover:bg-emerald-500/20 transition-all group self-start sm:self-auto"
+                            >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                {t('common.registrationPage')}
+                                <ArrowUpRight className="w-3 h-3 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
+                            </a>
+                        )}
+                    </div>
                 </div>
             </div>
 

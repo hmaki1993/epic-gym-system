@@ -93,7 +93,9 @@ i18n
                         hour4: '4 Hours',
                         currentGroup: 'Current',
                         saveGroup: 'Save Group',
-                        confirmationRequired: 'Confirmation Required'
+                        confirmationRequired: 'Confirmation Required',
+                        registrationPage: 'Registration Portal',
+                        publicPortal: 'Public Enrollment Portal'
                     },
                     cameras: {
                         subtitle: 'Monitor gym activities in real-time',
@@ -431,7 +433,9 @@ i18n
                         hour4: '4 ساعات',
                         currentGroup: 'المجموعة الحالية',
                         saveGroup: 'حفظ المجموعة',
-                        confirmationRequired: 'مطلوب تأكيد'
+                        confirmationRequired: 'مطلوب تأكيد',
+                        registrationPage: 'بوابة التسجيل',
+                        publicPortal: 'بوابة الاشتراك العام'
                     },
                     cameras: {
                         subtitle: 'مراقبة أنشطة الجيم في الوقت الفعلي',
