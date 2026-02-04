@@ -143,10 +143,10 @@ export default function LiveStudentsWidget({ coachId }: { coachId?: string | nul
     return (
         <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden flex flex-col h-full bg-[#122E34]/30 backdrop-blur-3xl">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 relative z-10">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500 relative">
-                        <Activity className="w-6 h-6 relative z-10" />
+            <div className="flex items-center justify-between mb-4 relative z-10">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-500 relative">
+                        <Activity className="w-5 h-5 relative z-10" />
                         <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full animate-pulse"></div>
                     </div>
                     <div>
@@ -169,7 +169,7 @@ export default function LiveStudentsWidget({ coachId }: { coachId?: string | nul
             </div>
 
             {/* List of Active Groups */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-2 relative z-10 min-h-[300px]">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-2 relative z-10 min-h-[300px]">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-4 opacity-50">
                         <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
@@ -258,7 +258,7 @@ export default function LiveStudentsWidget({ coachId }: { coachId?: string | nul
                                 </h4>
                                 <div className="space-y-2">
                                     {otherCheckedIn.map((record) => (
-                                        <div key={record.student_id} className="flex items-center justify-between p-4 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/5 transition-all group/item translate-y-0 hover:-translate-y-0.5 shadow-sm">
+                                        <div key={record.student_id} className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/5 transition-all group/item translate-y-0 hover:-translate-y-0.5 shadow-sm">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-sm">
                                                     {record.students?.full_name?.charAt(0) || '?'}

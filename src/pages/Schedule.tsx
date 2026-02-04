@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, startOfWeek, addDays, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, endOfWeek } from 'date-fns';
 import { enUS, ar } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Clock, Users, ChevronLeft, ChevronRight, MoreHorizontal, Plus, Trash2, CalendarDays, LogOut, RefreshCw, Sparkles, User, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Users, ChevronLeft, ChevronRight, MoreHorizontal, Plus, Trash2, CalendarDays, LogOut, RefreshCw, Sparkles, User, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 import { useTranslation } from 'react-i18next';
@@ -61,10 +61,10 @@ export default function Schedule() {
             let query = supabase
                 .from('training_groups')
                 .select(`
-                    *,
-                    coaches(full_name, role),
-                    students(id, full_name, birth_date)
-                `);
+    *,
+    coaches(full_name, role),
+    students(id, full_name, birth_date)
+        `);
 
             // If user is a simple coach, only show THEIR groups
             if (role === 'coach') {
@@ -173,7 +173,7 @@ export default function Schedule() {
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
                 setElapsedTime(
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} `
                 );
             };
 
@@ -252,15 +252,15 @@ export default function Schedule() {
     };
 
     const renderHeader = () => (
-        <div className="flex flex-col gap-8 mb-10">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8">
+        <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-3 border-b border-white/5 pb-3">
                 <div className="text-center md:text-left">
-                    <h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter mb-0.5">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">{t('dashboard.schedule')}</span>
                         <span className="text-primary">.</span>
                     </h1>
-                    <p className="text-white/40 text-sm font-black tracking-[0.2em] uppercase flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-primary/50"></span>
+                    <p className="text-white/40 text-[9px] font-black tracking-[0.2em] uppercase flex items-center gap-2">
+                        <span className="w-4 h-[1px] bg-primary/50"></span>
                         {format(currentDate, 'MMMM yyyy', { locale: i18n.language === 'ar' ? ar : enUS })}
                     </p>
                 </div>
@@ -272,9 +272,9 @@ export default function Schedule() {
                             <button
                                 onClick={handleCheckIn}
                                 disabled={attendanceLoading}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] transition-all flex items-center gap-3 active:scale-95 group"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all flex items-center gap-2 active:scale-95 group"
                             >
-                                <Clock className="w-4 h-4 text-emerald-900 group-hover:rotate-12 transition-transform" />
+                                <Clock className="w-3.5 h-3.5 text-emerald-900 group-hover:rotate-12 transition-transform" />
                                 {t('common.checkIn')}
                             </button>
                         ) : !attendanceToday.check_out_time ? (
@@ -284,27 +284,30 @@ export default function Schedule() {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                     </span>
-                                    <span className="text-lg font-mono font-black text-emerald-400 min-w-[80px] text-center tracking-tighter shadow-glow">
+                                    <span className="text-base font-mono font-black text-emerald-400 min-w-[70px] text-center tracking-tighter shadow-glow">
                                         {elapsedTime}
                                     </span>
                                 </div>
                                 <button
                                     onClick={handleCheckOut}
                                     disabled={attendanceLoading}
-                                    className="bg-rose-500 hover:bg-rose-400 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-[0_0_30px_rgba(244,63,94,0.3)] hover:shadow-[0_0_40px_rgba(244,63,94,0.5)] transition-all flex items-center gap-3 active:scale-95 group"
+                                    className="bg-rose-500 hover:bg-rose-400 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-[0_0_20px_rgba(244,63,94,0.2)] hover:shadow-[0_0_30px_rgba(244,63,94,0.4)] transition-all flex items-center gap-2 active:scale-95 group"
                                 >
-                                    <LogOut className="w-4 h-4 text-white group-hover:-translate-x-1 transition-transform" />
+                                    <LogOut className="w-3.5 h-3.5 text-white group-hover:-translate-x-1 transition-transform" />
                                     {t('common.out')}
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
-                                <div className="p-2 bg-emerald-500/20 rounded-xl">
-                                    <Clock className="w-5 h-5 text-emerald-400" />
+                            <div className="flex items-center gap-4 px-4 py-2 rounded-2xl bg-white/5 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)] group">
+                                <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-400 group-hover:animate-bounce" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-emerald-400/50 uppercase tracking-widest">{t('common.shiftCompleted')}</span>
-                                    <span className="text-sm font-black text-emerald-400 uppercase tracking-tight">
+                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                        {t('common.shiftCompleted')}
+                                        <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    </span>
+                                    <span className="text-[11px] font-black text-white/40 uppercase tracking-tighter font-mono">
                                         {new Date(attendanceToday.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(attendanceToday.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
@@ -314,53 +317,50 @@ export default function Schedule() {
                 )}
             </div>
 
-            <div className="flex flex-col xl:flex-row justify-between items-center gap-6">
-                <div className="w-full xl:w-auto flex items-center gap-4 p-2 rounded-[2rem] bg-[#0a0c10]/40 backdrop-blur-xl border border-white/5 shadow-2xl">
-                    {/* Date Nav */}
-                    <div className="flex items-center gap-1 bg-white/5 rounded-[1.5rem] p-1.5 border border-white/5">
-                        <button onClick={() => navigateDate('prev')} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
-                            <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        <span className="font-black text-white px-6 min-w-[160px] text-center uppercase tracking-widest text-xs">
-                            {format(currentDate, viewMode === 'month' ? 'MMMM yyyy' : 'MMM dd, yyyy')}
-                        </span>
-                        <button onClick={() => navigateDate('next')} className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
-                            <ChevronRight className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    {/* View Switcher */}
-                    <div className="flex p-1.5 bg-black/20 rounded-[1.5rem] border border-white/5">
-                        {['month', 'week', 'day'].map((mode) => (
-                            <button
-                                key={mode}
-                                onClick={() => setViewMode(mode as ViewMode)}
-                                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === mode ? 'bg-white/10 text-white shadow-lg border border-white/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
-                            >
-                                {t(`dashboard.${mode}`)}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Create Group Button (Premium Icon Version) */}
-                    {(role === 'admin' || role === 'head_coach') && (
-                        <>
-                            <div className="w-px h-8 bg-white/5 mx-2"></div>
-                            <button
-                                onClick={() => {
-                                    setEditingGroup(null);
-                                    setShowGroupModal(true);
-                                }}
-                                className="group/create relative w-12 h-12 rounded-2xl bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary/50 transition-all duration-500 flex items-center justify-center overflow-hidden shadow-lg shadow-primary/5 hover:shadow-primary/20 active:scale-90"
-                                title={t('dashboard.createGroup')}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 opacity-0 group-hover/create:opacity-100 transition-opacity duration-500"></div>
-                                <Plus className="w-5 h-5 text-primary group-hover/create:text-white transition-colors relative z-10 group-hover/create:rotate-90 duration-500" />
-                            </button>
-                        </>
-                    )}
+            <div className="w-full xl:w-auto flex items-center gap-3 p-1.5 rounded-[1.5rem] bg-[#0a0c10]/40 backdrop-blur-xl border border-white/5 shadow-2xl">
+                {/* Date Nav */}
+                <div className="flex items-center gap-1 bg-white/5 rounded-2xl p-1 border border-white/5">
+                    <button onClick={() => navigateDate('prev')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="font-black text-white px-4 min-w-[140px] text-center uppercase tracking-widest text-[10px]">
+                        {format(currentDate, viewMode === 'month' ? 'MMMM yyyy' : 'MMM dd, yyyy')}
+                    </span>
+                    <button onClick={() => navigateDate('next')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
                 </div>
 
+                {/* View Switcher */}
+                <div className="flex p-1 bg-black/20 rounded-2xl border border-white/5">
+                    {['month', 'week', 'day'].map((mode) => (
+                        <button
+                            key={mode}
+                            onClick={() => setViewMode(mode as ViewMode)}
+                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === mode ? 'bg-white/10 text-white shadow-lg border border-white/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
+                        >
+                            {t(`dashboard.${mode}`)}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Create Group Button (Premium Icon Version) */}
+                {(role === 'admin' || role === 'head_coach') && (
+                    <>
+                        <div className="w-px h-6 bg-white/5 mx-1"></div>
+                        <button
+                            onClick={() => {
+                                setEditingGroup(null);
+                                setShowGroupModal(true);
+                            }}
+                            className="group/create relative w-9 h-9 rounded-xl bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary/50 transition-all duration-500 flex items-center justify-center overflow-hidden shadow-lg shadow-primary/5 hover:shadow-primary/20 active:scale-90"
+                            title={t('dashboard.createGroup')}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 opacity-0 group-hover/create:opacity-100 transition-opacity duration-500"></div>
+                            <Plus className="w-4 h-4 text-primary group-hover/create:text-white transition-colors relative z-10 group-hover/create:rotate-90 duration-500" />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -388,7 +388,7 @@ export default function Schedule() {
                         return (
                             <div
                                 key={day.toString()}
-                                className={`bg-[#0a0c10]/60 min-h-[140px] p-4 relative group hover:bg-white/[0.05] transition-all cursor-pointer ${!isCurrentMonth ? 'opacity-30 bg-black/60' : ''}`}
+                                className={`bg-[#0a0c10]/60 min-h-[100px] p-2.5 relative group hover:bg-white/[0.05] transition-all cursor-pointer ${!isCurrentMonth ? 'opacity-30 bg-black/60' : ''}`}
                                 onClick={() => {
                                     setCurrentDate(day);
                                     setViewMode('day');
@@ -408,7 +408,7 @@ export default function Schedule() {
                                             <div
                                                 key={session.id || idx}
                                                 className="px-2.5 py-1 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/40 hover:bg-primary/5 transition-all w-full group/item cursor-pointer"
-                                                title={`${session.name || session.title} - ${session.coaches?.full_name}`}
+                                                title={`${session.name || session.title} - ${session.coaches?.full_name} `}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSelectedGroup(session);
@@ -447,25 +447,26 @@ export default function Schedule() {
                 {weekDays.map((day, i) => {
                     const isToday = isSameDay(day, new Date());
                     const daySessions = getSessionsForDay(day);
+                    const isCurrentMonth = isSameMonth(day, currentDate); // Added for consistency with the provided snippet
 
                     return (
-                        <div key={i} className={`flex flex-col gap-4 group/day ${isToday ? 'relative' : ''}`}>
+                        <div key={i} className={`flex flex-col gap-3 group/day ${isToday ? 'relative' : ''}`}>
                             {isToday && (
-                                <div className="absolute -inset-0.5 bg-gradient-to-b from-primary to-accent rounded-[2rem] blur opacity-30"></div>
+                                <div className="absolute -inset-0.5 bg-gradient-to-b from-primary to-accent rounded-2xl blur opacity-30"></div>
                             )}
                             <div
-                                className={`relative z-10 text-center p-6 rounded-[1.8rem] cursor-pointer transition-all duration-500 hover:-translate-y-1 ${isToday ? 'bg-gradient-to-b from-primary to-primary/80 text-white shadow-[0_10px_40px_rgba(var(--primary),0.3)] border border-white/20' : 'bg-[#0a0c10]/40 backdrop-blur-xl border border-white/5 hover:border-primary/30 hover:bg-white/5'}`}
+                                className={`relative z-10 text-center p-4 rounded-2xl cursor-pointer transition-all duration-500 hover:-translate-y-1 ${isToday ? 'bg-gradient-to-b from-primary to-primary/80 text-white shadow-[0_10px_40px_rgba(var(--primary),0.3)] border border-white/20' : 'bg-[#0a0c10]/40 backdrop-blur-xl border border-white/5 hover:border-primary/30 hover:bg-white/5'}`}
                                 onClick={() => {
                                     setCurrentDate(day);
                                     setViewMode('day');
                                 }}
                             >
-                                <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-2 transition-colors ${isToday ? 'text-white/90' : 'text-white/30 group-hover/day:text-white/60'}`}>{t(`students.days.${format(day, 'eee').toLowerCase()}`)}</p>
-                                <p className={`text-3xl font-black tracking-tighter transition-colors ${isToday ? 'text-white scale-110 origin-center' : 'text-white/80 group-hover/day:text-white'}`}>{format(day, 'dd')}</p>
+                                <p className={`text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 transition-colors ${isToday ? 'text-white/90' : 'text-white/30 group-hover/day:text-white/60'}`}>{t(`students.days.${format(day, 'eee').toLowerCase()}`)}</p>
+                                <p className={`text-xl font-black tracking-tighter transition-colors ${isToday ? 'text-white scale-110 origin-center' : 'text-white/80 group-hover/day:text-white'}`}>{format(day, 'dd')}</p>
 
                                 {/* Dot indicator for sessions */}
                                 {daySessions.length > 0 && !isToday && (
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
+                                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                                         <div className="w-1 h-1 rounded-full bg-primary/50 group-hover/day:bg-primary shadow-glow"></div>
                                     </div>
                                 )}
@@ -509,13 +510,13 @@ export default function Schedule() {
                 <div className="bg-[#0a0c10]/40 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white/10 overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-                    <div className="relative z-10 p-10 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                        <h3 className="font-black text-3xl text-white uppercase tracking-tighter flex items-center gap-6">
-                            <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-3xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
-                                <CalendarDays className="w-7 h-7 text-white" />
+                    <div className="relative z-10 p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <h3 className="font-black text-xl text-white uppercase tracking-tighter flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
+                                <CalendarDays className="w-5 h-5 text-white" />
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-black text-white/30 tracking-[0.4em] uppercase">{t('dashboard.selectedDate')}</span>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">{t('dashboard.selectedDate')}</span>
                                 <span>{format(currentDate, 'EEEE, MMMM do', { locale: i18n.language === 'ar' ? ar : enUS })}</span>
                             </div>
                         </h3>
@@ -592,9 +593,9 @@ export default function Schedule() {
                     {viewMode === 'day' && renderDayView()}
 
                     {/* Group Grid (Available in all views or just a specific section? Currently replacing the session list if Admin wants to manage) */}
-                    <div className="mt-12">
-                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-4">
-                            <span className="w-2 h-8 bg-gradient-to-b from-primary to-accent rounded-full shadow-[0_0_20px_rgba(var(--primary),0.5)]"></span>
+                    <div className="mt-8">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tighter mb-4 flex items-center gap-3">
+                            <span className="w-1.5 h-6 bg-gradient-to-b from-primary to-accent rounded-full shadow-[0_0_15px_rgba(var(--primary),0.5)]"></span>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">{t('dashboard.allGroups')}</span>
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

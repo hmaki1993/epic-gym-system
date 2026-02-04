@@ -74,17 +74,21 @@ export const applySettingsToRoot = (settings: GymSettings) => {
 
     // Dynamic Text Colors based on background luminance
     const bgLuminance = getLuminance(settings.secondary_color);
-    const isLightMode = bgLuminance > 0.5;
+    const isLightMode = bgLuminance > 0.6; // Slightly higher threshold for "True" light mode
 
     if (isLightMode) {
-        // Light Mode Text
-        root.style.setProperty('--color-text-base', '#0f172a'); // Dark Slate
-        root.style.setProperty('--color-text-muted', '#64748b'); // Slate 500
+        // Light Mode Text - Deep contrast
+        root.style.setProperty('--color-text-base', '#0a0a0f'); // Near black for sharp readability
+        root.style.setProperty('--color-text-muted', '#475569'); // Slate 600 - darker than before
+        root.style.setProperty('--color-surface-border', 'rgba(0, 0, 0, 0.15)');
+        root.style.setProperty('--is-light-mode', '1');
         root.style.setProperty('color-scheme', 'light');
     } else {
         // Dark Mode Text
-        root.style.setProperty('--color-text-base', '#f1f5f9'); // Slate 100
+        root.style.setProperty('--color-text-base', '#f8fafc'); // Slate 50
         root.style.setProperty('--color-text-muted', 'rgba(255, 255, 255, 0.6)');
+        root.style.setProperty('--color-surface-border', 'rgba(255, 255, 255, 0.08)');
+        root.style.setProperty('--is-light-mode', '0');
         root.style.setProperty('color-scheme', 'dark');
     }
 
@@ -107,7 +111,11 @@ export const applySettingsToRoot = (settings: GymSettings) => {
 
     // Styles
     root.style.setProperty('--radius', settings.border_radius || '1.5rem');
-    root.style.setProperty('--glass-opacity', settings.glass_opacity?.toString() || '0.6');
+
+    // Adjust glass opacity for light mode to ensure transparency isn't too overpowering
+    const baseOpacity = settings.glass_opacity ?? 0.6;
+    const finalOpacity = isLightMode ? Math.min(baseOpacity, 0.4) : baseOpacity;
+    root.style.setProperty('--glass-opacity', finalOpacity.toString());
 };
 
 interface ThemeContextType {
@@ -119,21 +127,21 @@ interface ThemeContextType {
 }
 
 export const defaultSettings: GymSettings = {
-    primary_color: '#10b981',
-    secondary_color: '#0E1D21',
-    accent_color: '#34d399',
+    primary_color: '#A30000',
+    secondary_color: '#0B120F',
+    accent_color: '#A30000',
     font_family: 'Cairo',
     font_scale: 1,
     border_radius: '1.5rem',
     glass_opacity: 0.6,
-    surface_color: 'rgba(18, 46, 52, 0.7)',
+    surface_color: 'rgba(21, 31, 28, 0.8)',
     search_icon_color: 'rgba(255, 255, 255, 0.4)',
-    search_bg_color: 'rgba(255, 255, 255, 0.05)',
-    search_border_color: 'rgba(255, 255, 255, 0.1)',
+    search_bg_color: 'rgba(255, 255, 255, 0.03)',
+    search_border_color: 'rgba(255, 255, 255, 0.08)',
     search_text_color: '#ffffff',
-    hover_color: 'rgba(16, 185, 129, 0.8)',
-    hover_border_color: 'rgba(16, 185, 129, 0.3)',
-    input_bg_color: '#0f172a',
+    hover_color: 'rgba(163, 0, 0, 0.4)',
+    hover_border_color: 'rgba(163, 0, 0, 0.2)',
+    input_bg_color: '#070D0B',
     clock_position: 'dashboard',
     clock_integration: true,
     weather_integration: true,
@@ -144,7 +152,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [settings, setSettings] = useState<GymSettings>(defaultSettings);
-    const [isLoading, setIsLoading] = useState(true);
+    const hasPossibleSession = typeof window !== 'undefined' &&
+        Object.keys(localStorage).some(key => key.includes('auth-token'));
+    const [isLoading, setIsLoading] = useState(hasPossibleSession);
     const [userProfile, setUserProfile] = useState<ThemeContextType['userProfile']>(null);
 
     const { i18n } = useTranslation();
@@ -154,11 +164,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, [settings]);
 
     useEffect(() => {
+        // Only force change if it's different and we are NOT in the middle of a manual switch
+        // This prevents the "auto-revert" behavior on login page
         if (settings.language && i18n.language !== settings.language) {
+            console.log('🌍 ThemeContext: Syncing i18n language to settings:', settings.language);
             i18n.changeLanguage(settings.language);
             document.dir = settings.language === 'ar' ? 'rtl' : 'ltr';
         }
-    }, [settings.language, i18n]);
+    }, [settings.language]); // Removed i18n from deps to avoid loop/aggressive sync
 
     useEffect(() => {
         // 1. Auth State Listener: Critical for Privacy
@@ -215,8 +228,29 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
             // 2. Overlay User Personal Settings & Fetch Profile
             if (user) {
-                // Fetch user settings and profile in parallel
-                const [userSettingsRes, profileRes] = await Promise.all([
+                // PRELIMINARY PROFILE: Only set for clear Admins to prevent flickering. 
+                // Others must wait for DB confirmation to ensure they haven't been deleted.
+                const email = user.email?.toLowerCase() || '';
+                const isAdminEmail = email.startsWith('admin@') || email.startsWith('amin@');
+                const tempRole = isAdminEmail ? 'admin' : null;
+
+                console.log('🛡️ ThemeContext: Preliminary check', { email, tempRole, existingProfile: userProfile?.role });
+
+                if (tempRole) {
+                    if (!userProfile || userProfile.id !== user.id) {
+                        console.log('🛡️ ThemeContext: Setting preliminary admin profile');
+                        setUserProfile({
+                            id: user.id,
+                            email: user.email || '',
+                            full_name: user.user_metadata?.full_name || null,
+                            role: tempRole,
+                            avatar_url: null
+                        });
+                    }
+                }
+
+                // Fetch user settings, profile, and coach record in parallel
+                const [userSettingsRes, profileRes, coachRes] = await Promise.all([
                     supabase
                         .from('user_settings')
                         .select('*')
@@ -226,6 +260,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                         .from('profiles')
                         .select('full_name, role, avatar_url')
                         .eq('id', user.id)
+                        .maybeSingle(),
+                    supabase
+                        .from('coaches')
+                        .select('id')
+                        .eq('profile_id', user.id)
                         .maybeSingle()
                 ]);
 
@@ -241,23 +280,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                     finalSettings = { ...finalSettings, ...filteredUser };
                 }
 
-                if (profileRes.data) {
-                    console.log('📥 Found user profile:', profileRes.data);
+                // 🛡️ DEEP SANITY CHECK: 
+                // A coach must have a record in both 'profiles' AND 'coaches' tables.
+                const isCoach = profileRes.data?.role?.toLowerCase() === 'coach';
+                const hasCoachRecord = !!coachRes.data;
+                const isUnauthorizedGhost = isCoach && !hasCoachRecord;
+
+                if (profileRes.data && !isUnauthorizedGhost) {
+                    console.log('🛡️ ThemeContext: Found valid user profile:', profileRes.data);
                     setUserProfile({
                         id: user.id,
                         email: user.email || '',
                         ...profileRes.data
                     });
                 } else {
-                    // Fallback for cases where profile doesn't exist yet but user is logged in (e.g. migration)
-                    const defaultRole = (user.email?.startsWith('admin@') || user.email?.startsWith('amin@')) ? 'admin' : 'reception';
-                    setUserProfile({
-                        id: user.id,
-                        email: user.email || '',
-                        full_name: null,
-                        role: defaultRole,
-                        avatar_url: null
-                    });
+                    // 🛡️ SECURITY LOCK: Either profile is missing, or it's a "Ghost" coach profile without a record.
+                    const reason = isUnauthorizedGhost ? 'Ghost Profile detected' : 'Profile missing';
+                    console.error(`🛡️ ThemeContext: SECURITY LOCK (${reason}) - User logged in but unauthorized. Signing out...`);
+
+                    // Delay sign out slightly to prevent infinite loops during transition
+                    setTimeout(async () => {
+                        await supabase.auth.signOut();
+                        toast.error(isUnauthorizedGhost ? 'Account inactive or deleted.' : 'Session expired or deleted.');
+                        window.location.href = '/login';
+                    }, 1000);
+
+                    setUserProfile(null);
                 }
             } else {
                 setUserProfile(null);
@@ -303,7 +351,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('User not authenticated');
+
+            // If no user, we still update the local state (session-only) but skip DB save
+            if (!user) {
+                console.log('💾 ThemeContext: No user for persistence, update is session-only.');
+                return;
+            }
 
             // Sanitize payload
             const payload: any = { user_id: user.id };

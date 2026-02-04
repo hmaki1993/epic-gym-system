@@ -105,7 +105,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
         <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
             <div className="glass-card rounded-[3rem] w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-white/20">
                 {/* Header */}
-                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-gradient-to-r from-accent/20 to-primary/20">
+                <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-gradient-to-r from-accent/20 to-primary/20">
                     <div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                             <div className="p-2 bg-accent/20 rounded-xl text-accent">
@@ -150,12 +150,12 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                         </div>
                         <select
                             required
-                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all text-white appearance-none cursor-pointer"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all text-white appearance-none cursor-pointer"
                             value={formData.subscription_plan_id}
                             onChange={e => setFormData({ ...formData, subscription_plan_id: e.target.value })}
                         >
                             {plans.map(plan => (
-                                <option key={plan.id} value={plan.id} className="bg-slate-900">
+                                <option key={plan.id} value={plan.id}>
                                     {plan.name} - {plan.price} {currency.code}
                                 </option>
                             ))}
@@ -171,7 +171,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                         <input
                             required
                             type="date"
-                            className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all text-white"
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all text-white"
                             value={formData.start_date}
                             onChange={e => setFormData({ ...formData, start_date: e.target.value })}
                         />
@@ -187,7 +187,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                         <input
                             required
                             type="date"
-                            className="w-full px-5 py-3 bg-accent/5 border border-accent/20 rounded-2xl focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all text-accent font-black"
+                            className="w-full px-4 py-2 bg-accent/5 border border-accent/20 rounded-2xl focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all text-accent font-black"
                             value={formData.expiry_date}
                             onChange={e => setFormData({ ...formData, expiry_date: e.target.value })}
                         />
@@ -224,7 +224,7 @@ export default function RenewSubscriptionForm({ student, onClose, onSuccess }: R
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-10 py-4 bg-gradient-to-r from-accent to-accent/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+                            className="px-8 py-3 bg-gradient-to-r from-accent to-accent/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
                         >
                             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
                             {loading ? (

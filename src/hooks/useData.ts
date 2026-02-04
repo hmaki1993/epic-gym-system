@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 
 // --- Students Hooks ---
@@ -96,11 +97,47 @@ export function useCoaches() {
                 };
             });
 
-            return enrichedCoaches;
+            // --- 🛡️ ABSOLUTE UI DEDUPLICATION REGISTRY (v15) ---
+            const uniqueList: any[] = [];
+            const seenIds = new Set();
+            const seenEmails = new Set();
+            const seenProfileIds = new Set();
+            const seenNames = new Set(); // Final fuzzy shield
+
+            // Sort so we process those with profiles or check-ins first
+            const sortedCoaches = [...enrichedCoaches].sort((a, b) => {
+                if (a.profile_id && !b.profile_id) return -1;
+                if (!a.profile_id && b.profile_id) return 1;
+                if (a.attendance_status === 'working' && b.attendance_status !== 'working') return -1;
+                return 0;
+            });
+
+            sortedCoaches.forEach(coach => {
+                const email = coach.email?.toLowerCase().trim();
+                const profileId = coach.profile_id;
+                const name = coach.full_name?.toLowerCase().trim();
+
+                const isDuplicate =
+                    seenIds.has(coach.id) ||
+                    (email && seenEmails.has(email)) ||
+                    (profileId && seenProfileIds.has(profileId)) ||
+                    (name && (!profileId || !email) && seenNames.has(name)); // Aggressive orphan block
+
+                if (!isDuplicate) {
+                    uniqueList.push(coach);
+                    seenIds.add(coach.id);
+                    if (email) seenEmails.add(email);
+                    if (profileId) seenProfileIds.add(profileId);
+                    if (name) seenNames.add(name);
+                }
+            });
+
+            return uniqueList;
         },
         staleTime: 1000 * 30, // 30 seconds for live status
     });
 }
+
 
 // --- Finance Hooks ---
 export function usePayments() {
@@ -164,16 +201,18 @@ export function useDashboardStats() {
     return useQuery({
         queryKey: ['dashboardStats'],
         queryFn: async () => {
-            const [students, coaches, payments, recent] = await Promise.all([
+            const [students, coaches, payments, groups, recent] = await Promise.all([
                 supabase.from('students').select('*', { count: 'exact', head: true }),
                 supabase.from('coaches').select('*', { count: 'exact', head: true }),
-                supabase.from('payments').select('amount').gte('payment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+                supabase.from('payments').select('amount').gte('payment_date', format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd')),
+                supabase.from('training_groups').select('*', { count: 'exact', head: true }),
                 supabase.from('students').select('id, full_name, created_at').order('created_at', { ascending: false }).limit(5)
             ]);
 
             return {
                 totalStudents: students.count || 0,
                 activeCoaches: coaches.count || 0,
+                totalGroups: groups.count || 0,
                 monthlyRevenue: (payments.data || []).reduce((acc, curr) => acc + Number(curr.amount), 0),
                 recentActivity: recent.data || []
             };

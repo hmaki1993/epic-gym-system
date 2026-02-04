@@ -129,13 +129,19 @@ export default function PublicRegistration() {
 
             // 4. Record Payment
             if (selectedPlan && selectedPlan.price > 0) {
-                await supabase.from('payments').insert({
+                const { error: paymentError } = await supabase.from('payments').insert({
                     student_id: studentId,
-                    amount: selectedPlan.price,
-                    payment_date: joinDateStr,
+                    amount: Number(selectedPlan.price),
+                    payment_date: format(new Date(), 'yyyy-MM-dd'),
                     payment_method: 'cash',
                     notes: `New Registration - ${selectedPlan.name}`
                 });
+
+                if (paymentError) {
+                    console.error('Registration payment record failed:', paymentError);
+                } else {
+                    console.log('Public registration payment recorded successfully');
+                }
             }
 
             // 5. Insert Training Schedule Rows & Sessions
@@ -433,7 +439,7 @@ export default function PublicRegistration() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full group relative overflow-hidden bg-gradient-to-r from-[#622347] to-[#122E34] text-white py-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.98] mt-12 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+                                className="w-full max-w-sm mx-auto block group relative overflow-hidden bg-gradient-to-r from-[#622347] to-[#122E34] text-white py-4 rounded-2xl font-black text-[12px] uppercase tracking-[0.4em] shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.98] mt-12 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
                             >
                                 <div className="absolute inset-0 bg-[#ABAFB5]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-700"></div>
                                 <span className="relative z-10 flex items-center justify-center gap-4">
@@ -468,7 +474,7 @@ export default function PublicRegistration() {
                 }
                 .input-mind {
                     width: 100%;
-                    padding: 1.5rem 2.5rem;
+                    padding: 0.875rem 1.75rem;
                     background: #0E1D21;
                     border: 1px solid rgba(103, 126, 138, 0.15);
                     border-radius: 2rem;
@@ -504,7 +510,7 @@ export default function PublicRegistration() {
                 }
                 @media (max-width: 768px) {
                     .input-mind {
-                        padding: 1.25rem 1.5rem;
+                        padding: 0.75rem 1.25rem;
                         font-size: 0.9rem;
                     }
                 }

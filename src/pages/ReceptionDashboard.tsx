@@ -743,7 +743,10 @@ export default function ReceptionDashboard() {
                 }, { onConflict: 'coach_id,date' })
                 .select().single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Self check-in Supabase error:', error);
+                throw error;
+            }
 
             setIsCheckedIn(true);
             setCheckInTime(format(now, 'HH:mm:ss'));
@@ -767,7 +770,7 @@ export default function ReceptionDashboard() {
                 fetchCoachesStatus();
             }, 1000);
         } catch (error: any) {
-            console.error('Self check-in error:', error);
+            console.error('Full Self check-in error:', error);
             toast.error(error.message || 'Check-in failed');
         }
     };
@@ -818,8 +821,8 @@ export default function ReceptionDashboard() {
             setTimeout(() => {
                 fetchCoachesStatus();
             }, 1000);
-        } catch (error) {
-            console.error('Self check-out error:', error);
+        } catch (error: any) {
+            console.error('Full Self check-out error:', error);
             toast.error('Check-out failed');
         }
     };
@@ -834,65 +837,105 @@ export default function ReceptionDashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-4xl font-extrabold premium-gradient-text uppercase tracking-tight">
-                        {t('reception.dashboard') || 'Reception Dashboard'}
-                    </h1>
-                    <div className="mt-6 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                            <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
-                                {format(new Date(), 'EEEE, dd MMMM yyyy')}
-                            </p>
-                            {settings.clock_position === 'dashboard' && (
-                                <>
-                                    <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-                                    <PremiumClock className="scale-110 !px-6 !py-3" />
-                                </>
-                            )}
+            {/* Premium Header Architecture */}
+            <div className="relative overflow-hidden group">
+                {/* Background Accent Glow - Hidden on mobile for performance */}
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-primary/20 transition-all duration-1000 hidden md:block"></div>
+
+                <div className="glass-card rounded-[2rem] border border-white/10 p-8 sm:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
+                    <div className="space-y-6 flex-1">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-2 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></div>
+                                <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text uppercase tracking-tighter leading-none">
+                                    {t('reception.dashboard') || 'Reception Dashboard'}
+                                </h1>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                                <p className="text-white/40 text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                                    <Calendar className="w-3 h-3 text-primary" />
+                                    {format(new Date(), 'EEEE, dd MMMM yyyy')}
+                                </p>
+                                {settings.clock_position === 'dashboard' && (
+                                    <>
+                                        <div className="hidden sm:block w-px h-4 bg-white/10"></div>
+                                        <PremiumClock className="scale-90 origin-left !bg-transparent !border-none !px-0 shadow-none hover:scale-100 transition-transform" />
+                                    </>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                            <p className="text-white/40 text-sm font-bold uppercase tracking-widest">{t('dashboard.welcome')}, {contextRole?.replace('_', ' ') || 'Staff'}.</p>
+                        <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-primary text-xl shadow-inner">
+                                    {contextRole?.[0]?.toUpperCase() || 'S'}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('dashboard.welcome') || 'Welcome Back'}</p>
+                                    <p className="text-sm font-black text-white uppercase tracking-tight">{contextRole?.replace('_', ' ') || 'Staff Member'}</p>
+                                </div>
+                            </div>
 
                             {(contextRole === 'admin' || contextRole === 'reception') && (
                                 <a
                                     href="/registration"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/5 hover:scale-105 hover:bg-emerald-500/20 transition-all group self-start sm:self-auto"
+                                    className="group/btn flex items-center gap-3 px-6 py-3 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 shadow-xl shadow-emerald-500/5"
                                 >
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    {t('common.registrationPage')}
-                                    <ArrowUpRight className="w-3 h-3 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                                        <UserPlus className="w-4 h-4 text-emerald-400" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-black text-emerald-400/50 uppercase tracking-widest leading-none mb-1">{t('common.registrationPage') || 'Registration'}</p>
+                                        <p className="text-xs font-black text-white uppercase tracking-tight flex items-center gap-1">
+                                            Open Portal <ArrowUpRight className="w-3 h-3 opacity-40 group-hover/btn:opacity-100 transition-all" />
+                                        </p>
+                                    </div>
                                 </a>
                             )}
                         </div>
                     </div>
-                </div>
 
-                {/* Self Check-In Widget */}
-                {myCoachId && (
-                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">My Duty Status</span>
-                            {isCheckedIn ? (
-                                <span className="text-2xl font-black text-white font-mono">{formatTimer(elapsedTime)}</span>
-                            ) : (
-                                <span className="text-sm font-bold text-white/40">Not Checked In</span>
-                            )}
+                    {/* Ultra-Chic Duty Control Center */}
+                    {myCoachId && (
+                        <div className="relative group/duty lg:ml-auto">
+                            <div className={`relative flex items-center gap-3 p-2 pr-4 rounded-[1.25rem] border transition-all duration-500 shadow-lg
+                                ${isCheckedIn
+                                    ? 'bg-emerald-500/5 border-emerald-500/10'
+                                    : 'bg-white/[0.02] border-white/5'}`}>
+
+                                <button
+                                    onClick={isCheckedIn ? handleSelfCheckOut : handleSelfCheckIn}
+                                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-105 active:scale-95
+                                        ${isCheckedIn
+                                            ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
+                                            : 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'}`}
+                                >
+                                    {isCheckedIn ? <XCircle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                                </button>
+
+                                <div className="space-y-0 min-w-[80px]">
+                                    <span className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] block leading-none mb-0.5">Status</span>
+                                    {isCheckedIn ? (
+                                        <div className="space-y-0">
+                                            <div className="text-lg font-black text-white font-mono tracking-tighter tabular-nums leading-none">
+                                                {formatTimer(elapsedTime)}
+                                            </div>
+                                            <div className="text-emerald-400/60 text-[7px] font-black uppercase tracking-widest leading-none mt-1">
+                                                ACTIVE
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-0">
+                                            <div className="text-sm font-black text-white/20 uppercase tracking-tighter leading-none">Offline</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-
-                        <button
-                            onClick={isCheckedIn ? handleSelfCheckOut : handleSelfCheckIn}
-                            className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${isCheckedIn ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600'}`}
-                            title={isCheckedIn ? "Check Out" : "Check In"}
-                        >
-                            {isCheckedIn ? <XCircle className="w-8 h-8" /> : <Clock className="w-8 h-8" />}
-                        </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Quick Actions */}

@@ -17,6 +17,7 @@ interface Coach {
     id: string;
     full_name: string;
     pt_rate: number;
+    role: string;
 }
 
 interface Student {
@@ -54,13 +55,23 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
     const fetchCoaches = async () => {
         const { data, error } = await supabase
             .from('coaches')
-            .select('id, full_name, pt_rate')
+            .select(`
+                id, 
+                full_name, 
+                pt_rate,
+                profiles:profile_id (role)
+            `)
             .order('full_name');
 
         if (error) {
             console.error('Error fetching coaches:', error);
         } else {
-            setCoaches(data || []);
+            const enrichedCoaches = (data || []).map((c: any) => ({
+                ...c,
+                role: c.profiles?.role
+            })).filter((c: any) => c.role !== 'reception' && c.role !== 'cleaner');
+
+            setCoaches(enrichedCoaches);
         }
     };
 
@@ -96,15 +107,19 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
         setLoading(true);
 
         try {
+            const totalSessions = Number(formData.sessions_total);
+            const totalPrice = Number(formData.price);
+
             const payload = {
-                student_id: isGuest ? null : parseInt(formData.student_id),
+                student_id: isGuest ? null : Number(formData.student_id),
                 student_name: isGuest ? formData.student_name : null,
                 coach_id: formData.coach_id,
-                sessions_total: parseInt(formData.sessions_total),
-                sessions_remaining: editData?.id ? (editData.sessions_remaining + (parseInt(formData.sessions_total) - editData.sessions_total)) : parseInt(formData.sessions_total),
+                sessions_total: totalSessions,
+                sessions_remaining: editData?.id ? (editData.sessions_remaining + (totalSessions - editData.sessions_total)) : totalSessions,
+                start_date: formData.start_date,
                 expiry_date: formData.expiry_date,
-                total_price: parseFloat(formData.price),
-                price_per_session: parseFloat(formData.price) / parseInt(formData.sessions_total),
+                total_price: totalPrice,
+                price_per_session: totalPrice / totalSessions,
                 status: 'active'
             };
 
@@ -125,8 +140,8 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
             if (!editData?.id) {
                 try {
                     const paymentData: any = {
-                        amount: parseFloat(formData.price),
-                        payment_date: formData.start_date || new Date().toISOString(),
+                        amount: Number(formData.price),
+                        payment_date: formData.start_date || format(new Date(), 'yyyy-MM-dd'),
                         payment_method: 'cash',
                         notes: `PT Subscription - ${isGuest ? formData.student_name : (students.find(s => s.id === parseInt(formData.student_id))?.full_name)} - Coach ${selectedCoach?.full_name}`
                     };
@@ -135,7 +150,13 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                         paymentData.student_id = parseInt(formData.student_id);
                     }
 
-                    await supabase.from('payments').insert(paymentData);
+                    const { error: paymentError } = await supabase.from('payments').insert(paymentData);
+                    if (paymentError) {
+                        console.error('PT Payment record failed:', paymentError);
+                        toast.error('Subscription created but payment record failed. Please add it manually in Finance.');
+                    } else {
+                        console.log('PT Payment recorded successfully');
+                    }
                 } catch (payErr) {
                     console.error('Payment record failed:', payErr);
                 }
@@ -190,8 +211,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                     {/* Student Selection */}
                     <div className="group">
                         <div className="flex items-center justify-between pointer-events-none mb-3 px-4">
-                            <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] flex items-center gap-2">
-                                <User className="w-3 h-3" />
+                            <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em]">
                                 {t('common.student') || 'Student'}
                             </label>
                             <button
@@ -211,21 +231,21 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 type="text"
                                 value={formData.student_name}
                                 onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
-                                placeholder="Guest Name"
-                                className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                                placeholder=""
+                                className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
                                 required
                             />
                         ) : (
                             <select
                                 value={formData.student_id}
                                 onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                                className={`w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                                className={`w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
                                     }`}
                                 required
                             >
                                 <option value="" disabled hidden></option>
                                 {students.map(student => (
-                                    <option key={student.id} value={student.id} className="bg-gray-900 text-white text-base font-medium">
+                                    <option key={student.id} value={student.id} className="text-white text-base font-medium">
                                         {student.full_name}
                                     </option>
                                 ))}
@@ -242,13 +262,13 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                         <select
                             value={formData.coach_id}
                             onChange={(e) => setFormData({ ...formData, coach_id: e.target.value })}
-                            className={`w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.coach_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                            className={`w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.coach_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
                                 }`}
                             required
                         >
                             <option value="" disabled hidden></option>
                             {coaches.map(coach => (
-                                <option key={coach.id} value={coach.id} className="bg-gray-900 text-white text-base font-medium">
+                                <option key={coach.id} value={coach.id} className="text-white text-base font-medium">
                                     {coach.full_name}
                                 </option>
                             ))}
@@ -265,7 +285,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                             min="1"
                             value={formData.sessions_total}
                             onChange={(e) => setFormData({ ...formData, sessions_total: e.target.value })}
-                            className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                            className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
                             required
                         />
                     </div>
@@ -280,7 +300,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                             type="date"
                             value={formData.start_date}
                             onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                            className="w-full px-6 py-4 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold"
+                            className="w-full px-4 py-2 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold"
                             required
                         />
                     </div>
@@ -297,7 +317,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 min="0"
                                 value={formData.price}
                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                className="w-full px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-black text-2xl premium-gradient-text"
+                                className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-black text-2xl premium-gradient-text"
                                 required
                             />
                             <div className="absolute right-8 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black uppercase tracking-widest pointer-events-none">
@@ -311,14 +331,14 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-8 py-5 rounded-[2rem] border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95"
+                            className="flex-1 px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95"
                         >
                             {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white px-8 py-5 rounded-[2rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-sm disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+                            className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white px-6 py-3 rounded-[2rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-sm disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
                         >
                             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
                             <span className="relative z-10">

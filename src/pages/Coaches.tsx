@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Plus, Filter, Mail, Phone, MapPin, Medal, DollarSign, Clock, Edit, Trash2, X } from 'lucide-react';
 import AddCoachForm from '../components/AddCoachForm';
 import ConfirmModal from '../components/ConfirmModal';
+import ManualAttendanceModal from '../components/ManualAttendanceModal';
 import Payroll from '../components/Payroll';
 import { useTranslation } from 'react-i18next';
 import { useCoaches } from '../hooks/useData';
@@ -20,6 +21,7 @@ interface Coach {
     avatar_url?: string;
     image_pos_x?: number;
     image_pos_y?: number;
+    role?: string;
     profiles?: { role: string };
     admin_only_info?: boolean; // Type hint
 }
@@ -48,6 +50,10 @@ export default function Coaches() {
     const [selectedCoachForAttendance, setSelectedCoachForAttendance] = useState<Coach | null>(null);
     const [attendanceLogs, setAttendanceLogs] = useState<any[]>([]);
     const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+    // Manual Attendance (Cleaner)
+    const [showManualAttendance, setShowManualAttendance] = useState(false);
+    const [selectedCoachForManual, setSelectedCoachForManual] = useState<Coach | null>(null);
 
     // Delete Modal State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -84,33 +90,53 @@ export default function Coaches() {
         if (!coachToDelete) return;
 
         const coach = coaches.find(c => c.id === coachToDelete);
-        const profileId = coach?.profile_id;
 
-        // 1. Attempt to delete Auth User via Edge Function (Best Effort)
-        if (profileId) {
-            try {
+        // Robust ID resolution:
+        // Prioritize profile_id as it's the direct link to auth.users
+        const profileId = coach?.profile_id || (coach as any).profiles?.id || coach?.id;
+
+        const deleteToast = toast.loading(t('common.deleting', 'Processing deletion...'));
+        console.log('🛡️ Protection: Starting deletion for coach:', { coachId: coachToDelete, profileId });
+
+        try {
+            // 1. Attempt to delete Auth User via Edge Function (The Master Key)
+            if (profileId) {
+                console.log('🛡️ Protection: Invoking Auth cleanup for:', profileId);
                 const { error: funcError } = await supabase.functions.invoke('staff-management', {
                     method: 'DELETE',
                     body: { userId: profileId }
                 });
 
                 if (funcError) {
-                    console.warn('Edge Function delete warning:', funcError);
-                    // We continue even if this fails, as the DB delete is critical
+                    console.warn('🛡️ Protection: Edge Function sync warning:', funcError);
                 }
-            } catch (e) {
-                console.warn('Edge Function delete failed:', e);
             }
-        }
 
-        // 2. Delete from Database
-        const { error } = await supabase.from('coaches').delete().eq('id', coachToDelete);
-        if (error) {
-            console.error('Error deleting:', error);
-            toast.error(t('common.deleteError'));
-        } else {
-            toast.success(t('common.deleteSuccess', 'Coach deleted successfully'));
+            // 2. Delete from Database (coaches table)
+            console.log('🛡️ Protection: Deleting coach record:', coachToDelete);
+            const { error: coachDeleteError } = await supabase.from('coaches').delete().eq('id', coachToDelete);
+            if (coachDeleteError) throw coachDeleteError;
+
+            // 3. 🛡️ CRITICAL: Delete from profiles table to trigger the Security Lock
+            if (profileId) {
+                console.log('🛡️ Protection: Deleting profile record to lock out user:', profileId);
+                const { error: profileDeleteError } = await supabase.from('profiles').delete().eq('id', profileId);
+
+                if (profileDeleteError) {
+                    console.warn('🛡️ Protection: Profile delete error:', profileDeleteError);
+                } else {
+                    console.log('🛡️ Protection: Profile deleted successfully.');
+                }
+            }
+
+            toast.success(t('common.deleteSuccess', 'Staff member deleted and locked out successfully'), { id: deleteToast });
             refetch();
+        } catch (error: any) {
+            console.error('🛡️ Protection: Deletion sequence failed:', error);
+            toast.error(t('common.deleteError', `Deletion failed: ${error.message || 'Unknown error'}`), { id: deleteToast });
+        } finally {
+            setShowDeleteModal(false);
+            setCoachToDelete(null);
         }
     };
 
@@ -149,17 +175,31 @@ export default function Coaches() {
 
                             {/* Edit/Delete Actions */}
                             <div className="absolute top-6 right-6 flex gap-2 z-10">
-                                <button
-                                    onClick={() => {
-                                        setSelectedCoachForAttendance(coach);
-                                        setShowAttendanceModal(true);
-                                        fetchAttendance(coach.id);
-                                    }}
-                                    className="p-3 bg-white/5 text-white/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                                    title={t('coaches.viewAttendance')}
-                                >
-                                    <Clock className="w-4 h-4" />
-                                </button>
+                                {(['admin', 'reception', 'receptionist'].includes(role?.toLowerCase().trim() || '')) && (
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCoachForAttendance(coach);
+                                            setShowAttendanceModal(true);
+                                            fetchAttendance(coach.id);
+                                        }}
+                                        className="p-3 bg-white/5 text-white/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                                        title={t('coaches.viewAttendance')}
+                                    >
+                                        <Clock className="w-4 h-4" />
+                                    </button>
+                                )}
+                                {coach.role?.toLowerCase() === 'cleaner' && (
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCoachForManual(coach);
+                                            setShowManualAttendance(true);
+                                        }}
+                                        className="p-3 bg-white/5 text-white/40 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all"
+                                        title={t('coaches.markAttendance')} // Ensure translation key exists or fallback
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                )}
                                 {role?.toLowerCase().trim() === 'admin' && (
                                     <>
                                         <button
@@ -199,182 +239,190 @@ export default function Coaches() {
                                 )}
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors">{coach.full_name}</h3>
-                                {(coach as any).attendance_status && (
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border ${(coach as any).attendance_status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_20px_rgba(52,211,153,0.2)]' :
+                            {/* Header Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors">{coach.full_name}</h3>
+                                    {(coach as any).attendance_status && (
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border ${(coach as any).attendance_status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_20px_rgba(52,211,153,0.2)]' :
                                             (coach as any).attendance_status === 'done' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                                 'bg-white/5 text-white/40 border-white/10'
                                             }`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full mr-2 ${(coach as any).attendance_status === 'working' ? 'bg-emerald-400 animate-pulse' : (coach as any).attendance_status === 'done' ? 'bg-blue-400' : 'bg-white/20'}`}></span>
-                                            {(coach as any).attendance_status === 'working' ? t('coaches.active') :
+                                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${(coach as any).attendance_status === 'working' ? 'bg-emerald-400 animate-pulse' : (coach as any).attendance_status === 'done' ? 'bg-blue-400' : 'bg-white/20'}`}></span>
+                                            {(coach as any).attendance_status === 'working' ? t('coaches.live') :
                                                 (coach as any).attendance_status === 'done' ? t('coaches.completed') :
                                                     t('coaches.away')}
                                         </span>
-                                        {(coach as any).daily_total_seconds > 0 && (
-                                            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest font-mono">
-                                                {Math.floor((coach as any).daily_total_seconds / 3600)}h {Math.floor(((coach as any).daily_total_seconds % 3600) / 60)}m {t('coaches.worked')}
-                                            </span>
-                                        )}
+                                    )}
+                                </div>
+
+                                {(coach as any).daily_total_seconds > 0 && (
+                                    <div className="text-[10px] font-black text-white/30 uppercase tracking-widest font-mono">
+                                        {Math.floor((coach as any).daily_total_seconds / 3600)}h {Math.floor(((coach as any).daily_total_seconds % 3600) / 60)}m {t('coaches.worked')}
                                     </div>
                                 )}
                             </div>
-                            <div className="flex flex-col gap-3 mt-4">
-                                <div className="flex items-center text-white/40 font-bold uppercase tracking-wider text-[10px]">
-                                    <Medal className="w-3.5 h-3.5 mr-2 text-primary/60" />
-                                    <span>{coach.specialty}</span>
-                                </div>
+                            {/* Role and Specialty */}
+                            <div className="flex items-center gap-3 mt-3">
+                                {!['reception', 'receptionist', 'cleaner'].includes(coach.role?.toLowerCase()) && (
+                                    <div className="flex items-center text-white/40 font-bold uppercase tracking-wider text-[10px]">
+                                        <Medal className="w-3.5 h-3.5 mr-1.5 text-primary/60" />
+                                        <span>{coach.specialty}</span>
+                                    </div>
+                                )}
                                 {coach.role && (
-                                    <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/5 flex items-center self-start group-hover:bg-white/10 transition-colors">
+                                    <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 group-hover:bg-white/10 transition-colors whitespace-nowrap">
                                         <span className="text-white font-black uppercase tracking-[0.2em] text-[9px]">{t(`roles.${coach.role}`)}</span>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Today's Times - Premium Display */}
+                            {/* Shift Time Display */}
                             {(coach as any).check_in_time && (
-                                <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group-hover:border-primary/20 transition-all">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-primary/20 rounded-lg text-primary shadow-inner">
-                                            <Clock className="w-4 h-4" />
+                                <div className="mt-4 p-3 bg-white/5 rounded-xl border border-white/5 group-hover:border-primary/20 transition-all">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 bg-primary/20 rounded-lg text-primary">
+                                            <Clock className="w-3.5 h-3.5" />
                                         </div>
-                                        <div>
-                                            <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{t('coaches.shiftTime')}</p>
-                                            <p className="text-xs font-black text-white/70 font-mono tracking-tighter">
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">{t('coaches.shiftTime')}</p>
+                                            <p className="text-xs font-black text-white/70 font-mono tracking-tight">
                                                 {new Date((coach as any).check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 {(coach as any).check_out_time && ` - ${new Date((coach as any).check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                             </p>
                                         </div>
                                     </div>
-                                    {(coach as any).attendance_status === 'working' && (
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-lg">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{t('coaches.live')}</span>
-                                        </div>
-                                    )}
                                 </div>
-                            )}
+                            )
+                            }
 
-                            {!['reception', 'cleaner'].includes(coach.role) && (
-                                <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
-                                    {role?.toLowerCase().trim() === 'admin' && (
+                            {/* PT Stats Section */}
+                            {
+                                !['reception', 'cleaner'].includes(coach.role) && (
+                                    <div className="mt-6 pt-6 border-t border-white/5 space-y-3">
+                                        {role?.toLowerCase().trim() === 'admin' && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">{t('coaches.ptRate')}:</span>
+                                                <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[9px] opacity-40">{currency.code}/{t('common.hour')}</span></span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{t('coaches.ptRate')}:</span>
-                                            <span className="text-sm font-black text-primary">{coach.pt_rate} <span className="text-[10px] opacity-40">{currency.code}/{t('common.hour')}</span></span>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">{t('coaches.sessions')}:</span>
-                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-black">
-                                            {(coach as any).pt_sessions_today || 0} 💪
-                                        </span>
-                                    </div>
-                                    {(coach as any).pt_student_name && (
-                                        <div className="flex items-center justify-between pt-2">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{t('coaches.activePlayer')}:</span>
-                                            <span className="text-xs font-bold text-white italic truncate ml-4">
-                                                {(coach as any).pt_student_name}
+                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">{t('coaches.sessions')}:</span>
+                                            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-black">
+                                                {(coach as any).pt_sessions_today || 0} 💪
                                             </span>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                        {(coach as any).pt_student_name && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">{t('coaches.activePlayer')}:</span>
+                                                <span className="text-xs font-bold text-white italic truncate ml-4">
+                                                    {(coach as any).pt_student_name}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
                         </div>
                     );
                 })}
             </div>
 
-            {/* Attendance History Section Title */}
-            <div className="pt-12 pb-6">
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                    <span className="w-2 h-8 bg-primary rounded-full"></span>
-                </h2>
-            </div>
-            {role?.toLowerCase().trim() === 'admin' && (
-                <Payroll
-                    refreshTrigger={refreshTrigger}
-                    onViewAttendance={(coachId: string) => {
-                        const coach = coaches.find(c => c.id === coachId);
-                        if (coach) {
-                            setSelectedCoachForAttendance(coach);
-                            setShowAttendanceModal(true);
-                            fetchAttendance(coachId);
-                        }
-                    }}
-                />
-            )}
+
+            {
+                role?.toLowerCase().trim() === 'admin' && (
+                    <Payroll
+                        refreshTrigger={refreshTrigger}
+                        onViewAttendance={(coachId: string) => {
+                            const coach = coaches.find(c => c.id === coachId);
+                            if (coach) {
+                                setSelectedCoachForAttendance(coach);
+                                setShowAttendanceModal(true);
+                                fetchAttendance(coachId);
+                            }
+                        }}
+                    />
+                )
+            }
 
             {/* Add/Edit Modal */}
-            {showAddModal && (
-                <AddCoachForm
-                    initialData={editingCoach ? {
-                        ...editingCoach,
-                        role: editingCoach.profiles?.role || 'coach'
-                    } : null}
-                    onClose={() => {
-                        setShowAddModal(false);
-                        setEditingCoach(null);
-                    }}
-                    onSuccess={refetch}
-                />
-            )}
+            {
+                showAddModal && (
+                    <AddCoachForm
+                        initialData={editingCoach ? {
+                            ...editingCoach,
+                            role: editingCoach.profiles?.role || 'coach'
+                        } : null}
+                        onClose={() => {
+                            setShowAddModal(false);
+                            setEditingCoach(null);
+                        }}
+                        onSuccess={refetch}
+                    />
+                )
+            }
 
             {/* Attendance Modal */}
-            {showAttendanceModal && selectedCoachForAttendance && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="glass-card rounded-[3rem] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden">
-                        <div className="p-10 border-b border-white/5 flex justify-between items-center bg-white/5">
-                            <div>
-                                <h2 className="text-3xl font-black text-white uppercase tracking-tight">{selectedCoachForAttendance.full_name}</h2>
-                                <p className="text-primary text-xs font-black uppercase tracking-[0.2em] mt-1">{t('coaches.attendanceHistory')}</p>
-                            </div>
-                            <button onClick={() => setShowAttendanceModal(false)} className="p-4 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-                            {loadingAttendance ? (
-                                <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest animate-pulse">{t('common.loading')}</div>
-                            ) : attendanceLogs.length === 0 ? (
-                                <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest italic">
-                                    {t('common.noResults')}
+            {
+                showAttendanceModal && selectedCoachForAttendance && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-in fade-in duration-300">
+                        <div className="glass-card rounded-[3rem] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden">
+                            <div className="p-10 border-b border-white/5 flex justify-between items-center bg-white/5">
+                                <div>
+                                    <h2 className="text-3xl font-black text-white uppercase tracking-tight">{selectedCoachForAttendance.full_name}</h2>
+                                    <p className="text-primary text-xs font-black uppercase tracking-[0.2em] mt-1">{t('coaches.attendanceHistory')}</p>
                                 </div>
-                            ) : (
-                                <table className="w-full text-left">
-                                    <thead className="bg-white/5 text-white/30 font-black text-[10px] uppercase tracking-[0.2em]">
-                                        <tr>
-                                            <th className="px-6 py-4 rounded-l-2xl">{t('common.date')}</th>
-                                            <th className="px-6 py-4">{t('coaches.checkIn')}</th>
-                                            <th className="px-6 py-4">{t('coaches.checkOut')}</th>
-                                            <th className="px-6 py-4 rounded-r-2xl text-right">{t('coaches.duration')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5">
-                                        {attendanceLogs.map((log: any) => {
-                                            const start = new Date(log.check_in_time);
-                                            const end = log.check_out_time ? new Date(log.check_out_time) : null;
-                                            const duration = end ? ((end.getTime() - start.getTime()) / 1000 / 3600).toFixed(2) + ' HR' : '-';
+                                <button onClick={() => setShowAttendanceModal(false)} className="p-4 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
 
-                                            return (
-                                                <tr key={log.id} className="hover:bg-white/5 transition-colors group">
-                                                    <td className="px-6 py-6 font-bold text-white/70">{log.date}</td>
-                                                    <td className="px-6 py-6 font-black font-mono text-sm text-white/50">{start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                                    <td className="px-6 py-6 font-black font-mono text-sm text-white/50">{end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                                                    <td className={`px-6 py-6 font-black text-right text-sm ${end ? 'text-emerald-400' : 'text-orange-400'}`}>
-                                                        {duration}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            )}
+                            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                                {loadingAttendance ? (
+                                    <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest animate-pulse">{t('common.loading')}</div>
+                                ) : attendanceLogs.length === 0 ? (
+                                    <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest italic">
+                                        {t('common.noResults')}
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-left">
+                                        <thead className="bg-white/5 text-white/30 font-black text-[10px] uppercase tracking-[0.2em]">
+                                            <tr>
+                                                <th className="px-6 py-4 rounded-l-2xl">{t('common.date')}</th>
+                                                <th className="px-6 py-4">{t('coaches.checkIn')}</th>
+                                                {selectedCoachForAttendance.role !== 'cleaner' && <th className="px-6 py-4">{t('coaches.checkOut')}</th>}
+                                                <th className="px-6 py-4 rounded-r-2xl text-right">{t('coaches.duration')}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {attendanceLogs.map((log: any) => {
+                                                const start = new Date(log.check_in_time);
+                                                const end = log.check_out_time ? new Date(log.check_out_time) : null;
+                                                const duration = end ? ((end.getTime() - start.getTime()) / 1000 / 3600).toFixed(2) + ' HR' : '-';
+
+                                                return (
+                                                    <tr key={log.id} className="hover:bg-white/5 transition-colors group">
+                                                        <td className="px-6 py-6 font-bold text-white/70">{log.date}</td>
+                                                        <td className="px-6 py-6 font-black font-mono text-sm text-white/50">
+                                                            {log.status === 'absent' ? <span className="text-rose-400">ABSENT</span> : start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </td>
+                                                        {selectedCoachForAttendance.role !== 'cleaner' && (
+                                                            <td className="px-6 py-6 font-black font-mono text-sm text-white/50">{end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                                                        )}
+                                                        <td className={`px-6 py-6 font-black text-right text-sm ${end ? 'text-emerald-400' : 'text-orange-400'}`}>
+                                                            {duration}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Confirm Delete Modal */}
             <ConfirmModal
@@ -384,7 +432,18 @@ export default function Coaches() {
                 title={t('common.deleteConfirmTitle', 'Delete Coach')}
                 message={t('common.deleteConfirm', 'Are you sure to delete this coach? This action cannot be undone.')}
             />
-        </div>
+
+            {showManualAttendance && selectedCoachForManual && (
+                <ManualAttendanceModal
+                    coach={selectedCoachForManual}
+                    onClose={() => setShowManualAttendance(false)}
+                    onSuccess={() => {
+                        refetch();
+                        toast.success(t('common.saved'));
+                    }}
+                />
+            )}
+        </div >
     );
 }
 

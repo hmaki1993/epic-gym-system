@@ -139,12 +139,55 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                         throw new Error(`Server Error${detail}. Please check console or try different email.`);
                     }
                 }
+
+                // Robust ID extraction from function response
                 if (functionData?.user_id) profileId = functionData.user_id;
+                else if (functionData?.id) profileId = functionData.id;
+                else if (functionData?.user?.id) profileId = functionData.user.id;
+
+                // 🛡️ POLLING FAILSAFE: If no profileId, wait and poll for it (DB sync can take a moment)
+                if (!profileId) {
+                    console.log('Profile ID not returned by function. Polling database...');
+                    for (let i = 0; i < 10; i++) { // 5 seconds max
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                        // Try Email search first
+                        const { data: byEmail } = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('email', formData.email.toLowerCase().trim())
+                            .maybeSingle();
+
+                        if (byEmail?.id) {
+                            profileId = byEmail.id;
+                            break;
+                        }
+
+                        // Fallback: Name search (Search for most recent profile with this name)
+                        const { data: byName } = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('full_name', formData.full_name.trim())
+                            .order('created_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+
+                        if (byName?.id) {
+                            profileId = byName.id;
+                            console.log('⚠️ Polled by Name instead of Email:', profileId);
+                            break;
+                        }
+                    }
+                }
+
+                if (!profileId) {
+                    throw new Error('Sync Timeout: The account was created in Auth but didn\'t appear in the database. Please Refresh the page - the coach might already be there. (Error: PROFILE_NOT_FOUND)');
+                }
             }
 
             const coachData: any = {
-                full_name: formData.full_name,
-                email: formData.email,
+                full_name: formData.full_name.trim(),
+                email: formData.email.toLowerCase().trim(),
                 specialty: formData.specialty,
                 role: formData.role,
                 pt_rate: parseFloat(formData.pt_rate) || 0,
@@ -167,24 +210,16 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                     .update(coachData)
                     .eq('id', initialData.id);
                 error = updateError;
-
-                // Sync profile data manually as well for extra robustness
-                if (profileId) {
-                    await supabase
-                        .from('profiles')
-                        .update({
-                            full_name: formData.full_name,
-                            role: formData.role,
-                            avatar_url: formData.avatar_url
-                        })
-                        .eq('id', profileId);
-                }
             } else {
-                // Create new coach record in DB
-                const { error: insertError } = await supabase
+                // Create or Update coach record in DB
+                // We target 'profile_id' as the anchor because it's the source of truth for the account.
+                const { error: upsertError } = await supabase
                     .from('coaches')
-                    .insert([coachData]);
-                error = insertError;
+                    .upsert([coachData], {
+                        onConflict: 'profile_id',
+                        ignoreDuplicates: false
+                    });
+                error = upsertError;
 
                 // --- NEW NOTIFICATION TRIGGER ---
                 if (!error) {
@@ -192,7 +227,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                         title: 'New Staff Member',
                         message: `${formData.full_name} has joined as ${t(`roles.${formData.role}`)}.`,
                         type: 'coach',
-                        target_role: 'admin', // Admins and Head Coaches see these
+                        target_role: 'admin',
                         is_read: false
                     });
                 }
@@ -326,11 +361,11 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                     value={formData.specialty}
                                     onChange={e => setFormData({ ...formData, specialty: e.target.value })}
                                 >
-                                    <option value="" disabled className="bg-slate-900">Select Specialty</option>
-                                    <option value="Artistic Gymnastics (Boys)" className="bg-slate-900">Artistic Gymnastics (Boys)</option>
-                                    <option value="Artistic Gymnastics (Girls)" className="bg-slate-900">Artistic Gymnastics (Girls)</option>
-                                    <option value="Artistic Gymnastics (Mixed)" className="bg-slate-900">Artistic Gymnastics (Boys & Girls)</option>
-                                    <option value="Rhythmic Gymnastics" className="bg-slate-900">Rhythmic Gymnastics</option>
+                                    <option value="" disabled>Select Specialty</option>
+                                    <option value="Artistic Gymnastics (Boys)">Artistic Gymnastics (Boys)</option>
+                                    <option value="Artistic Gymnastics (Girls)">Artistic Gymnastics (Girls)</option>
+                                    <option value="Artistic Gymnastics (Mixed)">Artistic Gymnastics (Boys & Girls)</option>
+                                    <option value="Rhythmic Gymnastics">Rhythmic Gymnastics</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/specialty:opacity-100 transition-opacity z-20">
                                     <ChevronDown className="w-4 h-4 text-white" />
@@ -341,7 +376,7 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Account Email</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 block">Account Email</label>
                             <input
                                 required
                                 type="email"
@@ -351,8 +386,9 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">
-                                {initialData ? 'Update Password (Optional)' : 'Default Password'}
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center justify-between">
+                                <span>{initialData ? 'Update Password' : 'Default Password'}</span>
+                                {initialData && <span className="text-[8px] opacity-40 lowercase font-medium tracking-normal">(optional)</span>}
                             </label>
                             <input
                                 required={!initialData}
@@ -370,15 +406,15 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                             <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl opacity-0 group-hover/role:opacity-20 transition-opacity blur"></div>
                             <select
                                 required
-                                className="w-full px-5 py-3 bg-[#1e2330] border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white font-black uppercase tracking-[0.2em] text-center appearance-none cursor-pointer relative z-10"
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white font-black uppercase tracking-[0.2em] text-center appearance-none cursor-pointer relative z-10"
                                 value={formData.role}
                                 onChange={e => setFormData({ ...formData, role: e.target.value })}
                             >
-                                <option value="coach" className="bg-[#1e2330]">{t('roles.coach')}</option>
-                                <option value="head_coach" className="bg-[#1e2330]">{t('roles.head_coach')}</option>
-                                <option value="admin" className="bg-[#1e2330]">{t('roles.admin')}</option>
-                                <option value="reception" className="bg-[#1e2330]">{t('roles.reception')}</option>
-                                <option value="cleaner" className="bg-[#1e2330]">{t('roles.cleaner')}</option>
+                                <option value="coach">{t('roles.coach')}</option>
+                                <option value="head_coach">{t('roles.head_coach')}</option>
+                                <option value="admin">{t('roles.admin')}</option>
+                                <option value="reception">{t('roles.reception')}</option>
+                                <option value="cleaner">{t('roles.cleaner')}</option>
                             </select>
                             <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity z-20">
                                 <ChevronDown className="w-4 h-4 text-white" />

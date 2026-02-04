@@ -3,7 +3,7 @@ import { Plus, Wallet, Calendar, TrendingUp, DollarSign, Receipt, Dumbbell, Refr
 import AddPaymentForm from '../components/AddPaymentForm';
 import AddRefundForm from '../components/AddRefundForm';
 import AddExpenseForm from '../components/AddExpenseForm';
-import { format, startOfMonth, endOfMonth, addMonths, isSameMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, addMonths, isSameMonth, parseISO } from 'date-fns';
 import { usePayments, useMonthlyPayroll, useRefunds, useExpenses, useAddRefund, useAddExpense } from '../hooks/useData';
 import { useTranslation } from 'react-i18next';
 import FinanceDetailModal from '../components/FinanceDetailModal';
@@ -123,7 +123,7 @@ export default function Finance() {
 
     const monthlyPayments = payments
         .filter(p => {
-            const d = new Date(p.payment_date);
+            const d = parseISO(p.payment_date);
             return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         });
     const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + Number(p.amount), 0);
@@ -132,11 +132,11 @@ export default function Finance() {
     const refunds = refundsData || [];
     const expenses = expensesData || [];
     const monthlyRefunds = refunds.filter(r => {
-        const d = new Date(r.refund_date);
+        const d = parseISO(r.refund_date);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     const monthlyGeneralExpenses = expenses.filter(e => {
-        const d = new Date(e.expense_date);
+        const d = parseISO(e.expense_date);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     const totalMonthlyRefunds = monthlyRefunds.reduce((sum, r) => sum + Number(r.amount), 0);
@@ -191,83 +191,96 @@ export default function Finance() {
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 border-b border-white/5 pb-10">
-                <div className="text-center sm:text-left">
-                    <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text tracking-tighter uppercase">{t('finance.title')}</h1>
-                    <p className="text-white/60 mt-3 text-sm sm:text-base font-bold tracking-[0.2em] uppercase opacity-100">{t('finance.subtitle') || 'Track revenue and handle payments'}</p>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 border-b border-white/5 pb-12">
+                <div className="max-w-2xl text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary mb-6 animate-in slide-in-from-left duration-500">
+                        <Wallet className="w-4 h-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{t('finance.title')}</span>
+                    </div>
+                    <h1 className="text-5xl sm:text-7xl font-black text-white tracking-tighter uppercase leading-[0.9] mb-4">
+                        {t('finance.titlePart1')} <span className="premium-gradient-text">{t('finance.titlePart2')}</span>
+                    </h1>
+                    <p className="text-white/40 text-sm sm:text-lg font-bold tracking-wide uppercase max-w-xl">
+                        {t('finance.subtitle')}
+                    </p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-8">
-                    {/* Period Selector */}
-                    <div className="flex items-center gap-4 bg-white/5 p-2 rounded-[2rem] border border-white/10 shadow-inner">
-                        <button
-                            onClick={() => setSelectedDate(prev => addMonths(prev, -1))}
-                            className="p-3 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-2xl transition-all active:scale-90"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        <div className="flex flex-col items-center px-4 min-w-[140px]">
-                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] leading-none mb-1">{t('finance.period')}</span>
-                            <span className="text-lg font-black text-white uppercase tracking-tighter">
-                                {format(selectedDate, 'MMMM yyyy')}
-                            </span>
+
+                <div className="flex flex-col items-center lg:items-end gap-8">
+                    {/* Utility Bar */}
+                    <div className="flex items-center gap-4 bg-white/[0.02] p-2 rounded-[2.5rem] border border-white/5 shadow-2xl">
+                        <div className="flex items-center gap-2 bg-black/20 p-1 rounded-2xl border border-white/5">
+                            <button
+                                onClick={() => setSelectedDate(prev => addMonths(prev, -1))}
+                                className="p-3 hover:bg-white/5 text-white/20 hover:text-white rounded-xl transition-all active:scale-95"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <div className="flex flex-col items-center px-6 min-w-[160px]">
+                                <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mb-1">{t('finance.period')}</span>
+                                <span className="text-base font-black text-white uppercase tracking-tight">
+                                    {format(selectedDate, 'MMMM yyyy')}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setSelectedDate(prev => addMonths(prev, 1))}
+                                className="p-3 hover:bg-white/5 text-white/20 hover:text-white rounded-xl transition-all active:scale-95"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
                         </div>
-                        <button
-                            onClick={() => setSelectedDate(prev => addMonths(prev, 1))}
-                            className="p-3 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-2xl transition-all active:scale-90"
-                        >
-                            <ChevronRight className="w-5 h-5" />
-                        </button>
+
+                        <div className="flex items-center gap-2 pr-2 border-l border-white/10 pl-4 ml-2">
+                            <button
+                                onClick={async () => {
+                                    setIsSyncing(true);
+                                    await refetch();
+                                    setTimeout(() => setIsSyncing(false), 500);
+                                    toast.success('Synced');
+                                }}
+                                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"
+                                title={t('common.sync')}
+                            >
+                                <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
+                            </button>
+                            <button
+                                onClick={() => setShowTrashModal(true)}
+                                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-rose-500/10 flex items-center justify-center text-white/40 hover:text-rose-400 transition-all active:scale-90"
+                                title={t('finance.history')}
+                            >
+                                <History className="w-5 h-5" />
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 justify-center sm:justify-end items-center">
-                        {/* Sync Button */}
-                        <button
-                            onClick={async () => {
-                                setIsSyncing(true);
-                                await refetch();
-                                setTimeout(() => setIsSyncing(false), 500);
-                                toast.success('Finance data synced');
-                            }}
-                            className="group relative w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center overflow-hidden active:scale-90"
-                            title={t('common.sync')}
-                        >
-                            <RefreshCw className={`w-5 h-5 text-white/40 group-hover:text-white transition-all duration-700 ${isSyncing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
-                        </button>
-
-                        {/* Trash / Restore Button */}
-                        <button
-                            onClick={() => setShowTrashModal(true)}
-                            className="group relative w-12 h-12 rounded-2xl bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 transition-all flex items-center justify-center overflow-hidden active:scale-90"
-                            title="Deleted Transactions"
-                        >
-                            <History className="w-5 h-5 text-white/40 group-hover:text-rose-400 transition-colors" />
-                        </button>
-
-                        <div className="w-px h-8 bg-white/5 mx-2 hidden sm:block"></div>
-
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="group bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-[2rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] relative overflow-hidden"
+                            className="group flex items-center gap-3 px-6 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 relative overflow-hidden"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                            <Plus className="w-4 h-4 relative z-10" />
+                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                            <div className="p-1.5 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-500 relative z-10">
+                                <Plus className="w-3.5 h-3.5" />
+                            </div>
                             <span className="relative z-10">{t('finance.addPayment')}</span>
                         </button>
-                        {/* ... other buttons ... */}
                         <button
                             onClick={() => setShowRefundModal(true)}
-                            className="group bg-rose-500 hover:bg-rose-600 text-white px-8 py-4 rounded-[2rem] shadow-premium shadow-rose-500/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] relative overflow-hidden"
+                            className="group flex items-center gap-3 px-6 py-4 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all shadow-lg shadow-rose-500/20 relative overflow-hidden"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                            <DollarSign className="w-4 h-4 relative z-10" />
+                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                            <div className="p-1.5 bg-white/20 rounded-lg group-hover:rotate-12 transition-transform duration-500 relative z-10">
+                                <RefreshCw className="w-3.5 h-3.5" />
+                            </div>
                             <span className="relative z-10">{t('finance.addRefund')}</span>
                         </button>
                         <button
                             onClick={() => setShowExpenseModal(true)}
-                            className="group bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-[2rem] shadow-premium shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] relative overflow-hidden"
+                            className="group flex items-center gap-3 px-6 py-4 bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all shadow-lg shadow-orange-500/20 relative overflow-hidden"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                            <Receipt className="w-4 h-4 relative z-10" />
+                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                            <div className="p-1.5 bg-white/20 rounded-lg group-hover:-rotate-12 transition-transform duration-500 relative z-10">
+                                <Receipt className="w-3.5 h-3.5" />
+                            </div>
                             <span className="relative z-10">{t('finance.addExpense')}</span>
                         </button>
                     </div>

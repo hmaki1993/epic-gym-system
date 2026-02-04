@@ -6,7 +6,13 @@ import { useTheme } from '../context/ThemeContext';
 
 export default function ProtectedRoute() {
     const { isLoading: themeLoading } = useTheme();
-    const [loading, setLoading] = useState(true);
+
+    // Optimistic check: if no auth token in localStorage, we can skip initial loading spinner
+    // and assume unauthenticated for the first render.
+    const hasPossibleSession = typeof window !== 'undefined' &&
+        Object.keys(localStorage).some(key => key.includes('auth-token'));
+
+    const [loading, setLoading] = useState(hasPossibleSession);
     const [authenticated, setAuthenticated] = useState(false);
 
     useEffect(() => {

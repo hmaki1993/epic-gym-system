@@ -76,42 +76,77 @@ export default function CoachDashboard() {
                         .single();
 
                     if (coachData) {
+                        console.log('Fetched Coach ID:', coachData.id);
                         setCoachId(coachData.id);
                         setPtRate(coachData.pt_rate || 0);
                         setBaseSalary(Number(coachData.salary) || 0);
 
-                        // 2. Sync Attendance using numeric ID
-                        const { data: attendance } = await supabase
+                        // 2. Sync Attendance: Priority to OPEN sessions
+                        let { data: attendance } = await supabase
                             .from('coach_attendance')
                             .select('*')
                             .eq('coach_id', coachData.id)
-                            .eq('date', todayStr)
+                            .is('check_out_time', null)
+                            .order('created_at', { ascending: false })
+                            .limit(1)
                             .maybeSingle();
+
+                        if (!attendance) {
+                            // If no active session, get latest closed record
+                            const { data: latest } = await supabase
+                                .from('coach_attendance')
+                                .select('*')
+                                .eq('coach_id', coachData.id)
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .maybeSingle();
+                            attendance = latest;
+                        }
 
                         if (attendance) {
                             const start = new Date(attendance.check_in_time);
+
+                            // Scenario A: Still checked in (no check_out_time) - Restore active session
                             if (!attendance.check_out_time) {
                                 setIsCheckedIn(true);
                                 setCheckInTime(format(start, 'HH:mm:ss'));
                                 setElapsedTime(Math.floor((new Date().getTime() - start.getTime()) / 1000));
-                                localStorage.setItem(`checkInStart_${todayStr}`, JSON.stringify({
+
+                                // Ensure local storage is in sync for the timer
+                                localStorage.setItem(`checkInStart_${format(new Date(), 'yyyy-MM-dd')}`, JSON.stringify({
                                     timestamp: start.getTime(),
                                     recordId: attendance.id
                                 }));
-                            } else {
+                            }
+                            // Scenario B: Checked out TODAY - Show daily summary
+                            else if (attendance.date === todayStr) {
                                 setIsCheckedIn(false);
                                 const end = new Date(attendance.check_out_time);
                                 setDailyTotalSeconds(Math.floor((end.getTime() - start.getTime()) / 1000));
+                            }
+                            // Scenario C: Checked out on a previous day - Reset (default state)
+                            else {
+                                setIsCheckedIn(false);
+                                setDailyTotalSeconds(0);
                             }
                         }
 
                         // 3. Fetch PT data
                         fetchTodaySessions(coachData.id);
                         fetchPTSubscriptions(coachData.id, coachData.pt_rate || 0);
+                    } else {
+                        console.warn('No coach profile found for user:', user.id);
+                        // Only show error to actual coaches, not admins/reception who might phantom-mount this
+                        if (role === 'coach') {
+                            toast.error('Coach profile not found. Please contact admin.');
+                        }
                     }
+                } else {
+                    console.error('No authenticated user found in initialization');
                 }
-            } catch (err) {
-                console.error('Initialization failed:', err);
+            } catch (err: any) {
+                console.error('Initialization failed detailed:', err);
+                toast.error('Dashboard init failed: ' + err.message);
             }
             setSyncLoading(false);
         };
@@ -156,22 +191,43 @@ export default function CoachDashboard() {
     useEffect(() => {
         const checkStatus = async () => {
             if (!coachId) return;
-            const today = format(new Date(), 'yyyy-MM-dd');
-            const { data } = await supabase
+            // FETCH ACTIVE RECORD FIRST (Prioritize check-in state)
+            let { data } = await supabase
                 .from('coach_attendance')
                 .select('*')
                 .eq('coach_id', coachId)
-                .eq('date', today)
+                .is('check_out_time', null)
+                .order('created_at', { ascending: false })
+                .limit(1)
                 .maybeSingle();
+
+            if (!data) {
+                // If no active session, get latest closed record
+                const { data: latest } = await supabase
+                    .from('coach_attendance')
+                    .select('*')
+                    .eq('coach_id', coachId)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                data = latest;
+            }
+
+            const today = format(new Date(), 'yyyy-MM-dd');
 
             if (data) {
                 if (data.status === 'absent') {
                     setAttendanceStatus('absent');
                     setIsCheckedIn(false);
-                } else if (data.check_in_time && !data.check_out_time) {
+                } else if (!data.check_out_time) {
                     setAttendanceStatus('present');
                     setIsCheckedIn(true);
+                } else if (data.date === today) {
+                    // Checked out today
+                    setAttendanceStatus('idle'); // or 'completed' if we had that status
+                    setIsCheckedIn(false);
                 } else {
+                    // Checked out on previous day
                     setAttendanceStatus('idle');
                     setIsCheckedIn(false);
                 }
@@ -250,7 +306,9 @@ export default function CoachDashboard() {
                 .upsert({
                     coach_id: coachId,
                     date: todayStr,
-                    check_in_time: now.toISOString()
+                    check_in_time: now.toISOString(),
+                    check_out_time: null, // Clear check-out time if re-checking in same day
+                    status: 'present'
                 }, { onConflict: 'coach_id,date' })
                 .select().single();
 
@@ -260,6 +318,7 @@ export default function CoachDashboard() {
             localStorage.setItem(`checkInStart_${todayStr}`, JSON.stringify({ timestamp: now.getTime(), recordId: data.id }));
             toast.success(t('coach.checkInSuccess'));
         } catch (error: any) {
+            console.error('Check-in error detailed:', error);
             toast.error(error.message || t('common.error'));
         }
     };
@@ -449,21 +508,21 @@ export default function CoachDashboard() {
     const sortedDates = Object.keys(groupedSessions).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Welcome Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
                 <div className="text-center sm:text-left">
-                    <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
+                    <h1 className="text-3xl sm:text-4xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
                         {t('dashboard.welcome')}, COACH! 👋
                     </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
-                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
+                        <p className="text-white/40 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase opacity-100 italic">
                             {format(new Date(), 'EEEE, dd MMMM yyyy')}
                         </p>
                         {settings.clock_position === 'dashboard' && (
                             <>
                                 <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-                                <PremiumClock className="scale-110 !px-6 !py-3" />
+                                <PremiumClock className="scale-100 !px-4 !py-2" />
                             </>
                         )}
                     </div>
@@ -472,74 +531,74 @@ export default function CoachDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {/* Attendance Card */}
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
+                <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl transition-all duration-700"></div>
-                    <div className="flex items-center justify-between mb-8 relative z-10">
+                    <div className="flex items-center justify-between mb-4 relative z-10">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
                                 <span className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isCheckedIn ? 'bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.8)] animate-pulse' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'}`}></span>
                                 <span className={isCheckedIn ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]'}>
                                     {isCheckedIn ? t('coaches.workingNow') : t('coaches.away')}
                                 </span>
                             </p>
                         </div>
-                        <div className="p-4 bg-primary/20 rounded-2xl text-primary">
-                            <Clock className="w-6 h-6" />
+                        <div className="p-3 bg-primary/20 rounded-xl text-primary">
+                            <Clock className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="flex flex-col items-center gap-8 relative z-10">
+                    <div className="flex flex-col items-center gap-6 relative z-10">
                         {isCheckedIn ? (
-                            <div className="text-6xl font-black text-white tracking-widest font-mono animate-in zoom-in-95 duration-500">
+                            <div className="text-5xl font-black text-white tracking-widest font-mono animate-in zoom-in-95 duration-500">
                                 {formatTimer(elapsedTime)}
                             </div>
                         ) : dailyTotalSeconds > 0 ? (
-                            <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-700">
-                                <div className="text-6xl font-black text-emerald-400 tracking-widest font-mono drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+                            <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-4 duration-700">
+                                <div className="text-5xl font-black text-emerald-400 tracking-widest font-mono drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
                                     {formatTimer(dailyTotalSeconds)}
                                 </div>
-                                <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Daily Work Summary</span>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em]">Summary</span>
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-6xl font-black text-white/10 tracking-widest font-mono">00:00:00</div>
+                            <div className="text-5xl font-black text-white/10 tracking-widest font-mono">00:00:00</div>
                         )}
                         <button
                             onClick={isCheckedIn ? handleCheckOut : handleCheckIn}
-                            className={`group/btn w-full py-6 rounded-[2rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-premium ${isCheckedIn ? 'bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white' : 'bg-primary text-white hover:bg-primary/90'}`}
+                            className={`group/btn w-full py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 transition-all hover:scale-102 active:scale-98 shadow-premium ${isCheckedIn ? 'bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white' : 'bg-primary text-white hover:bg-primary/90'}`}
                         >
-                            {isCheckedIn ? <XCircle className="w-6 h-6" /> : <CheckCircle className="w-6 h-6" />}
+                            {isCheckedIn ? <XCircle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
                             {isCheckedIn ? t('coach.checkOut') : t('coach.checkIn')}
                         </button>
                     </div>
                 </div>
 
                 {/* Total Earnings Card */}
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
+                <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
                     <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl transition-all duration-700"></div>
-                    <div className="flex items-center justify-between mb-8 relative z-10">
+                    <div className="flex items-center justify-between mb-4 relative z-10">
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tight">Total Earnings</h2>
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mt-2">Salary + PT for this month</p>
+                            <h2 className="text-lg font-black text-white uppercase tracking-tight">Earnings</h2>
+                            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">Salary + PT Month</p>
                         </div>
-                        <div className="p-4 bg-amber-500/20 rounded-2xl text-amber-500">
-                            <Wallet className="w-6 h-6" />
+                        <div className="p-3 bg-amber-500/20 rounded-xl text-amber-500">
+                            <Wallet className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="flex-1 flex flex-col justify-center items-center py-6 relative z-10">
+                    <div className="flex-1 flex flex-col justify-center items-center py-4 relative z-10">
                         <div className="flex items-baseline gap-2">
-                            <h3 className="text-6xl font-black text-amber-500 tracking-tighter">{(totalEarnings + baseSalary).toLocaleString()}</h3>
-                            <span className="text-sm font-black text-white/20 uppercase tracking-widest">{currency.code}</span>
+                            <h3 className="text-5xl font-black text-amber-500 tracking-tighter">{(totalEarnings + baseSalary).toLocaleString()}</h3>
+                            <span className="text-xs font-black text-white/20 uppercase tracking-widest">{currency.code}</span>
                         </div>
-                        <div className="flex gap-6 mt-6">
+                        <div className="flex gap-4 mt-4">
                             <div className="text-center">
-                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">Base Salary</p>
-                                <p className="text-sm font-bold text-white/60">{baseSalary.toLocaleString()} {currency.code}</p>
+                                <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Base</p>
+                                <p className="text-xs font-bold text-white/60">{baseSalary.toLocaleString()} {currency.code}</p>
                             </div>
-                            <div className="w-px h-8 bg-white/10"></div>
+                            <div className="w-px h-6 bg-white/10"></div>
                             <div className="text-center">
-                                <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">PT Earnings</p>
-                                <p className="text-sm font-bold text-white/60">{totalEarnings.toLocaleString()} {currency.code}</p>
+                                <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">PT</p>
+                                <p className="text-xs font-bold text-white/60">{totalEarnings.toLocaleString()} {currency.code}</p>
                             </div>
                         </div>
                     </div>
@@ -547,11 +606,11 @@ export default function CoachDashboard() {
             </div>
 
             {/* PT Sessions Recording Card */}
-            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative overflow-hidden">
+            <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden">
                 <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
-                            <div className="p-3 bg-primary/20 rounded-2xl text-primary"><User className="w-6 h-6" /></div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <div className="p-2.5 bg-primary/20 rounded-xl text-primary"><User className="w-5 h-5" /></div>
                             {t('coach.ptSessions', 'PT History Log')}
                         </h2>
 
@@ -617,9 +676,9 @@ export default function CoachDashboard() {
             </div>
 
             {/* My Groups Section */}
-            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium">
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
-                    <div className="p-3 bg-accent/20 rounded-2xl text-accent"><User className="w-6 h-6" /></div>
+            <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium">
+                <h2 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-3">
+                    <div className="p-2.5 bg-accent/20 rounded-xl text-accent"><User className="w-5 h-5" /></div>
                     {t('dashboard.myGroups', 'My Groups')}
                 </h2>
                 <GroupsList coachId={coachId || undefined} />
@@ -627,38 +686,40 @@ export default function CoachDashboard() {
 
             {/* My PT Students Section & Live Floor */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-2 glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium relative bg-gradient-to-br from-white/[0.02] to-transparent">
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-accent to-primary rounded-2xl text-white shadow-lg"><User className="w-6 h-6" /></div>
+                <div className="xl:col-span-2 glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative bg-gradient-to-br from-white/[0.02] to-transparent">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-3">
+                        <div className="p-2.5 bg-gradient-to-br from-accent to-primary rounded-xl text-white shadow-lg"><User className="w-5 h-5" /></div>
                         My PT Students
                     </h2>
 
                     {ptSubscriptions.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {ptSubscriptions.map((subscription) => (
-                                <div key={subscription.id} className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-accent/30 transition-all group relative overflow-hidden">
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-black text-2xl">
-                                                {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-black text-white text-xl tracking-tight">{subscription.students?.full_name || subscription.student_name || 'Unknown'}</h3>
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">PT Student</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between mb-6">
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <span className="text-xs font-black text-white/60 uppercase tracking-wider">Progress</span>
-                                                    <span className="text-xs font-black text-accent">{subscription.sessions_remaining}/{subscription.sessions_total}</span>
+                                <div key={subscription.id} className="glass-card p-6 rounded-[2rem] border border-white/10 hover:border-accent/40 transition-all duration-700 group hover:scale-[1.01] relative overflow-hidden flex flex-col h-full bg-[#0a0c10]/40">
+                                    {/* Premium Card Hover Glow */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-[2rem]"></div>
+                                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent/10 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+                                    <div className="relative z-10 flex flex-col h-full">
+                                        {/* Student Info & Actions */}
+                                        <div className="flex items-start justify-between mb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative">
+                                                    <div className="absolute -inset-1 bg-gradient-to-br from-accent to-primary rounded-xl blur opacity-20 group-hover:opacity-50 transition-opacity"></div>
+                                                    <div className="relative w-12 h-12 rounded-xl bg-[#0a0c10] border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-2xl group-hover:scale-105 transition-transform duration-500">
+                                                        {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
+                                                    </div>
                                                 </div>
-                                                <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                                                    <div className="h-full bg-gradient-to-r from-accent to-primary transition-all rounded-full" style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}></div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="font-black text-white text-lg tracking-tight group-hover:text-accent transition-colors leading-tight truncate">{subscription.students?.full_name || subscription.student_name || 'Unknown'}</h3>
+                                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1 flex items-center gap-2">
+                                                        <span className="w-1 h-1 rounded-full bg-accent/50"></span>
+                                                        PT Student
+                                                    </p>
                                                 </div>
                                             </div>
+
                                             {(() => {
-                                                // Robust tracking using subscription_id
                                                 const recentSession = savedSessions.find(s => {
                                                     const isMatch = s.subscription_id === subscription.id;
                                                     const sDate = new Date(s.created_at);
@@ -669,53 +730,106 @@ export default function CoachDashboard() {
                                                 const isLoading = recordingId === subscription.id;
 
                                                 return (
-                                                    <div className="flex items-center gap-2 ml-6">
+                                                    <div className="flex items-center gap-3">
                                                         <button
                                                             onClick={() => isRecentlyRecorded ? handleResetSession(subscription) : handleRecordSession(subscription)}
                                                             disabled={isLoading || (subscription.sessions_remaining <= 0 && !isRecentlyRecorded)}
-                                                            className={`p-4 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed group/record relative
+                                                            className={`p-3 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group/record relative border
                                                                 ${isRecentlyRecorded
-                                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20'
-                                                                    : 'bg-primary/10 hover:bg-primary text-primary hover:text-white'}`}
+                                                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20 shadow-emerald-500/10'
+                                                                    : 'bg-primary/20 text-primary border-primary/30 hover:bg-primary hover:text-white shadow-primary/10'}`}
                                                             title={isRecentlyRecorded ? "Reset Session" : "Record Session"}
                                                         >
                                                             {isLoading ? (
-                                                                <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                                             ) : isRecentlyRecorded ? (
-                                                                <RotateCcw className="w-6 h-6 transition-transform group-active/record:rotate-[-45deg]" />
+                                                                <RotateCcw className="w-5 h-5 transition-transform group-hover/record:rotate-[-45deg]" />
                                                             ) : (
-                                                                <CheckCircle className="w-6 h-6 transition-transform group-active/record:scale-90" />
+                                                                <CheckCircle className="w-5 h-5 transition-transform group-hover/record:scale-110" />
                                                             )}
                                                             {isRecentlyRecorded && (
-                                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0E1D21]" />
+                                                                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#0a0c10] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                                                             )}
                                                         </button>
-
                                                         {!isRecentlyRecorded && subscription.sessions_remaining > 0 && (
                                                             <button
                                                                 onClick={() => {
                                                                     setSubToClear(subscription);
                                                                     setShowClearModal(true);
                                                                 }}
-                                                                className="p-4 rounded-2xl bg-white/5 text-white/20 hover:text-rose-500 hover:bg-rose-500/10 border border-white/5 transition-all"
+                                                                className="p-3 rounded-xl bg-white/5 text-white/20 hover:text-rose-500 hover:bg-rose-500/10 border border-white/5 transition-all hover:scale-110 active:scale-90"
                                                                 title="Clear All Sessions"
                                                             >
-                                                                <Trash2 className="w-5 h-5" />
+                                                                <Trash2 className="w-4 h-4" />
                                                             </button>
                                                         )}
                                                     </div>
                                                 );
                                             })()}
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4 mb-6">
-                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Remaining</p><p className="text-3xl font-black text-accent">{subscription.sessions_remaining}</p></div>
-                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Rate</p><p className="text-2xl font-black text-white">{ptRate} {currency.code}</p></div>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                            <div><p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Expires</p><p className="text-sm font-bold text-white/80">{format(new Date(subscription.expiry_date), 'MMM dd, yyyy')}</p></div>
-                                            <div className={`px-4 py-2 rounded-full border text-xs font-black uppercase ${(new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired') ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-accent/10 border-accent/20 text-accent'}`}>
-                                                {(new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired') ? 'Expired' : 'Active'}
+
+                                        {/* Progress Section */}
+                                        <div className="flex-1 space-y-6">
+                                            {/* Data Boxes */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-2.5">
+                                                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
+                                                        <TrendingUp className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">{t('pt.sessionsRemaining')}</p>
+                                                        <p className="text-lg font-black text-accent">{subscription.sessions_remaining}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-2.5">
+                                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40">
+                                                        <div className="text-[9px] font-bold">{currency.symbol}</div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">Rate</p>
+                                                        <p className="text-base font-black text-white">{ptRate}</p>
+                                                    </div>
+                                                </div>
                                             </div>
+
+                                            {/* Progress Bar */}
+                                            <div className="space-y-2 p-4 bg-gradient-to-br from-white/5 to-transparent rounded-[1.5rem] border border-white/5">
+                                                <div className="flex items-center justify-between px-1">
+                                                    <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{t('pt.progress')}</span>
+                                                    <span className="text-[9px] font-black text-accent px-1.5 py-0.5 bg-accent/10 rounded-lg">
+                                                        {subscription.sessions_remaining}/{subscription.sessions_total}
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 bg-[#0a0c10] rounded-full overflow-hidden border border-white/5 p-0.5">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-accent to-primary transition-all duration-1000 rounded-full"
+                                                        style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer: Expiry & Status */}
+                                        <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">{t('students.expiry')}</p>
+                                                <p className="text-xs font-bold text-white/80">{format(new Date(subscription.expiry_date), 'dd MMM yyyy')}</p>
+                                            </div>
+
+                                            {(() => {
+                                                const isExpired = new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired' || subscription.sessions_remaining <= 0;
+                                                return isExpired ? (
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></div>
+                                                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">{t('pt.expired')}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 border border-accent/20 rounded-xl">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+                                                        <span className="text-[9px] font-black text-accent uppercase tracking-widest">{t('pt.active')}</span>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

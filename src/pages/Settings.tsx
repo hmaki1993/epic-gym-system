@@ -157,6 +157,7 @@ export default function Settings() {
     }, []);
 
     const themes = [
+        { id: 'elite', name: 'Elite Red', primary: '#A30000', secondary: '#0B120F', bg: '#0B120F', accent: '#A30000', surface: 'rgba(21, 31, 28, 0.8)', hover: '#A3000080', input: '#070D0B', font: 'Cairo' },
         { id: 'midnight', name: 'Midnight', primary: '#818cf8', secondary: '#1e293b', bg: '#0f172a', accent: '#c084fc', surface: 'rgba(30, 41, 59, 0.7)', hover: '#818cf880', input: '#0f172a' },
         { id: 'noguchi', name: 'Noguchi Pink', primary: '#ff096c', secondary: '#192731', bg: '#192731', accent: '#ff096c', surface: 'rgba(42, 56, 67, 0.7)', hover: '#ff096c80', input: '#111d26' },
         { id: 'obsidian', name: 'Obsidian', primary: '#a78bfa', secondary: '#18181b', bg: '#000000', accent: '#a78bfa', surface: 'rgba(24, 24, 27, 0.7)', hover: '#a78bfa80', input: '#09090b' },
@@ -189,6 +190,7 @@ export default function Settings() {
             surface_color: theme.surface || prev.surface_color,
             hover_color: (theme as any).hover || prev.hover_color,
             input_bg_color: (theme as any).input || prev.input_bg_color,
+            font_family: (theme as any).font || prev.font_family,
         }));
     };
 
@@ -317,75 +319,95 @@ export default function Settings() {
             {/* Premium Publishing Overlay */}
             {isPublishing && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-0">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-2xl animate-in fade-in duration-500"></div>
-                    <div className="relative glass-card p-12 rounded-[4rem] border border-white/20 shadow-[0_0_100px_rgba(var(--color-primary),0.2)] max-w-md w-full text-center animate-in zoom-in slide-in-from-bottom-12 duration-700 flex flex-col items-center">
-                        <div className="relative w-40 h-40 mb-10">
-                            {/* Inner Glow */}
-                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-3xl animate-in fade-in duration-700"></div>
+                    <div className="relative glass-card p-10 rounded-[3rem] border border-white/10 shadow-[0_0_80px_rgba(var(--color-primary),0.1)] max-w-sm w-full text-center animate-in zoom-in slide-in-from-bottom-12 duration-1000 flex flex-col items-center">
+
+                        {/* Status Icon Wrapper - Smaller */}
+                        <div className="relative w-36 h-36 mb-8 flex items-center justify-center">
+                            {/* Inner Pulsing Glow */}
+                            <div className="absolute inset-0 bg-primary/10 rounded-full blur-[40px] animate-pulse scale-75"></div>
 
                             {/* Progress Ring */}
-                            <svg className="w-full h-full transform -rotate-90">
+                            <svg viewBox="0 0 192 192" className="absolute inset-0 w-full h-full transform -rotate-90 filter drop-shadow-[0_0_10px_rgba(var(--color-primary),0.2)]">
+                                {/* Back Track */}
                                 <circle
-                                    cx="80"
-                                    cy="80"
-                                    r="70"
+                                    cx="96"
+                                    cy="96"
+                                    r="86"
                                     stroke="currentColor"
-                                    strokeWidth="8"
+                                    strokeWidth="4"
                                     fill="transparent"
-                                    className="text-white/5"
+                                    className="text-white/[0.03]"
                                 />
+                                {/* Main Progress */}
                                 <circle
-                                    cx="80"
-                                    cy="80"
-                                    r="70"
+                                    cx="96"
+                                    cy="96"
+                                    r="86"
                                     stroke="currentColor"
-                                    strokeWidth="8"
+                                    strokeWidth="6"
                                     fill="transparent"
-                                    strokeDasharray={440}
-                                    strokeDashoffset={440 - (440 * publishProgress) / 100}
-                                    className="text-primary transition-all duration-700 ease-out drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]"
+                                    strokeDasharray={540}
+                                    strokeDashoffset={540 - (540 * publishProgress) / 100}
+                                    className="text-primary transition-all duration-1000 ease-in-out"
                                     strokeLinecap="round"
                                 />
                             </svg>
 
-                            {/* Icon Center */}
-                            <div className="absolute inset-0 flex items-center justify-center">
+                            {/* Icon Center - Perfectly Balanced */}
+                            <div className="relative z-10 flex items-center justify-center w-24 h-24">
                                 {publishProgress === 100 ? (
-                                    <CheckCircle2 className="w-16 h-16 text-primary animate-in zoom-in duration-500" />
+                                    <div className="bg-primary/20 p-4 rounded-full border border-primary/30 animate-in zoom-in spin-in-12 duration-700">
+                                        <CheckCircle2 className="w-8 h-8 text-primary" />
+                                    </div>
                                 ) : (
-                                    <div className="relative">
-                                        <Sparkles className="w-12 h-12 text-primary animate-pulse" />
-                                        <Loader2 className="absolute -inset-4 w-20 h-20 text-primary/40 animate-spin" />
+                                    <div className="relative flex items-center justify-center">
+                                        <div className="absolute w-14 h-14 border-2 border-primary/20 rounded-full animate-ping duration-[2000ms]"></div>
+                                        <Sparkles className="w-8 h-8 text-primary animate-pulse" />
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
-                                {publishProgress === 100 ? t('settings.publishComplete') : t('settings.publishingDesign')}
-                            </h3>
-                            <div className="flex flex-col items-center gap-2">
-                                <p className="text-xs font-black text-white/40 uppercase tracking-[0.3em] min-h-[1.5em] animate-in fade-in slide-in-from-top-2 duration-300">
+                        {/* Text Content - Tighter */}
+                        <div className="space-y-4 w-full">
+                            <div className="space-y-1">
+                                <p className="text-[8px] font-black text-primary uppercase tracking-[0.4em] animate-pulse">
+                                    {publishProgress === 100 ? 'Update Complete' : 'Optimizing'}
+                                </p>
+                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight">
+                                    {publishProgress === 100 ? t('settings.publishComplete') : t('settings.publishingDesign')}
+                                </h3>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-3">
+                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.1em] px-5 py-1.5 bg-white/5 rounded-full border border-white/5">
                                     {publishStep}
                                 </p>
-                                <div className="flex gap-1 mt-2">
-                                    {[...Array(3)].map((_, i) => (
-                                        <div key={i} className={`w-1 h-1 rounded-full transition-all duration-300 ${publishProgress % 100 > i * 33 ? 'bg-primary w-4' : 'bg-white/10'}`}></div>
+                                {/* Step Indicators */}
+                                <div className="flex gap-1.5">
+                                    {[1, 2, 3].map((step) => (
+                                        <div
+                                            key={step}
+                                            className={`h-1 rounded-full transition-all duration-500 ${publishProgress >= (step * 33)
+                                                ? 'w-6 bg-primary shadow-[0_0_5px_rgba(var(--color-primary),0.5)]'
+                                                : 'w-1.5 bg-white/10'
+                                                }`}
+                                        ></div>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Detail Labels */}
-                        <div className="mt-12 grid grid-cols-2 gap-4 w-full">
-                            <div className="p-4 rounded-3xl bg-white/5 border border-white/5 flex flex-col items-center gap-2">
+                        {/* Detail Feature Badges - Smaller */}
+                        <div className="mt-10 grid grid-cols-2 gap-3 w-full">
+                            <div className="p-4 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2">
                                 <ShieldCheck className="w-4 h-4 text-primary/60" />
-                                <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">{t('settings.encryptionNote')}</span>
+                                <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] text-center">{t('settings.encryptionNote')}</span>
                             </div>
-                            <div className="p-4 rounded-3xl bg-white/5 border border-white/5 flex flex-col items-center gap-2">
+                            <div className="p-4 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2">
                                 <Zap className="w-4 h-4 text-primary/60" />
-                                <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">{t('settings.syncReadyNote')}</span>
+                                <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] text-center">{t('settings.syncReadyNote')}</span>
                             </div>
                         </div>
                     </div>
@@ -507,13 +529,7 @@ export default function Settings() {
                                                 <div className="space-y-8">
                                                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
                                                         <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{t('settings.colorsAtmosphere')}</h3>
-                                                        <button
-                                                            onClick={() => setDraftSettings(defaultSettings)}
-                                                            className="text-[9px] font-black text-primary hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2"
-                                                        >
-                                                            <RefreshCw size={10} />
-                                                            {t('settings.resetToDefaults')}
-                                                        </button>
+
                                                     </div>
 
                                                     {/* Primary Color */}
@@ -587,12 +603,16 @@ export default function Settings() {
                                                         {/* Font Selection */}
                                                         <div>
                                                             <label className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-4 block">{t('settings.applicationFont')}</label>
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                {['Cairo', 'Inter', 'Outfit', 'Montserrat'].map(font => (
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                                {[
+                                                                    'Cairo', 'Inter', 'Outfit', 'Montserrat',
+                                                                    'Alexandria', 'Kanit', 'Poppins', 'Roboto',
+                                                                    'Lexend', 'Plus Jakarta Sans', 'Playfair Display'
+                                                                ].map(font => (
                                                                     <button
                                                                         key={font}
                                                                         onClick={() => setDraftSettings({ ...draftSettings, font_family: font })}
-                                                                        className={`p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${draftSettings.font_family === font ? 'bg-primary text-white shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                                                                        className={`p-5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center text-center leading-[1.3] min-h-[70px] ${draftSettings.font_family === font ? 'bg-primary text-white shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
                                                                         style={{ fontFamily: font }}
                                                                     >
                                                                         {font}
@@ -655,50 +675,29 @@ export default function Settings() {
                                                                 ))}
                                                             </div>
                                                         </div>
-                                                        {/* Clock Position Selection */}
-                                                        <div>
-                                                            <label className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-4 block text-center sm:text-left">{t('settings.clockPosition')}</label>
-                                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                                {[
-                                                                    { id: 'header', label: t('settings.headerTitle'), icon: Layout, desc: t('settings.headerDescription') },
-                                                                    { id: 'dashboard', label: t('settings.welcomeSectionTitle'), icon: LayoutDashboard, desc: t('settings.welcomeSectionDescription') },
-                                                                    { id: 'none', label: t('settings.disabledTitle'), icon: X, desc: t('settings.disabledDescription') }
-                                                                ].map(pos => (
-                                                                    <button
-                                                                        key={pos.id}
-                                                                        onClick={() => setDraftSettings({ ...draftSettings, clock_position: pos.id as any })}
-                                                                        className={`flex flex-col items-center justify-center p-6 gap-3 rounded-[2rem] border-2 transition-all duration-300 ${draftSettings.clock_position === pos.id ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10 scale-[1.02]' : 'border-white/5 bg-white/5 hover:bg-white/10'}`}
-                                                                    >
-                                                                        <pos.icon className={`w-5 h-5 ${draftSettings.clock_position === pos.id ? 'text-primary' : 'text-white/40'}`} />
-                                                                        <div className="text-center">
-                                                                            <span className={`block text-[9px] font-black uppercase tracking-widest ${draftSettings.clock_position === pos.id ? 'text-white' : 'text-white/40'}`}>{pos.label}</span>
-                                                                            <span className="text-[7px] font-bold text-white/20 uppercase tracking-tighter mt-1">{pos.desc}</span>
-                                                                        </div>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
+
                                                     </div>
                                                 </div>
                                                 {/* Action Buttons */}
-                                                <div className="flex flex-col sm:flex-row gap-4 pt-12">
+                                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-8">
                                                     <button
                                                         onClick={handleSaveTheme}
                                                         disabled={loading}
-                                                        className="flex-1 bg-primary hover:bg-primary/90 text-white py-5 rounded-3xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-4 shadow-2xl shadow-primary/40 transition-all hover:scale-[1.02] active:scale-95 group/save"
+                                                        className="relative overflow-hidden bg-primary/20 hover:bg-primary/30 text-primary hover:text-white py-2.5 px-8 rounded-xl font-black uppercase tracking-[0.2em] text-[8px] flex items-center justify-center gap-2.5 transition-all duration-500 hover:scale-105 active:scale-95 group/save border border-primary/30 hover:border-primary shadow-lg shadow-primary/5"
                                                     >
                                                         {loading ? (
-                                                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                                            <div className="w-3.5 h-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                                                         ) : (
                                                             <>
-                                                                <Save className="w-4 h-4" />
-                                                                {t('settings.saveTheme')}
+                                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                                                <Save className="w-3.5 h-3.5 transition-transform group-hover:scale-110 relative z-10" />
+                                                                <span className="relative z-10">{t('settings.saveTheme')}</span>
                                                             </>
                                                         )}
                                                     </button>
                                                     <button
                                                         onClick={() => setDraftSettings(defaultSettings)}
-                                                        className="px-10 py-5 rounded-3xl bg-white/5 text-white/20 hover:text-white hover:bg-rose-500/20 border border-white/5 hover:border-rose-500/30 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                                                        className="px-6 py-2.5 rounded-xl bg-white/5 text-white/20 hover:text-white hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300"
                                                     >
                                                         {t('settings.discardChanges')}
                                                     </button>
@@ -891,7 +890,7 @@ export default function Settings() {
                                             type="password"
                                             value={passwordData.newPassword}
                                             onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                            className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-rose-500/50 text-white transition-all outline-none font-bold"
+                                            className="w-full px-4 py-2 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-rose-500/50 text-white transition-all outline-none font-bold"
                                             placeholder=""
                                         />
                                     </div>
@@ -901,7 +900,7 @@ export default function Settings() {
                                             type="password"
                                             value={passwordData.confirmPassword}
                                             onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                            className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-rose-500/50 text-white transition-all outline-none font-bold"
+                                            className="w-full px-4 py-2 rounded-2xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-rose-500/50 text-white transition-all outline-none font-bold"
                                             placeholder=""
                                         />
                                     </div>
@@ -909,7 +908,7 @@ export default function Settings() {
                                     <button
                                         type="submit"
                                         disabled={passwordLoading}
-                                        className="w-full bg-rose-500 hover:bg-rose-600 text-white px-10 py-4 rounded-2xl shadow-lg shadow-rose-500/20 transition-all font-black uppercase tracking-widest text-[10px]"
+                                        className="w-full bg-rose-500 hover:bg-rose-600 text-white px-8 py-3 rounded-2xl shadow-lg shadow-rose-500/20 transition-all font-black uppercase tracking-widest text-[10px]"
                                     >
                                         {passwordLoading ? t('common.saving') : t('settings.changePassword')}
                                     </button>
@@ -1018,8 +1017,18 @@ function PremiumColorPicker({
 
                 <div className="flex-1 min-w-0 space-y-3">
                     <div className="flex flex-col gap-0.5">
-                        <div className="text-sm font-black text-white tracking-[0.15em] font-mono leading-none">
-                            {value.toUpperCase()}
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={baseColor.toUpperCase()}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val.match(/^#?[0-9a-f]{0,6}$/i)) {
+                                        handleBaseChange(val.startsWith('#') ? val : `#${val}`);
+                                    }
+                                }}
+                                className="text-sm font-black text-white tracking-[0.15em] font-mono leading-none bg-transparent border-none outline-none focus:text-primary transition-colors w-24"
+                            />
                         </div>
                         <div className="text-[7px] text-white/20 font-bold uppercase tracking-widest truncate">
                             RGBA({r}, {g}, {b}, {opacity})

@@ -275,127 +275,148 @@ export default function Students() {
                                 {ptSubscriptions.map((subscription) => (
                                     <div
                                         key={subscription.id}
-                                        className="glass-card p-8 rounded-[2.5rem] border border-white/10 hover:border-primary/30 transition-all duration-500 group hover:scale-[1.02] relative overflow-hidden"
+                                        className="glass-card p-10 rounded-[3rem] border border-white/10 hover:border-primary/40 transition-all duration-700 group hover:scale-[1.02] relative overflow-hidden flex flex-col h-full bg-[#0a0c10]/40"
                                     >
-                                        {/* Card Gradient */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[2.5rem]"></div>
+                                        {/* Premium Card Hover Glow */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-[3rem]"></div>
+                                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-                                        <div className="relative z-10">
-                                            {/* Card Actions */}
-                                            <div className="absolute top-0 right-0 flex gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setPtToRenew(subscription);
-                                                        setShowPTRenewModal(true);
-                                                    }}
-                                                    className="p-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-xl border border-accent/20 transition-all"
-                                                    title={t('pt.renewSubscription')}
-                                                >
-                                                    <RefreshCw className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setPtToEdit(subscription)}
-                                                    className="p-2 bg-white/5 hover:bg-primary/20 text-white/20 hover:text-primary rounded-xl border border-white/5 transition-all"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setPtToDelete(subscription)}
-                                                    className="p-2 bg-white/5 hover:bg-rose-500/20 text-white/20 hover:text-rose-500 rounded-xl border border-white/5 transition-all"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                        <div className="relative z-10 flex flex-col h-full">
+                                            {/* Top Banner: Student Info & Actions */}
+                                            <div className="flex items-start justify-between mb-8">
+                                                <div className="flex items-center gap-5">
+                                                    <div className="relative">
+                                                        <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-2xl blur opacity-20 group-hover:opacity-50 transition-opacity"></div>
+                                                        <div className="relative w-16 h-16 rounded-2xl bg-[#0a0c10] border border-white/10 flex items-center justify-center text-white font-black text-2xl shadow-2xl group-hover:scale-105 transition-transform duration-500">
+                                                            {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors leading-tight" title={subscription.students?.full_name || subscription.student_name || t('common.unknown')}>
+                                                            {subscription.students?.full_name || subscription.student_name || t('common.unknown')}
+                                                        </h3>
+                                                        <div className="flex items-center gap-2 mt-1.5">
+                                                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${subscription.student_name && !subscription.students ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-primary/10 text-primary border border-primary/20'}`}>
+                                                                {subscription.student_name && !subscription.students ? t('pt.guestStudent') : t('pt.academyStudent')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                            {/* Student Info */}
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                                                    {(subscription.students?.full_name || subscription.student_name || 'S')?.[0]}
-                                                </div>
-                                                <div className="flex-1 min-w-0 pr-20">
-                                                    <h3 className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors truncate" title={subscription.students?.full_name || subscription.student_name || t('common.unknown')}>
-                                                        {subscription.students?.full_name || subscription.student_name || t('common.unknown')}
-                                                    </h3>
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">
-                                                        {subscription.student_name && !subscription.students ? t('pt.guestStudent') : t('pt.academyStudent')}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Coach Info */}
-                                            <div className="flex items-center gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/5">
-                                                <UserIcon className="w-4 h-4 text-accent" />
-                                                <div className="flex-1">
-                                                    <p className="text-xs font-black text-white/60 uppercase tracking-wider">{t('dashboard.coachName')}</p>
-                                                    <p className="text-sm font-black text-white">{subscription.coaches?.full_name || t('common.unknown')}</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Progress Bar */}
-                                            <div className="mb-6">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-wider">{t('pt.progress')}</span>
-                                                    <span className="text-xs font-black text-accent">{subscription.sessions_remaining}/{subscription.sessions_total}</span>
-                                                </div>
-                                                <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                                    <div
-                                                        className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700"
-                                                        style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}
-                                                    ></div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setPtToRenew(subscription);
+                                                            setShowPTRenewModal(true);
+                                                        }}
+                                                        className="p-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-2xl border border-accent/20 transition-all hover:scale-110 active:scale-90"
+                                                        title={t('pt.renewSubscription')}
+                                                    >
+                                                        <RefreshCw className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setPtToEdit(subscription)}
+                                                        className="p-3 bg-white/5 hover:bg-primary/20 text-white/40 hover:text-primary rounded-2xl border border-white/5 transition-all hover:scale-110 active:scale-90"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setPtToDelete(subscription)}
+                                                        className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-500 rounded-2xl border border-white/5 transition-all hover:scale-110 active:scale-90"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            {/* Sessions Info */}
-                                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-primary/5 transition-colors">
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{t('pt.sessionsRemaining')}</p>
-                                                    <p className="text-2xl font-black text-primary">{subscription.sessions_remaining}</p>
+                                            {/* Content Spacer */}
+                                            <div className="flex-1 space-y-6">
+                                                {/* Meta Info Row */}
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="p-4 bg-white/5 rounded-[1.5rem] border border-white/5 flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+                                                            <UserIcon className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">{t('dashboard.coachName')}</p>
+                                                            <p className="text-xs font-black text-white truncate">{subscription.coaches?.full_name || t('common.unknown')}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-4 bg-white/5 rounded-[1.5rem] border border-white/5 flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                                            <Calendar className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">{t('students.expiry')}</p>
+                                                            <p className="text-xs font-black text-white truncate">{format(new Date(subscription.expiry_date), 'dd MMM yyyy')}</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{t('pt.sessionsTotal')}</p>
-                                                    <p className="text-2xl font-black text-white">{subscription.sessions_total}</p>
+
+                                                {/* Progress Visualization */}
+                                                <div className="space-y-3 p-5 bg-gradient-to-br from-white/5 to-transparent rounded-[2rem] border border-white/5">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">{t('pt.progress')}</span>
+                                                        <span className="text-[10px] font-black text-primary px-2 py-0.5 bg-primary/10 rounded-md">
+                                                            {Math.round((subscription.sessions_remaining / subscription.sessions_total) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2.5 bg-[#0a0c10] rounded-full overflow-hidden border border-white/5 p-0.5">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-1000 rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"
+                                                            style={{ width: `${(subscription.sessions_remaining / subscription.sessions_total) * 100}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="flex justify-between mt-2">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{t('pt.sessionsRemaining')}</span>
+                                                            <span className="text-lg font-black text-primary leading-none mt-1">{subscription.sessions_remaining}</span>
+                                                        </div>
+                                                        <div className="flex flex-col text-right">
+                                                            <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">{t('pt.sessionsTotal')}</span>
+                                                            <span className="text-lg font-black text-white/60 leading-none mt-1">{subscription.sessions_total}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Price & Expiry */}
-                                            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                            {/* Footer Info: Price & Status */}
+                                            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between gap-4">
                                                 <div>
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{t('common.price')}</p>
-                                                    <p className="text-xl font-black premium-gradient-text tracking-tighter">
-                                                        {subscription.total_price?.toLocaleString()} <span className="text-[10px] uppercase ml-1">{currency.code}</span>
-                                                    </p>
+                                                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">{t('common.price')}</p>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-2xl font-black text-white tracking-tighter">{subscription.total_price?.toLocaleString()}</span>
+                                                        <span className="text-[10px] font-bold text-white/40 uppercase">{currency.code}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{t('students.expiry')}</p>
-                                                    <p className="text-xs font-bold text-white/80">{format(new Date(subscription.expiry_date), 'MMM dd, yyyy')}</p>
-                                                </div>
-                                            </div>
 
-                                            {/* Status Badge */}
-                                            <div className="mt-4">
-                                                {(() => {
-                                                    const isExpired = new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired' || subscription.sessions_remaining <= 0;
-                                                    return isExpired ? (
-                                                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                                                    <span className="text-xs font-black text-red-500 uppercase tracking-wider">
+                                                <div className="flex-1 max-w-[160px]">
+                                                    {(() => {
+                                                        const isExpired = new Date(subscription.expiry_date) < new Date() || subscription.status === 'expired' || subscription.sessions_remaining <= 0;
+                                                        return isExpired ? (
+                                                            <div className="group/status flex items-center gap-3 p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl hover:bg-rose-500/20 transition-all cursor-help" title={t('pt.renewalRequired')}>
+                                                                <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-500 shadow-lg shadow-rose-500/20">
+                                                                    <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></div>
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest truncate">
                                                                         {(subscription.sessions_remaining <= 0 || subscription.status === 'expired') ? t('pt.outOfSessions') : t('pt.expired')}
-                                                                    </span>
+                                                                    </p>
+                                                                    <p className="text-[7px] font-black text-rose-400/60 uppercase tracking-tighter mt-0.5 whitespace-nowrap overflow-hidden">{t('pt.renewalRequired')}</p>
                                                                 </div>
                                                             </div>
-                                                            <p className="text-[10px] text-red-400/80 font-bold uppercase tracking-wider">
-                                                                ⚠️ {t('pt.renewalRequired')}
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-2xl group-hover:bg-accent/20 transition-all">
-                                                            <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
-                                                            <span className="text-xs font-black text-accent uppercase tracking-wider">{t('pt.active')}</span>
-                                                        </div>
-                                                    );
-                                                })()}
+                                                        ) : (
+                                                            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl group-hover:bg-emerald-500/20 transition-all">
+                                                                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/20">
+                                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">{t('pt.active')}</p>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

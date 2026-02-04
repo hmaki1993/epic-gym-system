@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import FloatingChat from '../components/FloatingChat';
+
 import {
     LayoutDashboard,
     Users,
@@ -126,7 +126,17 @@ export default function DashboardLayout() {
                         setNotifications(prev => {
                             // Prevent duplicates
                             if (prev.some(n => n.id === newNote.id)) return prev;
-                            return [newNote, ...prev];
+                            const newList = [newNote, ...prev];
+
+                            // Trigger toast for new notification if it's unread
+                            if (!newNote.is_read) {
+                                toast.success(newNote.title, {
+                                    icon: '🔔',
+                                    duration: 4000
+                                });
+                            }
+
+                            return newList;
                         });
                     }
                 }
@@ -182,6 +192,8 @@ export default function DashboardLayout() {
         };
 
         // Debugging: Monitor Role
+        console.log('🛡️ DashboardLayout: Render check', { role, userId, userEmail, fullName });
+
         if (role) console.log('Current User Role:', role);
 
         // Also refresh user profile on event
@@ -226,7 +238,7 @@ export default function DashboardLayout() {
     ];
 
     const navItems = allNavItems.filter(item => {
-        if (!role) return true; // Show everything while loading if no role
+        if (!role) return false; // Show nothing while loading to avoid flickering
         const normalizedRole = role.toLowerCase().trim();
         if (normalizedRole === 'admin') return true; // Admin sees all
         return item.roles.includes(normalizedRole);
@@ -260,7 +272,7 @@ export default function DashboardLayout() {
 
         // Reception Filtering
         if (role === 'reception') {
-            const allowedTypes = ['payment', 'student'];
+            const allowedTypes = ['payment', 'student', 'check_in', 'attendance_absence'];
             if (note.target_role === 'reception' || note.target_role === 'admin_reception') return true;
             if (allowedTypes.includes(note.type)) return true;
             return false;
@@ -311,14 +323,14 @@ export default function DashboardLayout() {
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-200"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 transition-transform duration-500 transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : isRtl ? 'translate-x-[110%]' : '-translate-x-full'}`}>
-                <div className="h-full glass-card flex flex-col m-4 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-premium">
+            <aside className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 transition-transform duration-300 transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : isRtl ? 'translate-x-[110%]' : '-translate-x-full'}`}>
+                <div className="h-full glass-card flex flex-col m-4 rounded-[2.5rem] overflow-hidden border border-surface-border shadow-premium">
                     {/* Sidebar Header */}
                     <div className="p-8 pb-4 flex flex-col items-center">
                         <div className="relative group">
@@ -327,7 +339,11 @@ export default function DashboardLayout() {
                         </div>
 
                         <div className="text-center w-full mt-4">
-                            <h2 className="font-extrabold text-xl tracking-tight text-white premium-gradient-text uppercase">{gymProfile.name}</h2>
+                            <h2 className="relative flex flex-col items-center">
+                                <span className="text-[10px] font-black tracking-[0.4em] text-text-muted uppercase mb-1">Epic</span>
+                                <span className="text-sm font-black tracking-[0.2em] text-text-base premium-gradient-text uppercase">Gymnastic Academy</span>
+                                <div className="mt-2 w-8 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                            </h2>
                             <div className="text-xs text-white/60 mt-2 font-bold space-y-1">
                                 <p className="flex items-center justify-center gap-1"><Building2 className="w-3 h-3" /> {gymProfile.address}</p>
                                 <p dir="ltr" className="flex items-center justify-center gap-1">{gymProfile.phone}</p>
@@ -369,7 +385,7 @@ export default function DashboardLayout() {
                     </nav>
 
                     {/* Sidebar Footer */}
-                    <div className="p-8 mt-auto border-t border-white/10 space-y-2">
+                    <div className="p-8 mt-auto border-t border-surface-border space-y-2">
                         {/* Language Toggle - Sidebar */}
                         <button
                             onClick={() => {
@@ -399,179 +415,202 @@ export default function DashboardLayout() {
 
             {/* Main Content Area */}
             <div className={`flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-500 ${isRtl ? 'lg:mr-72' : 'lg:ml-72'}`}>
-                {/* Header */}
-                <header className="h-20 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-30 w-full border-b border-white/5">
+                {/* Header - Elite Reborn */}
+                <header className="h-16 flex items-center justify-between px-6 bg-background/50 backdrop-blur-3xl sticky top-0 z-30 w-full border-b border-surface-border">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-3 text-white/70 hover:bg-white/5 rounded-2xl transition-all active:scale-90"
+                            className="lg:hidden p-3 text-white/70 hover:bg-white/5 rounded-xl transition-all active:scale-90 border border-white/5"
                         >
-                            <Menu className="w-6 h-6" />
+                            <Menu className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        {settings.clock_position === 'header' && (
-                            <PremiumClock className="hidden md:flex" />
-                        )}
-
-                        {role === 'admin' && (
-                            <a
-                                href="/registration"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hidden sm:flex items-center justify-center p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all group relative border border-emerald-500/10"
-                                title={t('common.registrationPage')}
-                            >
-                                <UserPlus className="w-5 h-5" />
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-                            </a>
-                        )}
-
-                        <div className="h-10 w-[1px] bg-white/10 mx-2 hidden sm:block"></div>
-
-                        {/* Notifications Dropdown */}
-                        <div className="relative">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setNotificationsOpen(!notificationsOpen); setProfileOpen(false); }}
-                                className={`p-3 rounded-2xl transition-all relative ${notificationsOpen ? 'bg-primary/20 text-primary shadow-inner' : 'text-white/70 hover:bg-white/5'}`}
-                            >
-                                <Bell className="w-6 h-6" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 border border-white/20 animate-in zoom-in duration-300">
-                                        {unreadCount > 9 ? '+9' : unreadCount}
-                                    </span>
-                                )}
-                            </button>
-
-                            {notificationsOpen && (
-                                <div className={`absolute top-full mt-4 ${isRtl ? 'left-0' : 'right-0'} w-96 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in slide-in-from-top-4 duration-300`}>
-                                    <div className="p-8 border-b border-white/5 bg-white/[0.02]">
-                                        <h3 className="font-black text-white uppercase tracking-tight text-lg">{t('common.notifications') || t('common.recentActivity')}</h3>
-                                    </div>
-                                    <div className="max-h-[70vh] overflow-y-auto">
-                                        {filteredNotifications.length === 0 ? (
-                                            <div className="p-8 text-center text-white/20 font-black uppercase tracking-widest text-xs">
-                                                {t('common.noNotifications')}
-                                            </div>
-                                        ) : (
-                                            filteredNotifications.map(note => {
-                                                let Icon = Bell;
-                                                let color = 'text-white';
-
-                                                if (note.type === 'student') { Icon = Users; color = 'text-primary'; }
-                                                else if (note.type === 'payment') { Icon = Wallet; color = 'text-emerald-400'; }
-                                                else if (note.type === 'schedule') { Icon = Calendar; color = 'text-accent'; }
-                                                else if (note.type === 'coach') { Icon = UserCircle; color = 'text-purple-400'; }
-                                                else if (note.type === 'check_in') { Icon = Calendar; color = 'text-green-400'; }
-                                                else if (note.type === 'attendance_absence') { Icon = Calendar; color = 'text-red-400'; }
-                                                else if (note.type === 'pt_subscription') { Icon = Wallet; color = 'text-amber-400'; }
-
-                                                const timeAgo = (dateStr: string) => {
-                                                    const diff = (new Date().getTime() - new Date(dateStr).getTime()) / 1000 / 60;
-                                                    if (diff < 60) return `${Math.floor(diff)}${t('common.minutesAgoShort')}`;
-                                                    if (diff < 1440) return `${Math.floor(diff / 60)}${t('common.hoursAgoShort')}`;
-                                                    return `${Math.floor(diff / 1440)}${t('common.daysAgoShort')}`;
-                                                };
-
-                                                return (
-                                                    <div
-                                                        key={note.id}
-                                                        onClick={() => handleMarkAsRead(note.id)}
-                                                        className={`p-6 border-b border-white/5 hover:bg-white/[0.02] transition-all group cursor-pointer ${!note.is_read ? 'bg-primary/5' : ''}`}
-                                                    >
-                                                        <div className="flex gap-4">
-                                                            <div className={`p-3 rounded-2xl bg-white/5 shadow-inner ${color} group-hover:scale-110 transition-transform`}>
-                                                                <Icon className="w-5 h-5" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="flex justify-between items-start mb-1">
-                                                                    <h4 className="font-black text-white text-sm">{note.title}</h4>
-                                                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{timeAgo(note.created_at)}</span>
-                                                                </div>
-                                                                <p className="text-xs text-white/50 group-hover:text-white/70 transition-colors">{note.message}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
-                                    </div>
-                                    <div className="p-4 border-t border-white/5 bg-white/[0.01]">
-                                        {filteredNotifications.length > 0 && (
-                                            <button
-                                                onClick={handleClearAllNotifications}
-                                                className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-[0.3em] transition-all"
-                                            >
-                                                {t('common.notificationsClearAll')}
-                                            </button>
-                                        )}
-                                    </div>
+                    <div className="flex items-center gap-4">
+                        {/* Quick Action Hub */}
+                        <div className="hidden md:flex items-center gap-2 p-1.5 bg-text-base/5 border border-surface-border rounded-[2rem] shadow-inner backdrop-blur-md">
+                            {settings.clock_position === 'header' && (
+                                <div className="flex items-center gap-3">
+                                    <PremiumClock className="!bg-transparent !border-none !shadow-none !px-2" />
+                                    {role === 'admin' && <div className="h-6 w-px bg-white/10 mx-1"></div>}
                                 </div>
                             )}
+
+                            {role === 'admin' && (
+                                <a
+                                    href="/registration"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="relative group/reg flex items-center justify-center w-11 h-11 rounded-full bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-500/40 transition-all duration-500 shadow-lg shadow-emerald-500/5 hover:bg-emerald-500/10 active:scale-95"
+                                    title={t('common.registrationPage')}
+                                >
+                                    {/* Premium Glow effect */}
+                                    <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-xl opacity-0 group-hover/reg:opacity-100 transition-opacity duration-700"></div>
+
+                                    <UserPlus className="w-5 h-5 text-emerald-400 group-hover/reg:scale-110 transition-transform duration-500 relative z-10" />
+
+                                    {/* Elite Status Dot */}
+                                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0E1D21] shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse z-20"></span>
+                                </a>
+                            )}
+
+                            {/* Unified Control Separator */}
+                            <div className="h-8 w-px bg-surface-border mx-2"></div>
+
+                            {/* Notifications Center */}
+                            <div className="relative">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setNotificationsOpen(!notificationsOpen); setProfileOpen(false); }}
+                                    className={`w-11 h-11 flex items-center justify-center rounded-full transition-all relative ${notificationsOpen ? 'bg-primary/20 text-primary shadow-[inset_0_0_15px_rgba(var(--primary-rgb),0.3)]' : 'text-white/70 hover:bg-white/5 border border-transparent'}`}
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 bg-gradient-to-br from-red-500 to-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 border-2 border-background">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+
+                                {notificationsOpen && (
+                                    <div className={`absolute top-full mt-6 ${isRtl ? 'left-[-1rem]' : 'right-[-1rem]'} w-96 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in fade-in slide-in-from-top-4 duration-300`}>
+                                        <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+                                            <h3 className="font-black text-white uppercase tracking-tighter text-xl">{t('common.notifications') || t('common.recentActivity')}</h3>
+                                        </div>
+                                        <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                                            {filteredNotifications.length === 0 ? (
+                                                <div className="p-12 text-center text-white/10 font-black uppercase tracking-[0.3em] text-[10px]">
+                                                    {t('common.noNotifications')}
+                                                </div>
+                                            ) : (
+                                                filteredNotifications.map(note => {
+                                                    let Icon = Bell;
+                                                    let color = 'text-white';
+
+                                                    if (note.type === 'student') { Icon = Users; color = 'text-primary'; }
+                                                    else if (note.type === 'payment') { Icon = Wallet; color = 'text-emerald-400'; }
+                                                    else if (note.type === 'schedule') { Icon = Calendar; color = 'text-accent'; }
+                                                    else if (note.type === 'coach') { Icon = UserCircle; color = 'text-purple-400'; }
+                                                    else if (note.type === 'check_in') { Icon = Calendar; color = 'text-green-400'; }
+                                                    else if (note.type === 'attendance_absence') { Icon = Calendar; color = 'text-red-400'; }
+                                                    else if (note.type === 'pt_subscription') { Icon = Wallet; color = 'text-amber-400'; }
+
+                                                    const timeAgo = (dateStr: string) => {
+                                                        const diff = (new Date().getTime() - new Date(dateStr).getTime()) / 1000 / 60;
+                                                        if (diff < 60) return `${Math.floor(diff)}${t('common.minutesAgoShort')}`;
+                                                        if (diff < 1440) return `${Math.floor(diff / 60)}${t('common.hoursAgoShort')}`;
+                                                        return `${Math.floor(diff / 1440)}${t('common.daysAgoShort')}`;
+                                                    };
+
+                                                    return (
+                                                        <div
+                                                            key={note.id}
+                                                            onClick={() => handleMarkAsRead(note.id)}
+                                                            className={`p-6 border-b border-white/[0.02] hover:bg-white/[0.03] transition-all group cursor-pointer ${!note.is_read ? 'bg-primary/5' : ''}`}
+                                                        >
+                                                            <div className="flex gap-4">
+                                                                <div className={`w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 shadow-inner ${color} group-hover:scale-105 transition-transform border border-white/5`}>
+                                                                    <Icon className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex justify-between items-start mb-1">
+                                                                        <h4 className="font-extrabold text-white text-sm tracking-tight">{note.title}</h4>
+                                                                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{timeAgo(note.created_at)}</span>
+                                                                    </div>
+                                                                    <p className="text-xs text-white/40 group-hover:text-white/70 transition-colors leading-relaxed line-clamp-2">{note.message}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                        <div className="p-4 bg-white/[0.01]">
+                                            {filteredNotifications.length > 0 && (
+                                                <button
+                                                    onClick={handleClearAllNotifications}
+                                                    className="w-full py-4 rounded-[1.5rem] bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-[0.4em] transition-all border border-red-500/10"
+                                                >
+                                                    {t('common.notificationsClearAll')}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="h-10 w-[1px] bg-white/10 mx-2 hidden sm:block"></div>
-
-                        {/* Profile Dropdown */}
+                        {/* Status & Profile Hub */}
                         <div className="relative">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); setNotificationsOpen(false); }}
-                                className={`flex items-center gap-4 px-4 py-2 rounded-2xl transition-all group ${profileOpen ? 'bg-white/10 ring-2 ring-primary/20' : 'hover:bg-white/5 shadow-premium bg-white/[0.02]'}`}
+                                className={`flex items-center gap-4 pl-6 pr-3 py-2 rounded-[2rem] transition-all group ${profileOpen ? 'bg-white/10 shadow-inner' : 'bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/5 shadow-premium'}`}
                             >
-                                <div className="text-right text-sm">
-                                    <p className={`text-[10px] ${userStatus === 'online' ? 'text-emerald-400' : 'text-orange-400'} font-black uppercase tracking-[0.3em] flex items-center justify-end gap-2.5`}>
-                                        <span className={`w-2 h-2 rounded-full ${userStatus === 'online' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]'} animate-pulse`}></span>
-                                        {userStatus === 'online' ? t('common.onlineLabel') : t('common.busyLabel')}
-                                    </p>
+                                <div className="hidden sm:flex flex-col items-end leading-none gap-1.5">
+                                    <p className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{fullName || role?.replace('_', ' ')}</p>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'} animate-pulse`}></span>
+                                        <span className={`text-[8px] font-black uppercase tracking-widest ${userStatus === 'online' ? 'text-emerald-400/80' : 'text-orange-400/80'}`}>
+                                            {userStatus === 'online' ? t('common.onlineLabel') : t('common.busyLabel')}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
-                                    {avatarUrl ? (
-                                        <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-black text-xs">
-                                            {(fullName || role)?.[0]?.toUpperCase() || 'A'}
+
+                                <div className="relative">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-accent p-[1px] group-hover:scale-105 transition-transform duration-500">
+                                        <div className="w-full h-full rounded-[0.9rem] bg-background flex items-center justify-center overflow-hidden">
+                                            {avatarUrl ? (
+                                                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-white font-black text-xs">
+                                                    {(fullName || role)?.[0]?.toUpperCase() || 'A'}
+                                                </span>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-background border-2 border-white/10 flex items-center justify-center p-0.5">
+                                        <ChevronDown className={`w-full h-full text-white/40 transition-all duration-300 ${profileOpen ? 'rotate-180' : ''}`} />
+                                    </div>
                                 </div>
-                                <ChevronDown className={`w-4 h-4 text-white/30 group-hover:text-white transition-all ${profileOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {profileOpen && (
-                                <div className={`absolute top-full mt-4 ${isRtl ? 'left-0' : 'right-0'} w-64 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in slide-in-from-top-4 duration-300`}>
-                                    <div className="p-6 space-y-2 border-b border-white/5">
-                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] px-4 mb-4">{t('common.setStatus')}</p>
-                                        <div className="grid grid-cols-2 gap-2">
+                                <div className={`absolute top-full mt-4 ${isRtl ? 'left-[-1rem]' : 'right-[-1rem]'} w-72 glass-card rounded-[2.5rem] border border-white/10 shadow-premium overflow-hidden z-[70] animate-in fade-in slide-in-from-top-4 duration-300`}>
+                                    <div className="p-8 space-y-4 border-b border-white/[0.03] bg-white/[0.01]">
+                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-2">{t('common.setStatus')}</p>
+                                        <div className="grid grid-cols-2 gap-3">
                                             <button
                                                 onClick={() => handleStatusChange('online')}
-                                                className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${userStatus === 'online' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
+                                                className={`flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${userStatus === 'online' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-500/10' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
                                             >
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                                <span className={`w-2 h-2 rounded-full ${userStatus === 'online' ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></span>
                                                 {t('common.onlineLabel')}
                                             </button>
                                             <button
                                                 onClick={() => handleStatusChange('busy')}
-                                                className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${userStatus === 'busy' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
+                                                className={`flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${userStatus === 'busy' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30 shadow-lg shadow-orange-500/10' : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'}`}
                                             >
-                                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                                <span className={`w-2 h-2 rounded-full ${userStatus === 'busy' ? 'bg-orange-400 animate-pulse' : 'bg-white/20'}`}></span>
                                                 {t('common.busyLabel')}
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="p-6 space-y-2">
+                                    <div className="p-4 space-y-1">
                                         <button
                                             onClick={() => navigate('/settings')}
-                                            className="flex items-center w-full px-4 py-4 text-sm font-black text-white/60 hover:text-white hover:bg-white/5 rounded-2xl transition-all group uppercase tracking-widest gap-4"
+                                            className="flex items-center w-full px-6 py-5 text-xs font-black text-white/50 hover:text-white hover:bg-white/[0.03] rounded-[1.5rem] transition-all group uppercase tracking-[0.2em] gap-5"
                                         >
-                                            <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+                                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 group-hover:text-primary transition-all border border-white/5">
+                                                <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-700" />
+                                            </div>
                                             {t('common.settings')}
                                         </button>
-                                        <div className="h-[1px] bg-white/5 mx-2"></div>
                                         <button
                                             onClick={handleLogout}
-                                            className="flex items-center w-full px-4 py-4 text-sm font-black text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all group uppercase tracking-widest gap-4"
+                                            className="flex items-center w-full px-6 py-5 text-xs font-black text-rose-500/60 hover:text-rose-500 hover:bg-rose-500/5 rounded-[1.5rem] transition-all group uppercase tracking-[0.2em] gap-5"
                                         >
-                                            <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-500/10 transition-all border border-rose-500/10">
+                                                <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                                            </div>
                                             {t('common.logout')}
                                         </button>
                                     </div>
@@ -582,15 +621,9 @@ export default function DashboardLayout() {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 sm:p-8 overflow-x-hidden">
+                <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
                     <Outlet context={{ role, fullName }} />
-                    {/* Floating Chat */}
-                    <FloatingChat
-                        userStatus={userStatus}
-                        currentUserId={userId}
-                        currentUserRole={role}
-                        currentUserName={fullName}
-                    />
+
                 </main>
             </div >
         </div >

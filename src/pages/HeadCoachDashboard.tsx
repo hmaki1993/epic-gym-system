@@ -74,28 +74,51 @@ export default function HeadCoachDashboard() {
                         setCoachId(coachData.id);
                         setBaseSalary(Number(coachData.salary) || 0);
 
-                        // Sync Attendance
-                        const { data: attendance } = await supabase
+                        // Sync Attendance: Priority to OPEN sessions
+                        let { data: attendance } = await supabase
                             .from('coach_attendance')
                             .select('*')
                             .eq('coach_id', coachData.id)
-                            .eq('date', todayStr)
+                            .is('check_out_time', null)
                             .maybeSingle();
+
+                        if (!attendance) {
+                            // If no active session, get latest closed record
+                            const { data: latest } = await supabase
+                                .from('coach_attendance')
+                                .select('*')
+                                .eq('coach_id', coachData.id)
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .maybeSingle();
+                            attendance = latest;
+                        }
 
                         if (attendance) {
                             const start = new Date(attendance.check_in_time);
+
+                            // Scenario A: Still checked in (no check_out_time) - Restore active session
                             if (!attendance.check_out_time) {
                                 setIsCheckedIn(true);
                                 setCheckInTime(format(start, 'HH:mm:ss'));
                                 setElapsedTime(Math.floor((new Date().getTime() - start.getTime()) / 1000));
-                                localStorage.setItem(`checkInStart_${todayStr}`, JSON.stringify({
+
+                                // Ensure local storage is in sync for the timer
+                                localStorage.setItem(`checkInStart_${format(new Date(), 'yyyy-MM-dd')}`, JSON.stringify({
                                     timestamp: start.getTime(),
                                     recordId: attendance.id
                                 }));
-                            } else {
+                            }
+                            // Scenario B: Checked out TODAY - Show daily summary
+                            else if (attendance.date === todayStr) {
                                 setIsCheckedIn(false);
                                 const end = new Date(attendance.check_out_time);
                                 setDailyTotalSeconds(Math.floor((end.getTime() - start.getTime()) / 1000));
+                            }
+                            // Scenario C: Checked out on a previous day - Reset (default state)
+                            else {
+                                setIsCheckedIn(false);
+                                setDailyTotalSeconds(0);
                             }
                         }
                     }
@@ -118,7 +141,9 @@ export default function HeadCoachDashboard() {
                 .upsert({
                     coach_id: coachId,
                     date: todayStr,
-                    check_in_time: now.toISOString()
+                    check_in_time: now.toISOString(),
+                    check_out_time: null, // Clear check-out time if re-checking in same day
+                    status: 'present'
                 }, { onConflict: 'coach_id,date' })
                 .select().single();
 

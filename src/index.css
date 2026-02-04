@@ -23,6 +23,10 @@
 
   --radius: 1.5rem;
   --glass-opacity: 0.6;
+  /* Theme Aware Variables */
+  --color-text-base: var(--color-text-base);
+  --color-text-muted: var(--color-text-muted);
+  --color-surface-border: var(--color-surface-border);
 }
 
 :root {
@@ -58,7 +62,7 @@ body {
   background: color-mix(in srgb, var(--color-surface), transparent calc(100% - var(--glass-opacity) * 100%)) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--color-surface-border, rgba(255, 255, 255, 0.08)) !important;
   border-radius: var(--radius) !important;
   box-shadow: var(--shadow-premium) !important;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
@@ -66,6 +70,11 @@ body {
     background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   will-change: transform, opacity;
+}
+
+/* Light mode specific shadow refinement */
+:root[style*="--is-light-mode: 1"] .glass-card {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important;
 }
 
 .glass-card:hover {
@@ -89,10 +98,14 @@ body {
 */
 /* High contrast text overrides */
 .text-gray-400,
+.text-white\/80,
+.text-white\/70,
 .text-white\/60,
 .text-white\/50,
 .text-white\/40,
-.text-white\/30 {
+.text-white\/30,
+.text-white\/20,
+.text-white\/10 {
   color: var(--color-text-muted) !important;
 }
 
@@ -135,12 +148,19 @@ select,
 textarea {
   background-color: var(--color-input-bg, #0f172a);
   color: var(--color-text-base);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-surface-border, rgba(255, 255, 255, 0.1));
   border-radius: var(--radius);
-  padding: 0.625rem 1rem;
+  padding: 0.5rem 1rem;
   opacity: 1;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-text-fill-color: var(--color-text-base);
+}
+
+/* Light mode input adjustment */
+:root[style*="--is-light-mode: 1"] input,
+:root[style*="--is-light-mode: 1"] select,
+:root[style*="--is-light-mode: 1"] textarea {
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 input:focus,
@@ -157,6 +177,12 @@ select {
   appearance: none;
   padding-right: 2.5rem !important;
   cursor: pointer;
+}
+
+select option {
+  background-color: var(--color-input-bg, #0f172a);
+  color: var(--color-text-base);
+  padding: 0.5rem;
 }
 
 ::placeholder {
@@ -222,17 +248,35 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Mobile Performance Optimizations */
+/* Mobile Performance & Chic Optimizations */
 @media (max-width: 768px) {
   .glass-card {
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    transition-duration: 0.15s !important;
   }
 
-  --shadow-premium: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+  .glass-card:hover {
+    transform: none !important;
+    /* Prevent layout shift on touch */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  :root {
+    --shadow-premium: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --radius: 1rem;
+    /* Slightly smaller radius for mobile for a tighter look */
+  }
 
   * {
-    transition-duration: 0.2s !important;
+    transition-duration: 0.15s !important;
+    /* Ultra-snappy response */
+  }
+
+  .animate-pulse,
+  .animate-pulse-indigo {
+    animation-duration: 4s !important;
+    /* Slow down pulses to save CPU */
   }
 }

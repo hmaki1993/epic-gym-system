@@ -21,25 +21,37 @@ export default function Dashboard() {
 
     const { data: stats, isLoading: loading } = useDashboardStats();
 
+    // Show loading while role is being determined
+    if (!role) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     // Show Head Coach Dashboard
     if (role === 'head_coach') {
         return <HeadCoachDashboard />;
     }
 
-    // Show Coach Dashboard for coaches
+    // Show Coach Dashboard for coaches only
     if (role === 'coach') {
         return <CoachDashboard />;
     }
 
     // Show Reception Dashboard
-    if (role === 'reception') {
+    if (role === 'reception' || role === 'receptionist') {
         return <ReceptionDashboard />;
     }
+
+    // If Admin or any other role, continue to show the main admin dashboard stats below
 
     // Default stats to avoid undefined errors during loading
     const displayStats = stats || {
         totalStudents: 0,
         activeCoaches: 0,
+        totalGroups: 0,
         monthlyRevenue: 0,
         recentActivity: []
     };
@@ -50,21 +62,33 @@ export default function Dashboard() {
             value: displayStats.totalStudents,
             icon: Users,
             color: 'bg-blue-500',
-            trend: '+12% from last month'
+            trend: '+12% from last month',
+            trendColor: 'text-emerald-400'
         },
         {
             label: t('dashboard.monthlyRevenue'),
             value: formatPrice(displayStats.monthlyRevenue),
             icon: TrendingUp,
-            color: 'bg-green-500',
-            trend: '+5% from last month'
+            color: 'bg-emerald-500',
+            trend: '+5% from last month',
+            trendColor: 'text-emerald-400'
+        },
+        {
+            label: t('dashboard.trainingGroups'),
+            value: displayStats.totalGroups,
+            icon: Scale,
+            color: 'bg-purple-500',
+            trend: 'Optimized',
+            trendColor: 'text-purple-400'
         },
         {
             label: t('dashboard.activeCoaches'),
             value: displayStats.activeCoaches,
-            icon: Medal, // Changed from Dumbbell to Medal
+            icon: Medal,
             color: 'bg-orange-500',
-            trend: 'Stable'
+            trend: 'Active Now',
+            trendColor: 'text-orange-400',
+            isLive: true
         }
     ];
 
@@ -72,59 +96,78 @@ export default function Dashboard() {
     console.log('Is Reception?', role === 'reception');
 
     return (
-        <div className="space-y-12">
+        <div className="space-y-10">
 
-            {/* Welcome Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
-                <div className="text-center sm:text-left">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-                        <h1 className="text-4xl sm:text-5xl font-extrabold premium-gradient-text tracking-tight uppercase leading-none">{t('common.dashboard')}</h1>
-                        <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                            <span className="text-xs font-black text-white/40 uppercase tracking-[0.2em]">{format(new Date(), 'EEEE, dd MMMM')}</span>
-                            {settings.clock_position === 'dashboard' && (
-                                <>
-                                    <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-                                    <PremiumClock />
-                                </>
-                            )}
+            {/* Premium Welcome Header */}
+            <div className="relative group">
+                <div className="flex flex-col gap-2 mb-8 animate-in fade-in slide-in-from-left duration-700">
+                    <h1 className="text-5xl sm:text-6xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
+                        {t('common.dashboard')}
+                    </h1>
+                    <p className="text-white/40 text-sm sm:text-lg font-black tracking-[0.2em] uppercase">
+                        {t('dashboard.welcome')}, <span className="text-white">{fullName || role?.replace('_', ' ') || 'Admin'}</span>
+                    </p>
+                </div>
+
+                {/* Info Bar - Clean & Organized */}
+                <div className="flex flex-wrap items-center gap-x-10 gap-y-4 py-6 border-y border-white/5 animate-in fade-in slide-in-from-top-4 duration-1000 delay-200">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                            <Calendar className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{t('common.today') || 'Today'}</span>
+                            <span className="text-sm font-black text-white uppercase tracking-wider">{format(new Date(), 'EEEE, dd MMMM')}</span>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-4">
-                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-wide uppercase opacity-100">{t('dashboard.welcome')}, {fullName || role?.replace('_', ' ') || 'Admin'}.</p>
 
-                        {role === 'admin' && (
-                            <a
-                                href="/registration"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/5 hover:scale-105 hover:bg-emerald-500/20 transition-all group self-start sm:self-auto"
-                            >
-                                <UserPlus className="w-3.5 h-3.5" />
-                                {t('common.registrationPage')}
-                                <ArrowUpRight className="w-3 h-3 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-emerald-400" />
-                            </a>
-                        )}
-                    </div>
+                    {settings.clock_position === 'dashboard' && (
+                        <div className="flex items-center gap-4">
+                            <div className="h-10 w-px bg-white/10 hidden sm:block mr-4"></div>
+                            <div className="scale-110">
+                                <PremiumClock />
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Stats Grid - Balanced & Elite */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((stat, index) => (
-                    <div key={index} className="glass-card p-5 rounded-3xl border border-white/10 shadow-premium group hover:scale-[1.02] transition-transform duration-500">
-                        <div className="flex items-center justify-between mb-4">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 truncate w-full">{stat.label}</p>
-                            <div className={`p-2 rounded-xl text-white ${stat.color} shadow-lg shadow-black/10 group-hover:scale-110 transition-transform`}>
-                                <stat.icon className="w-4 h-4" />
+                    <div key={index} className="glass-card p-8 rounded-[2.5rem] border border-white/5 shadow-premium group hover:scale-[1.03] transition-all duration-500 hover:border-white/10 relative overflow-hidden">
+                        {/* Subtle background glow */}
+                        <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color}/5 blur-[60px] rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700`}></div>
+
+                        <div className="flex items-center justify-between mb-8">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 truncate pr-4">{stat.label}</p>
+                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-white ${stat.color} shadow-xl shadow-black/20 group-hover:rotate-12 transition-all duration-500`}>
+                                <stat.icon className="w-5 h-5" />
                             </div>
                         </div>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-2xl font-black text-white">{loading ? '-' : stat.value}</h3>
-                        </div>
-                        <div className="mt-4 flex items-center text-[9px] font-black uppercase tracking-widest text-emerald-400">
-                            <ArrowUpRight className="w-3 h-3 mr-1" />
-                            {stat.trend}
+
+                        <div className="flex flex-col gap-1">
+                            <h3 className="text-4xl font-black text-white tracking-tighter">
+                                {loading ? (
+                                    <div className="h-10 w-24 bg-white/5 animate-pulse rounded-xl"></div>
+                                ) : (
+                                    stat.value
+                                )}
+                            </h3>
+                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] ${stat.trendColor || 'text-white/40'} mt-2`}>
+                                {stat.isLive ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-current animate-pulse shadow-[0_0_8px_currentColor]"></span>
+                                        {stat.trend}
+                                    </span>
+                                ) : (
+                                    <>
+                                        <ArrowUpRight className="w-3 h-3 opacity-50" />
+                                        {stat.trend}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}

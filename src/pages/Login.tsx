@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, Loader2, Globe, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
+    const { updateSettings, settings } = useTheme();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,13 +39,12 @@ export default function Login() {
     };
 
     const toggleLanguage = () => {
-        const newLang = i18n.language === 'en' ? 'ar' : 'en';
-        i18n.changeLanguage(newLang);
-        document.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+        const newLang = settings.language === 'en' ? 'ar' : 'en';
+        updateSettings({ language: newLang });
     };
 
     return (
-        <div className="min-h-screen bg-[#0E1D21] flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden font-cairo">
+        <div className="min-h-screen bg-[#0E1D21] flex flex-col items-center justify-center p-4 relative overflow-hidden font-cairo">
 
             {/* Background Effects - Premium Atmosphere */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -55,43 +56,43 @@ export default function Login() {
                 <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
             </div>
 
-            <div className="w-full max-w-lg relative z-10 scale-90 md:scale-100">
+            <div className="w-full max-w-md relative z-10 scale-90 md:scale-100">
                 {/* Logo Section */}
-                <div className="mb-12 text-center animate-in fade-in slide-in-from-top-8 duration-1000">
+                <div className="mb-4 text-center animate-in fade-in slide-in-from-top-8 duration-1000">
                     <div className="relative inline-block group">
                         <div className="absolute -inset-6 bg-gradient-to-r from-[#622347]/30 to-[#122E34]/30 rounded-full blur-2xl opacity-40 group-hover:opacity-100 transition duration-1000"></div>
                         <img
                             src="/logo.png"
                             alt="Epic Gym Logo"
-                            className="relative h-32 w-auto mx-auto drop-shadow-2xl transition-transform hover:scale-105 duration-500 brightness-110"
+                            className="relative h-20 w-auto mx-auto drop-shadow-2xl transition-transform hover:scale-105 duration-500 brightness-110"
                         />
                     </div>
                 </div>
 
                 {/* Login Card */}
-                <div className="relative p-[1px] rounded-[3.5rem] bg-gradient-to-br from-white/10 via-transparent to-white/5 shadow-2xl animate-in fade-in zoom-in-95 duration-700">
-                    <div className="bg-[#122E34]/30 backdrop-blur-3xl rounded-[3.4rem] p-10 md:p-14 border border-white/5 shadow-inner relative overflow-hidden">
+                <div className="relative p-[1px] rounded-[2.5rem] bg-gradient-to-br from-white/10 via-transparent to-white/5 shadow-2xl animate-in fade-in zoom-in-95 duration-700">
+                    <div className="bg-[#122E34]/30 backdrop-blur-3xl rounded-[2.4rem] p-6 md:p-8 border border-white/5 shadow-inner relative overflow-hidden">
                         {/* Internal Decorative Glow */}
                         <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#622347]/10 rounded-full blur-3xl"></div>
 
-                        <div className="mb-10 text-center relative z-10">
-                            <h1 className="text-4xl font-black text-white uppercase tracking-tighter premium-gradient-text-mind">
+                        <div className="mb-6 text-center relative z-10">
+                            <h1 className="text-3xl font-black text-white uppercase tracking-tighter premium-gradient-text-mind">
                                 {t('common.login')}
                             </h1>
-                            <p className="text-[#677E8A] mt-3 text-[10px] font-black uppercase tracking-[0.4em]">
+                            <p className="text-[#677E8A] mt-2 text-[9px] font-black uppercase tracking-[0.4em]">
                                 Welcome to the Legacy
                             </p>
                         </div>
 
                         {error && (
-                            <div className="bg-rose-500/10 text-rose-400 text-xs font-black p-4 rounded-2xl mb-8 border border-rose-500/20 text-center uppercase tracking-widest animate-in shake duration-500">
+                            <div className="bg-rose-500/10 text-rose-400 text-[10px] font-black p-3 rounded-xl mb-6 border border-rose-500/20 text-center uppercase tracking-widest animate-in shake duration-500">
                                 {error}
                             </div>
                         )}
 
-                        <form onSubmit={handleLogin} className="space-y-8 relative z-10">
+                        <form onSubmit={handleLogin} className="space-y-4 relative z-10">
                             <div className="group">
-                                <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block group-focus-within:text-[#677E8A] transition-colors">
+                                <label className="text-[9px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-2 ml-4 block group-focus-within:text-[#677E8A] transition-colors">
                                     Email Address
                                 </label>
                                 <input
@@ -106,7 +107,7 @@ export default function Login() {
                             </div>
 
                             <div className="group">
-                                <label className="text-[10px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-3 ml-6 block group-focus-within:text-[#677E8A] transition-colors">
+                                <label className="text-[9px] font-black text-[#ABAFB5]/40 uppercase tracking-[0.2em] mb-2 ml-4 block group-focus-within:text-[#677E8A] transition-colors">
                                     Password
                                 </label>
                                 <input
@@ -120,39 +121,41 @@ export default function Login() {
                                 />
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full group relative overflow-hidden bg-gradient-to-r from-[#622347] to-[#122E34] text-white py-8 rounded-[2.5rem] font-black text-xl uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
-                            >
-                                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-700"></div>
-                                <span className="relative z-10 flex items-center justify-center gap-4">
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="w-6 h-6 animate-spin text-[#ABAFB5]" />
-                                            <span>Processing...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>{t('common.login')}</span>
-                                            <Sparkles className="w-6 h-6 group-hover:animate-ping text-[#ABAFB5]" />
-                                        </>
-                                    )}
-                                </span>
-                            </button>
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full max-w-[220px] group relative overflow-hidden bg-gradient-to-r from-[#622347] to-[#122E34] text-white py-2.5 rounded-full font-black text-xs uppercase tracking-[0.4em] transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 premium-button"
+                                >
+                                    <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-700"></div>
+                                    <span className="relative z-10 flex items-center justify-center gap-2">
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin text-[#ABAFB5]" />
+                                                <span className="text-[10px]">Processing...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>{t('common.login')}</span>
+                                                <Sparkles className="w-3 h-3 group-hover:animate-ping text-[#ABAFB5]" />
+                                            </>
+                                        )}
+                                    </span>
+                                </button>
+                            </div>
                         </form>
 
-                        <div className="mt-12 flex flex-col items-center gap-6 relative z-10">
+                        <div className="mt-6 flex flex-col items-center gap-4 relative z-10">
                             <button
                                 onClick={toggleLanguage}
-                                className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-[#0E1D21] border border-[#677E8A]/10 text-[#677E8A]/60 hover:text-white hover:bg-[#122E34] hover:border-[#677E8A]/30 transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-xl"
+                                className="flex items-center gap-2 px-6 py-2 rounded-xl bg-[#0E1D21] border border-[#677E8A]/10 text-[#677E8A]/60 hover:text-white hover:bg-[#122E34] hover:border-[#677E8A]/30 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-xl"
                             >
-                                <Globe className="w-4 h-4 text-[#622347]" />
+                                <Globe className="w-3 h-3 text-[#622347]" />
                                 {i18n.language === 'en' ? 'Switch to Arabic' : 'Switch to English'}
                             </button>
 
-                            <p className="text-[10px] font-black text-[#ABAFB5]/10 uppercase tracking-[0.5em] text-center">
-                                © {new Date().getFullYear()} Epic Gymnastic Academy • Excellence since day one
+                            <p className="text-[8px] font-black text-[#ABAFB5]/10 uppercase tracking-[0.5em] text-center">
+                                © {new Date().getFullYear()} Epic Gymnastic Academy
                             </p>
                         </div>
                     </div>
@@ -167,7 +170,7 @@ export default function Login() {
                 }
                 .input-mind {
                     width: 100%;
-                    padding: 1.5rem 2.5rem;
+                    padding: 0.75rem 1.5rem;
                     background: transparent !important;
                     border: 1px solid rgba(103, 126, 138, 0.2);
                     border-radius: 2rem;
@@ -196,6 +199,14 @@ export default function Login() {
                     text-transform: uppercase;
                     letter-spacing: 0.1em;
                     font-size: 0.8rem;
+                }
+                .premium-button {
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+                }
+                .premium-button:hover {
+                    box-shadow: 0 0 25px rgba(98, 35, 71, 0.3), 0 0 50px rgba(18, 46, 52, 0.2);
+                    border-color: rgba(255, 255, 255, 0.2);
                 }
             `}</style>
         </div>

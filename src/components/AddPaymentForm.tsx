@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, Save, DollarSign, ChevronDown } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
+import toast from 'react-hot-toast';
 
 interface Student {
     id: number;
@@ -61,7 +62,7 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
             onClose();
         } catch (error: any) {
             console.error('Error adding payment:', error);
-            alert('Error adding payment: ' + error.message);
+            toast.error('Error adding payment: ' + error.message);
         } finally {
             setLoading(false);
         }

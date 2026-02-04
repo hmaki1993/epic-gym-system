@@ -82,7 +82,7 @@ export default function GroupsList({ coachId, showAll = false }: GroupsListProps
     );
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {groups.length === 0 ? (
                 <div className="col-span-full py-16 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
                     <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/5 flex items-center justify-center text-white/20">
@@ -96,15 +96,15 @@ export default function GroupsList({ coachId, showAll = false }: GroupsListProps
                     <div
                         key={group.id}
                         onClick={() => setSelectedGroup(group)}
-                        className="group relative glass-card p-6 rounded-[2.5rem] border border-white/10 hover:border-accent/40 transition-all duration-500 cursor-pointer overflow-hidden active:scale-95"
+                        className="group relative glass-card p-6 rounded-[2rem] border border-white/10 hover:border-accent/40 transition-all duration-500 cursor-pointer overflow-hidden active:scale-95"
                     >
                         {/* Interactive Background Gradient */}
                         <div className="absolute inset-0 bg-gradient-to-br from-accent/0 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-6">
-                                <div className="p-3.5 bg-accent/10 rounded-2xl text-accent border border-accent/20 group-hover:scale-110 transition-transform duration-500">
-                                    <Calendar className="w-6 h-6" />
+                                <div className="p-3 bg-accent/10 rounded-2xl text-accent border border-accent/20 group-hover:scale-110 transition-transform duration-500">
+                                    <Calendar className="w-5 h-5" />
                                 </div>
                                 <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 shadow-inner">
                                     <Users className="w-3.5 h-3.5 text-white/30" />
@@ -112,7 +112,7 @@ export default function GroupsList({ coachId, showAll = false }: GroupsListProps
                                 </div>
                             </div>
 
-                            <h3 className="font-black text-white text-xl tracking-tighter mb-4 uppercase group-hover:text-accent transition-colors">
+                            <h3 className="font-black text-white text-lg tracking-tighter mb-4 uppercase group-hover:text-accent transition-colors">
                                 {group.name}
                             </h3>
 
