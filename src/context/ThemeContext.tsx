@@ -180,8 +180,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
                 fetchSettings();
             } else if (event === 'SIGNED_OUT') {
-                console.log('🔐 ThemeContext: User signed out, resetting to defaults...');
+                console.log('🔐 ThemeContext: User signed out, resetting settings and profile...');
                 setSettings(defaultSettings);
+                setUserProfile(null);
             }
         });
 
@@ -247,6 +248,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                             avatar_url: null
                         });
                     }
+                } else if (userProfile && userProfile.id !== user.id) {
+                    // Reset if the user ID changed (e.g., login after logout without full reload)
+                    console.log('🛡️ ThemeContext: User ID changed, resetting profile for new fetch...');
+                    setUserProfile(null);
                 }
 
                 // Fetch user settings, profile, and coach record in parallel

@@ -17,7 +17,7 @@ export default function CoachDashboard() {
     const { t, i18n } = useTranslation();
     const { settings } = useTheme();
     const { currency } = useCurrency();
-    const { role, fullName } = useOutletContext<{ role: string, fullName: string }>() || { role: null, fullName: null };
+    const { role, fullName, userId } = useOutletContext<{ role: string, fullName: string, userId: string | null }>() || { role: null, fullName: null, userId: null };
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [checkInTime, setCheckInTime] = useState<string | null>(null);
     const [currentTime] = useState(new Date());
@@ -136,8 +136,10 @@ export default function CoachDashboard() {
                         fetchPTSubscriptions(coachData.id, coachData.pt_rate || 0);
                     } else {
                         console.warn('No coach profile found for user:', user.id);
-                        // Only show error to actual coaches, not admins/reception who might phantom-mount this
-                        if (role === 'coach') {
+                        // 🛡️ ENHANCED SAFETY: Only show error if:
+                        // 1. Context role is strictly 'coach'
+                        // 2. The Auth user we just fetched MATCHES the global state user (prevent transition leaks)
+                        if (role === 'coach' && user.id === userId) {
                             toast.error('Coach profile not found. Please contact admin.');
                         }
                     }

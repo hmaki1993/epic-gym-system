@@ -504,210 +504,208 @@ export default function Settings() {
                             </div>
                         </div>
 
-                        {/* Granular Design Customization - Restricted to Admins */}
-                        {role === 'admin' && (
-                            <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8 text-white/40 text-[10px] uppercase font-bold tracking-widest">
-                                    <span className="px-2 py-0.5 rounded-lg bg-primary/20 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-widest mr-2">{t('settings.premiumMember')}</span>
-                                    {t('settings.premiumOptions')}
-                                </div>
-                                <div className="absolute -top-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"></div>
-                                <div className="relative z-10">
-                                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-10">
-                                        <div className="p-3 bg-purple-500/20 rounded-2xl text-purple-500">
-                                            <Palette className="w-6 h-6" />
-                                        </div>
-                                        {t('settings.designCustomization')}
-                                    </h2>
+                        {/* Granular Design Customization - Available to all roles */}
+                        <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 text-white/40 text-[10px] uppercase font-bold tracking-widest">
+                                <span className="px-2 py-0.5 rounded-lg bg-primary/20 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-widest mr-2">{t('settings.premiumMember')}</span>
+                                {t('settings.premiumOptions')}
+                            </div>
+                            <div className="absolute -top-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"></div>
+                            <div className="relative z-10">
+                                <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 mb-10">
+                                    <div className="p-3 bg-purple-500/20 rounded-2xl text-purple-500">
+                                        <Palette className="w-6 h-6" />
+                                    </div>
+                                    {t('settings.designCustomization')}
+                                </h2>
 
-                                    {/* Full Width Customization Controls */}
-                                    <div className="grid grid-cols-1 gap-12 items-start">
-                                        {/* Left Column: Customization Controls */}
-                                        <div className="space-y-12">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                                {/* Colors & Atmosphere Section */}
+                                {/* Full Width Customization Controls */}
+                                <div className="grid grid-cols-1 gap-12 items-start">
+                                    {/* Left Column: Customization Controls */}
+                                    <div className="space-y-12">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                            {/* Colors & Atmosphere Section */}
+                                            <div className="space-y-8">
+                                                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                                    <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{t('settings.colorsAtmosphere')}</h3>
+
+                                                </div>
+
+                                                {/* Primary Color */}
+                                                <PremiumColorPicker
+                                                    label={t('settings.primaryColor')}
+                                                    value={draftSettings.primary_color}
+                                                    onChange={(val: string) => setDraftSettings({ ...draftSettings, primary_color: val })}
+                                                    description="Used for main buttons, interactive elements, and high-visibility indicators."
+                                                />
+
+                                                {/* Secondary Color - Background */}
+                                                <PremiumColorPicker
+                                                    label={t('settings.backgroundColor')}
+                                                    value={draftSettings.secondary_color}
+                                                    onChange={(val: string) => setDraftSettings({ ...draftSettings, secondary_color: val })}
+                                                    description="Defines the core atmosphere of the app. Darker colors are recommended for a premium feel."
+                                                />
+
+                                                {/* Accent Color */}
+                                                <PremiumColorPicker
+                                                    label={t('settings.accentColor')}
+                                                    value={draftSettings.accent_color}
+                                                    onChange={(val: string) => setDraftSettings({ ...draftSettings, accent_color: val })}
+                                                    description="Used for success states, active pulses, and secondary highlights."
+                                                />
+
+                                                {/* Surface Color */}
+                                                <PremiumColorPicker
+                                                    label={t('settings.surfaceColor')}
+                                                    value={draftSettings.surface_color}
+                                                    onChange={(val: string) => setDraftSettings({ ...draftSettings, surface_color: val })}
+                                                    description="Controls the transparency and color of dashboard cards and internal surfaces."
+                                                />
+
+                                                {/* Hover & Input Backgrounds */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <PremiumColorPicker
+                                                        label={t('settings.hoverState')}
+                                                        value={draftSettings.hover_color || '#10b98180'}
+                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, hover_color: val })}
+                                                    />
+                                                    <PremiumColorPicker
+                                                        label={t('settings.inputBackground')}
+                                                        value={draftSettings.input_bg_color || '#0f172aff'}
+                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, input_bg_color: val })}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Typography & Visuals */}
+                                            <div className="space-y-12">
                                                 <div className="space-y-8">
-                                                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                                                        <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{t('settings.colorsAtmosphere')}</h3>
-
+                                                    <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] border-b border-white/5 pb-2">{t('settings.dashboardIntegration')}</h3>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <PremiumSwitch
+                                                            label={t('settings.clockIntegration')}
+                                                            description={t('settings.clockIntegrationDescription')}
+                                                            checked={draftSettings.clock_position !== 'none'}
+                                                            onChange={(checked) => setDraftSettings({ ...draftSettings, clock_position: checked ? 'header' : 'none' })}
+                                                        />
+                                                        <PremiumSwitch
+                                                            label={t('settings.weatherIntegration')}
+                                                            description={t('settings.weatherIntegrationDescription')}
+                                                            checked={draftSettings.weather_integration || false}
+                                                            onChange={(checked) => setDraftSettings({ ...draftSettings, weather_integration: checked })}
+                                                        />
                                                     </div>
 
-                                                    {/* Primary Color */}
-                                                    <PremiumColorPicker
-                                                        label={t('settings.primaryColor')}
-                                                        value={draftSettings.primary_color}
-                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, primary_color: val })}
-                                                        description="Used for main buttons, interactive elements, and high-visibility indicators."
-                                                    />
+                                                    <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] border-b border-white/5 pb-2">{t('settings.typographyStyle')}</h3>
 
-                                                    {/* Secondary Color - Background */}
-                                                    <PremiumColorPicker
-                                                        label={t('settings.backgroundColor')}
-                                                        value={draftSettings.secondary_color}
-                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, secondary_color: val })}
-                                                        description="Defines the core atmosphere of the app. Darker colors are recommended for a premium feel."
-                                                    />
+                                                    {/* Font Selection */}
+                                                    <div>
+                                                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-4 block">{t('settings.applicationFont')}</label>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                            {[
+                                                                'Cairo', 'Inter', 'Outfit', 'Montserrat',
+                                                                'Alexandria', 'Kanit', 'Poppins', 'Roboto',
+                                                                'Lexend', 'Plus Jakarta Sans', 'Playfair Display'
+                                                            ].map(font => (
+                                                                <button
+                                                                    key={font}
+                                                                    onClick={() => setDraftSettings({ ...draftSettings, font_family: font })}
+                                                                    className={`p-5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center text-center leading-[1.3] min-h-[70px] ${draftSettings.font_family === font ? 'bg-primary text-white shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                                                                    style={{ fontFamily: font }}
+                                                                >
+                                                                    {font}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
 
-                                                    {/* Accent Color */}
-                                                    <PremiumColorPicker
-                                                        label={t('settings.accentColor')}
-                                                        value={draftSettings.accent_color}
-                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, accent_color: val })}
-                                                        description="Used for success states, active pulses, and secondary highlights."
-                                                    />
-
-                                                    {/* Surface Color */}
-                                                    <PremiumColorPicker
-                                                        label={t('settings.surfaceColor')}
-                                                        value={draftSettings.surface_color}
-                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, surface_color: val })}
-                                                        description="Controls the transparency and color of dashboard cards and internal surfaces."
-                                                    />
-
-                                                    {/* Hover & Input Backgrounds */}
+                                                    {/* Font Scale & Glass Opacity */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                        <PremiumColorPicker
-                                                            label={t('settings.hoverState')}
-                                                            value={draftSettings.hover_color || '#10b98180'}
-                                                            onChange={(val: string) => setDraftSettings({ ...draftSettings, hover_color: val })}
-                                                        />
-                                                        <PremiumColorPicker
-                                                            label={t('settings.inputBackground')}
-                                                            value={draftSettings.input_bg_color || '#0f172aff'}
-                                                            onChange={(val: string) => setDraftSettings({ ...draftSettings, input_bg_color: val })}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* Typography & Visuals */}
-                                                <div className="space-y-12">
-                                                    <div className="space-y-8">
-                                                        <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] border-b border-white/5 pb-2">{t('settings.dashboardIntegration')}</h3>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                            <PremiumSwitch
-                                                                label={t('settings.clockIntegration')}
-                                                                description={t('settings.clockIntegrationDescription')}
-                                                                checked={draftSettings.clock_position !== 'none'}
-                                                                onChange={(checked) => setDraftSettings({ ...draftSettings, clock_position: checked ? 'header' : 'none' })}
-                                                            />
-                                                            <PremiumSwitch
-                                                                label={t('settings.weatherIntegration')}
-                                                                description={t('settings.weatherIntegrationDescription')}
-                                                                checked={draftSettings.weather_integration || false}
-                                                                onChange={(checked) => setDraftSettings({ ...draftSettings, weather_integration: checked })}
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest">{t('settings.fontScale')}</label>
+                                                                <span className="text-[10px] font-mono text-primary font-black">{Math.round(draftSettings.font_scale * 100)}%</span>
+                                                            </div>
+                                                            <input
+                                                                type="range"
+                                                                min="0.8"
+                                                                max="1.2"
+                                                                step="0.05"
+                                                                value={draftSettings.font_scale}
+                                                                onChange={(e) => setDraftSettings({ ...draftSettings, font_scale: parseFloat(e.target.value) })}
+                                                                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                                                             />
                                                         </div>
-
-                                                        <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] border-b border-white/5 pb-2">{t('settings.typographyStyle')}</h3>
-
-                                                        {/* Font Selection */}
-                                                        <div>
-                                                            <label className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-4 block">{t('settings.applicationFont')}</label>
-                                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                                                                {[
-                                                                    'Cairo', 'Inter', 'Outfit', 'Montserrat',
-                                                                    'Alexandria', 'Kanit', 'Poppins', 'Roboto',
-                                                                    'Lexend', 'Plus Jakarta Sans', 'Playfair Display'
-                                                                ].map(font => (
-                                                                    <button
-                                                                        key={font}
-                                                                        onClick={() => setDraftSettings({ ...draftSettings, font_family: font })}
-                                                                        className={`p-5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center text-center leading-[1.3] min-h-[70px] ${draftSettings.font_family === font ? 'bg-primary text-white shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
-                                                                        style={{ fontFamily: font }}
-                                                                    >
-                                                                        {font}
-                                                                    </button>
-                                                                ))}
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[10px] text-white/40 font-black uppercase tracking-widest">{t('settings.glassIntensity')}</label>
+                                                                <span className="text-[10px] font-mono text-primary font-black">{Math.round(draftSettings.glass_opacity * 100)}%</span>
                                                             </div>
+                                                            <input
+                                                                type="range"
+                                                                min="0.2"
+                                                                max="0.9"
+                                                                step="0.05"
+                                                                value={draftSettings.glass_opacity}
+                                                                onChange={(e) => setDraftSettings({ ...draftSettings, glass_opacity: parseFloat(e.target.value) })}
+                                                                className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                                                            />
                                                         </div>
-
-                                                        {/* Font Scale & Glass Opacity */}
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <label className="text-[10px] text-white/40 font-black uppercase tracking-widest">{t('settings.fontScale')}</label>
-                                                                    <span className="text-[10px] font-mono text-primary font-black">{Math.round(draftSettings.font_scale * 100)}%</span>
-                                                                </div>
-                                                                <input
-                                                                    type="range"
-                                                                    min="0.8"
-                                                                    max="1.2"
-                                                                    step="0.05"
-                                                                    value={draftSettings.font_scale}
-                                                                    onChange={(e) => setDraftSettings({ ...draftSettings, font_scale: parseFloat(e.target.value) })}
-                                                                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <label className="text-[10px] text-white/40 font-black uppercase tracking-widest">{t('settings.glassIntensity')}</label>
-                                                                    <span className="text-[10px] font-mono text-primary font-black">{Math.round(draftSettings.glass_opacity * 100)}%</span>
-                                                                </div>
-                                                                <input
-                                                                    type="range"
-                                                                    min="0.2"
-                                                                    max="0.9"
-                                                                    step="0.05"
-                                                                    value={draftSettings.glass_opacity}
-                                                                    onChange={(e) => setDraftSettings({ ...draftSettings, glass_opacity: parseFloat(e.target.value) })}
-                                                                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Roundness */}
-                                                        <div>
-                                                            <label className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-4 block">{t('settings.interfaceRoundness')}</label>
-                                                            <div className="grid grid-cols-3 gap-3">
-                                                                {[
-                                                                    { label: t('settings.sharp'), value: '4px' },
-                                                                    { label: t('settings.sleek'), value: '16px' },
-                                                                    { label: t('settings.hyper'), value: '32px' }
-                                                                ].map(style => (
-                                                                    <button
-                                                                        key={style.value}
-                                                                        onClick={() => setDraftSettings({ ...draftSettings, border_radius: style.value })}
-                                                                        className={`p-5 transition-all text-[9px] font-black uppercase tracking-widest ${draftSettings.border_radius === style.value ? 'bg-primary text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
-                                                                        style={{ borderRadius: style.value === '16px' ? '1rem' : (style.value === '32px' ? '2rem' : '4px') }}
-                                                                    >
-                                                                        {style.label}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-
                                                     </div>
+
+                                                    {/* Roundness */}
+                                                    <div>
+                                                        <label className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-4 block">{t('settings.interfaceRoundness')}</label>
+                                                        <div className="grid grid-cols-3 gap-3">
+                                                            {[
+                                                                { label: t('settings.sharp'), value: '4px' },
+                                                                { label: t('settings.sleek'), value: '16px' },
+                                                                { label: t('settings.hyper'), value: '32px' }
+                                                            ].map(style => (
+                                                                <button
+                                                                    key={style.value}
+                                                                    onClick={() => setDraftSettings({ ...draftSettings, border_radius: style.value })}
+                                                                    className={`p-5 transition-all text-[9px] font-black uppercase tracking-widest ${draftSettings.border_radius === style.value ? 'bg-primary text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                                                                    style={{ borderRadius: style.value === '16px' ? '1rem' : (style.value === '32px' ? '2rem' : '4px') }}
+                                                                >
+                                                                    {style.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
                                                 </div>
-                                                {/* Action Buttons */}
-                                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-8">
-                                                    <button
-                                                        onClick={handleSaveTheme}
-                                                        disabled={loading}
-                                                        className="relative overflow-hidden bg-primary/20 hover:bg-primary/30 text-primary hover:text-white py-2.5 px-8 rounded-xl font-black uppercase tracking-[0.2em] text-[8px] flex items-center justify-center gap-2.5 transition-all duration-500 hover:scale-105 active:scale-95 group/save border border-primary/30 hover:border-primary shadow-lg shadow-primary/5"
-                                                    >
-                                                        {loading ? (
-                                                            <div className="w-3.5 h-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                                                        ) : (
-                                                            <>
-                                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                                                                <Save className="w-3.5 h-3.5 transition-transform group-hover:scale-110 relative z-10" />
-                                                                <span className="relative z-10">{t('settings.saveTheme')}</span>
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDraftSettings(defaultSettings)}
-                                                        className="px-6 py-2.5 rounded-xl bg-white/5 text-white/20 hover:text-white hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300"
-                                                    >
-                                                        {t('settings.discardChanges')}
-                                                    </button>
-                                                </div>
+                                            </div>
+                                            {/* Action Buttons */}
+                                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-8">
+                                                <button
+                                                    onClick={handleSaveTheme}
+                                                    disabled={loading}
+                                                    className="relative overflow-hidden bg-primary/20 hover:bg-primary/30 text-primary hover:text-white py-2.5 px-8 rounded-xl font-black uppercase tracking-[0.2em] text-[8px] flex items-center justify-center gap-2.5 transition-all duration-500 hover:scale-105 active:scale-95 group/save border border-primary/30 hover:border-primary shadow-lg shadow-primary/5"
+                                                >
+                                                    {loading ? (
+                                                        <div className="w-3.5 h-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                                            <Save className="w-3.5 h-3.5 transition-transform group-hover:scale-110 relative z-10" />
+                                                            <span className="relative z-10">{t('settings.saveTheme')}</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => setDraftSettings(defaultSettings)}
+                                                    className="px-6 py-2.5 rounded-xl bg-white/5 text-white/20 hover:text-white hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+                                                >
+                                                    {t('settings.discardChanges')}
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
 
