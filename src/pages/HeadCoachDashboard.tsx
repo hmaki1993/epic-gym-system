@@ -29,6 +29,7 @@ export default function HeadCoachDashboard() {
     const [dailyTotalSeconds, setDailyTotalSeconds] = useState(0);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [coachId, setCoachId] = useState<string | null>(null);
+    const [savedSessions, setSavedSessions] = useState<any[]>([]);
 
     // Modals
     const [showGroupModal, setShowGroupModal] = useState(false);
