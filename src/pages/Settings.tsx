@@ -349,7 +349,8 @@ export default function Settings() {
                                     fill="transparent"
                                     strokeDasharray={540}
                                     strokeDashoffset={540 - (540 * publishProgress) / 100}
-                                    className="text-primary transition-all duration-1000 ease-in-out"
+                                    className="transition-all duration-1000 ease-in-out"
+                                    style={{ color: 'var(--color-brand-label)' }}
                                     strokeLinecap="round"
                                 />
                             </svg>
@@ -372,7 +373,7 @@ export default function Settings() {
                         {/* Text Content - Tighter */}
                         <div className="space-y-4 w-full">
                             <div className="space-y-1">
-                                <p className="text-[8px] font-black text-primary uppercase tracking-[0.4em] animate-pulse">
+                                <p className="text-[8px] font-black uppercase tracking-[0.4em] animate-pulse" style={{ color: 'var(--color-brand-label)' }}>
                                     {publishProgress === 100 ? 'Update Complete' : 'Optimizing'}
                                 </p>
                                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight">
@@ -402,11 +403,11 @@ export default function Settings() {
                         {/* Detail Feature Badges - Smaller */}
                         <div className="mt-10 grid grid-cols-2 gap-3 w-full">
                             <div className="p-4 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2">
-                                <ShieldCheck className="w-4 h-4 text-primary/60" />
+                                <ShieldCheck className="w-4 h-4" style={{ color: 'var(--color-brand-label)', opacity: 0.6 }} />
                                 <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] text-center">{t('settings.encryptionNote')}</span>
                             </div>
                             <div className="p-4 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2">
-                                <Zap className="w-4 h-4 text-primary/60" />
+                                <Zap className="w-4 h-4" style={{ color: 'var(--color-brand-label)', opacity: 0.6 }} />
                                 <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.2em] text-center">{t('settings.syncReadyNote')}</span>
                             </div>
                         </div>
@@ -507,7 +508,7 @@ export default function Settings() {
                         {/* Granular Design Customization - Available to all roles */}
                         <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 text-white/40 text-[10px] uppercase font-bold tracking-widest">
-                                <span className="px-2 py-0.5 rounded-lg bg-primary/20 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-widest mr-2">{t('settings.premiumMember')}</span>
+                                <span className="px-2 py-0.5 rounded-lg border text-[8px] font-black uppercase tracking-widest mr-2" style={{ backgroundColor: 'var(--color-premium-badge)', color: 'var(--color-text-base)', borderColor: 'rgba(255,255,255,0.1)' }}>{t('settings.premiumMember')}</span>
                                 {t('settings.premiumOptions')}
                             </div>
                             <div className="absolute -top-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"></div>
@@ -574,6 +575,18 @@ export default function Settings() {
                                                         label={t('settings.inputBackground')}
                                                         value={draftSettings.input_bg_color || '#0f172aff'}
                                                         onChange={(val: string) => setDraftSettings({ ...draftSettings, input_bg_color: val })}
+                                                    />
+                                                    <PremiumColorPicker
+                                                        label="Premium Badge Color"
+                                                        value={draftSettings.premium_badge_color || draftSettings.primary_color || '#A30000'}
+                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, premium_badge_color: val })}
+                                                        description="Customize the color of the 'Premium Member' badge throughout the app."
+                                                    />
+                                                    <PremiumColorPicker
+                                                        label="Brand Label Color"
+                                                        value={draftSettings.brand_label_color || draftSettings.primary_color || '#A30000'}
+                                                        onChange={(val: string) => setDraftSettings({ ...draftSettings, brand_label_color: val })}
+                                                        description="Customize subtle brand labels, status tags, and descriptor text."
                                                     />
                                                 </div>
                                             </div>
@@ -826,7 +839,7 @@ export default function Settings() {
                                             {t('settings.myProfile')}
                                         </h2>
                                     </div>
-                                    <div className="px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-[8px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                    <div className="px-3 py-1 rounded-full border text-[8px] font-black uppercase tracking-widest flex items-center gap-2" style={{ backgroundColor: 'var(--color-premium-badge)', color: 'var(--color-text-base)', border: '1px solid rgba(255,255,255,0.1)' }}>
                                         <Sparkles className="w-3 h-3" />
                                         Premium Member
                                     </div>

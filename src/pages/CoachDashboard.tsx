@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import GroupDetailsModal from '../components/GroupDetailsModal';
 import GroupsList from '../components/GroupsList';
 import LiveStudentsWidget from '../components/LiveStudentsWidget';
+import GroupFormModal from '../components/GroupFormModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { useCurrency } from '../context/CurrencyContext';
 import PremiumClock from '../components/PremiumClock';
@@ -33,6 +34,8 @@ export default function CoachDashboard() {
     const [subToClear, setSubToClear] = useState<any>(null);
     const [showClearModal, setShowClearModal] = useState(false);
     const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
+    const [showGroupForm, setShowGroupForm] = useState(false);
+    const [editingGroup, setEditingGroup] = useState<any>(null);
 
     // No longer need interval here as PremiumClock handles it
     // But we might need currentTime for the date display if we don't want it to be static
@@ -159,12 +162,15 @@ export default function CoachDashboard() {
     useEffect(() => {
         if (!coachId) return;
 
+        // If Head Coach, listen to ALL changes, otherwise only for THIS coach
+        const filter = (role === 'head_coach') ? undefined : `coach_id=eq.${coachId}`;
+
         const ptSessionsSubscription = supabase.channel(`pt_sessions_changes_${coachId}`)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
                 table: 'pt_sessions',
-                filter: `coach_id=eq.${coachId}`
+                filter: filter
             }, () => {
                 fetchTodaySessions(coachId);
             })
@@ -175,7 +181,7 @@ export default function CoachDashboard() {
                 event: '*',
                 schema: 'public',
                 table: 'pt_subscriptions',
-                filter: `coach_id=eq.${coachId}`
+                filter: filter
             }, () => {
                 fetchPTSubscriptions(coachId, ptRate);
             })
@@ -185,7 +191,7 @@ export default function CoachDashboard() {
             ptSessionsSubscription.unsubscribe();
             ptSubscriptionsChannel.unsubscribe();
         };
-    }, [coachId, ptRate]);
+    }, [coachId, ptRate, role]);
 
     const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent' | 'idle'>('idle');
 
@@ -245,12 +251,17 @@ export default function CoachDashboard() {
     const fetchSavedSessions = async (id: string) => {
         try {
             // Fetch last 100 sessions for history log
-            const { data } = await supabase
+            let query = supabase
                 .from('pt_sessions')
                 .select('*')
-                .eq('coach_id', id)
                 .order('created_at', { ascending: false })
                 .limit(100);
+
+            if (role !== 'head_coach') {
+                query = query.eq('coach_id', id);
+            }
+
+            const { data } = await query;
             setSavedSessions(data || []);
         } catch (error) {
             console.error('Error fetching sessions:', error);
@@ -259,12 +270,18 @@ export default function CoachDashboard() {
 
     const fetchTodaySessions = async (id: string) => {
         try {
-            const { data } = await supabase
+            // Head Coach sees ALL sessions, regular Coach only their own
+            let query = supabase
                 .from('pt_sessions')
                 .select('*')
-                .eq('coach_id', id)
                 .order('created_at', { ascending: false })
                 .limit(100);
+
+            if (role !== 'head_coach') {
+                query = query.eq('coach_id', id);
+            }
+
+            const { data } = await query;
             setSavedSessions(data || []);
         } catch (error) {
             console.error('Error fetching sessions:', error);
@@ -275,6 +292,8 @@ export default function CoachDashboard() {
     const fetchPTSubscriptions = async (id: string, rate: number) => {
         try {
             const startOfMonth = format(new Date(), 'yyyy-MM-01');
+
+            // For earnings, we still only calculate for the specific coach (unrelated to view)
             const { data: sessionsData } = await supabase
                 .from('pt_sessions')
                 .select('sessions_count')
@@ -284,11 +303,17 @@ export default function CoachDashboard() {
             const totalSessions = sessionsData?.reduce((sum, s) => sum + (s.sessions_count || 1), 0) || 0;
             setTotalEarnings(totalSessions * rate);
 
-            const { data } = await supabase
+            // Fetch PT Subscriptions: Head Coach sees ALL, Coach sees their own
+            let query = supabase
                 .from('pt_subscriptions')
-                .select('*, students(id, full_name)')
-                .eq('coach_id', id)
+                .select('*, students(id, full_name), coaches(full_name)')
                 .order('status', { ascending: true });
+
+            if (role !== 'head_coach' && role !== 'admin') {
+                query = query.eq('coach_id', id);
+            }
+
+            const { data } = await query;
 
             if (data) {
                 setPtSubscriptions(data);
@@ -357,7 +382,7 @@ export default function CoachDashboard() {
             const studentName = (studentData?.full_name || sub.student_name || '').trim();
 
             const { error: sessionError } = await supabase.from('pt_sessions').insert({
-                coach_id: coachId,
+                coach_id: sub.coach_id, // Record for the coach assigned to the subscription
                 date: format(new Date(), 'yyyy-MM-dd'),
                 sessions_count: 1,
                 student_name: studentName,
@@ -515,7 +540,7 @@ export default function CoachDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
                 <div className="text-center sm:text-left">
                     <h1 className="text-3xl sm:text-4xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('dashboard.welcome')}, COACH! 👋
+                        {t('dashboard.welcome')}, {fullName || 'COACH'}! 👋
                     </h1>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
                         <p className="text-white/40 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase opacity-100 italic">
@@ -683,8 +708,26 @@ export default function CoachDashboard() {
                     <div className="p-2.5 bg-accent/20 rounded-xl text-accent"><User className="w-5 h-5" /></div>
                     {t('dashboard.myGroups', 'My Groups')}
                 </h2>
-                <GroupsList coachId={coachId || undefined} />
+                <GroupsList
+                    coachId={coachId || undefined}
+                    onEdit={(role === 'admin' || role === 'head_coach') ? (group) => {
+                        setEditingGroup(group);
+                        setShowGroupForm(true);
+                    } : undefined}
+                />
             </div>
+
+            {showGroupForm && (
+                <GroupFormModal
+                    initialData={editingGroup}
+                    onClose={() => setShowGroupForm(false)}
+                    onSuccess={() => {
+                        // Success handled by realtime or implicit refetch if needed
+                        // But let's trigger a hard refresh if we want consistency
+                        window.location.reload();
+                    }}
+                />
+            )}
 
             {/* My PT Students Section & Live Floor */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -717,6 +760,12 @@ export default function CoachDashboard() {
                                                     <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mt-1 flex items-center gap-2">
                                                         <span className="w-1 h-1 rounded-full bg-accent/50"></span>
                                                         PT Student
+                                                        {role === 'head_coach' && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-primary/50 mx-1"></span>
+                                                                <span className="text-primary/70 italic">Coach: {subscription.coaches?.full_name || 'Unknown'}</span>
+                                                            </>
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>

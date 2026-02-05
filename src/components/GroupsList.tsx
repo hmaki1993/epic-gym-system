@@ -7,9 +7,10 @@ import GroupDetailsModal from './GroupDetailsModal';
 interface GroupsListProps {
     coachId?: string;
     showAll?: boolean;
+    onEdit?: (group: any) => void;
 }
 
-export default function GroupsList({ coachId, showAll = false }: GroupsListProps) {
+export default function GroupsList({ coachId, showAll = false, onEdit }: GroupsListProps) {
     const { t } = useTranslation();
     const [groups, setGroups] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -140,7 +141,16 @@ export default function GroupsList({ coachId, showAll = false }: GroupsListProps
                     </div>
                 );
             })}
-            {selectedGroup && <GroupDetailsModal group={selectedGroup} onClose={() => setSelectedGroup(null)} />}
+            {selectedGroup && (
+                <GroupDetailsModal
+                    group={selectedGroup}
+                    onClose={() => setSelectedGroup(null)}
+                    onEdit={onEdit ? () => {
+                        onEdit(selectedGroup);
+                        setSelectedGroup(null);
+                    } : undefined}
+                />
+            )}
         </div>
     );
 }

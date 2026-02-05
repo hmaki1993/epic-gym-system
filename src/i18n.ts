@@ -35,6 +35,8 @@ i18n
                         actions: 'Actions',
                         name: 'Name',
                         phone: 'Phone',
+                        fatherPhone: "Father's Phone",
+                        motherPhone: "Mother's Phone",
                         parentPhone: 'Parent Phone WhatsApp',
                         status: 'Status',
                         unknown: 'Unknown',
@@ -98,7 +100,9 @@ i18n
                         publicPortal: 'Public Enrollment Portal',
                         selected: 'Selected',
                         sync: 'Sync Data',
-                        guest: 'Guest'
+                        guest: 'Guest',
+                        method: 'Method',
+                        amount: 'Amount'
                     },
                     cameras: {
                         subtitle: 'Monitor gym activities in real-time',
@@ -287,6 +291,7 @@ i18n
                         completed: 'Finished',
                         away: 'Offline',
                         worked: 'Worked',
+                        supportStaff: 'Operations & Support',
                         viewDetails: 'Details',
                         rate: 'Hourly Rate',
                         workingNow: 'Working Now',
@@ -414,6 +419,8 @@ i18n
                         actions: 'إجراءات',
                         name: 'الاسم',
                         phone: 'رقم الهاتف',
+                        fatherPhone: 'رقم هاتف الأب',
+                        motherPhone: 'رقم هاتف الأم',
                         parentPhone: 'رقم ولي الأمر (واتساب)',
                         status: 'الحالة',
                         unknown: 'غير معروف',
@@ -483,7 +490,9 @@ i18n
                         noteContent: 'هذا البث متاح فقط للمديرين. تأكد من أن رابط الكاميرا الخاص بك آمن وليس عامًا.',
                         liveFeed: 'مباشر',
                         hdFeed: 'بث أمني عالي الدقة 01',
-                        stableConnection: 'اتصال مستقر'
+                        stableConnection: 'اتصال مستقر',
+                        method: 'طريقة الدفع',
+                        amount: 'المبلغ'
                     },
                     dashboard: {
                         welcome: 'مرحباً بك',
@@ -660,6 +669,7 @@ i18n
                         completed: 'انتهى',
                         away: 'غير متواجد',
                         worked: 'ساعات العمل',
+                        supportStaff: 'فريق الدعم و العمليات',
                         viewDetails: 'التفاصيل',
                         rate: 'سعر الساعة',
                         workingNow: 'يعمل الآن',

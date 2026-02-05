@@ -102,11 +102,8 @@ export default function Dashboard() {
             <div className="relative group">
                 <div className="flex flex-col gap-2 mb-8 animate-in fade-in slide-in-from-left duration-700">
                     <h1 className="text-5xl sm:text-6xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('common.dashboard')}
+                        {t('dashboard.welcome')}, {fullName || (role ? t(`roles.${role}`) : 'Admin')}
                     </h1>
-                    <p className="text-white/40 text-sm sm:text-lg font-black tracking-[0.2em] uppercase">
-                        {t('dashboard.welcome')}, <span className="text-white">{fullName || role?.replace('_', ' ') || 'Admin'}</span>
-                    </p>
                 </div>
 
                 {/* Info Bar - Clean & Organized */}

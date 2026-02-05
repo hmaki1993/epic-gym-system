@@ -1,22 +1,38 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import DashboardLayout from './layouts/DashboardLayout';
-import Students from './pages/Students';
-import StudentDetails from './pages/StudentDetails';
-import Coaches from './pages/Coaches';
-import CoachDetails from './pages/CoachDetails';
-import Finance from './pages/Finance';
-import Dashboard from './pages/Dashboard';
-import Schedule from './pages/Schedule';
-import Settings from './pages/Settings';
-import Calculator from './pages/Calculator';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import PublicRegistration from './pages/PublicRegistration';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminCameras from './pages/AdminCameras';
+
+// Lazy load pages for performance
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Students = lazy(() => import('./pages/Students'));
+const StudentDetails = lazy(() => import('./pages/StudentDetails'));
+const Coaches = lazy(() => import('./pages/Coaches'));
+const CoachDetails = lazy(() => import('./pages/CoachDetails'));
+const Finance = lazy(() => import('./pages/Finance'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Calculator = lazy(() => import('./pages/Calculator'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const PublicRegistration = lazy(() => import('./pages/PublicRegistration'));
+const AdminCameras = lazy(() => import('./pages/AdminCameras'));
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
+const PersonalDashboard = lazy(() => import('./pages/PersonalDashboard'));
+
+// Premium Loading Fallback
+const PageLoader = () => (
+  <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-8">
+    <div className="relative w-24 h-24 mb-8">
+      <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+      <div className="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
+    </div>
+    <div className="text-white/40 font-black tracking-[0.5em] text-xs uppercase animate-pulse">
+      Epic Gymnastic
+    </div>
+  </div>
+);
 
 
 import { initializeTheme } from './utils/theme';
@@ -68,30 +84,33 @@ function App() {
               },
             }}
           />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/registration" element={<PublicRegistration />} />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/registration" element={<PublicRegistration />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<DashboardLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="students" element={<Students />} />
-                <Route path="students/:id" element={<StudentDetails />} />
-                <Route path="coaches" element={<Coaches />} />
-                <Route path="coaches/:id" element={<CoachDetails />} />
-                <Route path="finance" element={<Finance />} />
-                <Route path="calculator" element={<Calculator />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<DashboardLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="students" element={<Students />} />
+                  <Route path="students/:id" element={<StudentDetails />} />
+                  <Route path="coaches" element={<Coaches />} />
+                  <Route path="coaches/:id" element={<CoachDetails />} />
+                  <Route path="finance" element={<Finance />} />
+                  <Route path="calculator" element={<Calculator />} />
 
-                <Route path="schedule" element={<Schedule />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="admin/cameras" element={<AdminCameras />} />
+                  <Route path="schedule" element={<Schedule />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="my-work" element={<PersonalDashboard />} />
+                  <Route path="admin/cameras" element={<AdminCameras />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </ThemeProvider>
     </CurrencyProvider>

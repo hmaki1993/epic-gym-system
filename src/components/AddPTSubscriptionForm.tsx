@@ -18,6 +18,7 @@ interface Coach {
     full_name: string;
     pt_rate: number;
     role: string;
+    profile_id: string;
 }
 
 interface Student {
@@ -41,7 +42,8 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
         sessions_total: editData?.sessions_total || '',
         start_date: editData?.start_date || format(new Date(), 'yyyy-MM-dd'),
         expiry_date: editData?.expiry_date || format(addMonths(new Date(), 12), 'yyyy-MM-dd'),
-        price: editData?.total_price || ''
+        price: editData?.total_price || '',
+        student_phone: editData?.student_phone || ''
     });
 
     const selectedCoach = coaches.find(c => c.id === formData.coach_id);
@@ -59,6 +61,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                 id, 
                 full_name, 
                 pt_rate,
+                profile_id,
                 profiles:profile_id (role)
             `)
             .order('full_name');
@@ -120,6 +123,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                 expiry_date: formData.expiry_date,
                 total_price: totalPrice,
                 price_per_session: totalPrice / totalSessions,
+                student_phone: formData.student_phone,
                 status: 'active'
             };
 
@@ -159,6 +163,24 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                     }
                 } catch (payErr) {
                     console.error('Payment record failed:', payErr);
+                }
+
+                // New Notification for the assigned Coach
+                try {
+                    if (selectedCoach?.profile_id) {
+                        const studentName = isGuest ? formData.student_name : (students.find(s => s.id === parseInt(formData.student_id))?.full_name);
+
+                        await supabase.from('notifications').insert({
+                            type: 'pt_subscription',
+                            title: 'New PT Subscription',
+                            message: `New PT Student: ${studentName}`,
+                            user_id: selectedCoach.profile_id, // Direct to coach
+                            is_read: false
+                        });
+                        console.log('PT Notification sent to coach:', selectedCoach.full_name);
+                    }
+                } catch (noteErr) {
+                    console.error('Coach notification failed:', noteErr);
                 }
             }
 
@@ -218,7 +240,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 type="button"
                                 onClick={() => {
                                     setIsGuest(!isGuest);
-                                    setFormData(prev => ({ ...prev, student_id: '', student_name: '' }));
+                                    setFormData(prev => ({ ...prev, student_id: '', student_name: '', student_phone: '' }));
                                 }}
                                 className="pointer-events-auto text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20"
                             >
@@ -251,6 +273,20 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 ))}
                             </select>
                         )}
+                    </div>
+
+                    {/* Personal Phone */}
+                    <div className="group">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                            <User className="w-3 h-3" />
+                            {t('common.phone') || 'Personal Phone'}
+                        </label>
+                        <input
+                            type="tel"
+                            value={formData.student_phone}
+                            onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
+                            className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                        />
                     </div>
 
                     {/* Coach Selection */}

@@ -31,7 +31,7 @@ export function useCoaches() {
             // Get coaches with roles
             const { data: coaches, error: coachesError } = await supabase
                 .from('coaches')
-                .select('*, profiles(role)')
+                .select('id, full_name, email, specialty, avatar_url, image_pos_x, image_pos_y, pt_rate, salary, role, created_at, profile_id, profiles(role)')
                 .order('created_at', { ascending: false });
 
             if (coachesError) {
@@ -161,12 +161,15 @@ export function useSubscriptionPlans() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('subscription_plans')
-                .select('*')
+                .select('id, name, duration_months, price, created_at')
                 .order('duration_months', { ascending: true });
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching subscription plans:', error);
+                throw error;
+            }
             return data;
         },
-        staleTime: 1000 * 60 * 60, // 1 hour
+        staleTime: 1000 * 60 * 60 * 24, // 24 hours (plans change rarely)
     });
 }
 
@@ -340,12 +343,32 @@ export function useAddRefund() {
     return useMutation({
         mutationFn: async (refund: { student_id: string; amount: number; reason?: string; refund_date: string }) => {
             const { data: { user } } = await supabase.auth.getUser();
+
+            // Get student name for notification
+            const { data: studentData } = await supabase
+                .from('students')
+                .select('full_name')
+                .eq('id', refund.student_id)
+                .single();
+
             const { data, error } = await supabase
                 .from('refunds')
                 .insert([{ ...refund, created_by: user?.id }])
                 .select()
                 .single();
             if (error) throw error;
+
+            // Create notification for admin
+            if (studentData) {
+                await supabase.from('notifications').insert({
+                    type: 'payment',
+                    title: 'Refund Issued',
+                    message: `Refund: ${refund.amount.toFixed(2)} to ${studentData.full_name}`,
+                    user_id: null,
+                    is_read: false
+                });
+            }
+
             return data;
         },
     });
@@ -389,6 +412,16 @@ export function useAddExpense() {
                 .select()
                 .single();
             if (error) throw error;
+
+            // Create notification for admin
+            await supabase.from('notifications').insert({
+                type: 'payment',
+                title: 'Expense Recorded',
+                message: `Expense: ${expense.amount.toFixed(2)} - ${expense.description}`,
+                user_id: null,
+                is_read: false
+            });
+
             return data;
         },
     });

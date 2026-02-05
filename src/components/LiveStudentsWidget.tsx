@@ -47,7 +47,7 @@ export default function LiveStudentsWidget({ coachId }: { coachId?: string | nul
             .select(`
                 student_id, 
                 check_in_time,
-                students${coachId ? '!inner' : ''} (
+                students!inner (
                     full_name,
                     coach_id,
                     training_groups ( name )
@@ -69,7 +69,7 @@ export default function LiveStudentsWidget({ coachId }: { coachId?: string | nul
             .select(`
                 *,
                 coaches(id, full_name, role),
-                students(id, full_name, coach_id)
+                students!inner(id, full_name, coach_id)
             `);
 
         if (coachId) {

@@ -47,6 +47,9 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
         setLoading(true);
 
         try {
+            // Get student name for notification
+            const selectedStudent = students.find(s => s.id === parseInt(formData.student_id));
+
             const { error } = await supabase.from('payments').insert([
                 {
                     student_id: parseInt(formData.student_id),
@@ -58,6 +61,18 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
             ]);
 
             if (error) throw error;
+
+            // Create notification for admin
+            if (selectedStudent) {
+                await supabase.from('notifications').insert({
+                    type: 'payment',
+                    title: 'Payment Received',
+                    message: `Payment: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} from ${selectedStudent.full_name}`,
+                    user_id: null, // null means all admins
+                    is_read: false
+                });
+            }
+
             onSuccess();
             onClose();
         } catch (error: any) {

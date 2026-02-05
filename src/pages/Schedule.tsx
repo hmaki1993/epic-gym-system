@@ -231,9 +231,13 @@ export default function Schedule() {
     };
 
     const getSessionsForDay = (date: Date) => {
-        const dayName = format(date, 'EEEE');
-        return sessions.filter(s => s.schedule_key && s.schedule_key.toLowerCase().includes(dayName.toLowerCase()));
-        // Note: Using schedule_key instead of day_of_week for groups
+        // Use 3-letter day name (sat, sun, mon...) to match the database schedule_key
+        const dayAbbr = format(date, 'eee').toLowerCase();
+        return sessions.filter(s => {
+            if (!s.schedule_key) return false;
+            const parts = s.schedule_key.toLowerCase().split('|');
+            return parts.some(p => p.startsWith(dayAbbr));
+        });
     };
 
     const handleDeleteGroup = async () => {
@@ -400,8 +404,8 @@ export default function Schedule() {
 
                                 <div className="mt-4 space-y-1.5 flex flex-col">
                                     {daySessions.map((session, idx) => {
-                                        const dayName = format(day, 'eeee').toLowerCase();
-                                        const scheduleEntry = session.schedule_key?.toLowerCase().split('|').find((s: string) => s.startsWith(dayName));
+                                        const dayAbbr = format(day, 'eee').toLowerCase();
+                                        const scheduleEntry = session.schedule_key?.toLowerCase().split('|').find((s: string) => s.startsWith(dayAbbr));
                                         const startTime = scheduleEntry?.split(':')[1] || '';
 
                                         return (
@@ -542,12 +546,26 @@ export default function Schedule() {
                                 >
                                     <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                                    <div className="text-center min-w-[120px] bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 group-hover:border-primary/20 group-hover:bg-primary/10 transition-all shadow-lg">
-                                        <p className="font-black text-white/40 text-xs mb-1 uppercase tracking-widest group-hover:text-primary/60 transition-colors">Start</p>
-                                        <p className="font-black text-white text-2xl tracking-tighter group-hover:text-primary transition-colors">
-                                            {format(new Date(), 'h:mm')} <span className="text-sm text-white/20">AM</span>
-                                        </p>
-                                    </div>
+                                    {(() => {
+                                        const dayAbbr = format(currentDate, 'eee').toLowerCase();
+                                        const scheduleEntry = session.schedule_key?.toLowerCase().split('|').find((s: string) => s.startsWith(dayAbbr));
+                                        const timeStr = scheduleEntry?.split(':')[1] || '00:00';
+
+                                        // Simple parsing to show AM/PM
+                                        const [h, m] = timeStr.split(':').map(Number);
+                                        const ampm = h >= 12 ? 'PM' : 'AM';
+                                        const displayH = h % 12 || 12;
+                                        const displayM = String(m || 0).padStart(2, '0');
+
+                                        return (
+                                            <div className="text-center min-w-[120px] bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 group-hover:border-primary/20 group-hover:bg-primary/10 transition-all shadow-lg">
+                                                <p className="font-black text-white/40 text-xs mb-1 uppercase tracking-widest group-hover:text-primary/60 transition-colors">Start</p>
+                                                <p className="font-black text-white text-2xl tracking-tighter group-hover:text-primary transition-colors">
+                                                    {displayH}:{displayM} <span className="text-sm text-white/20">{ampm}</span>
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
 
                                     <div className="flex-1">
                                         <h4 className="text-2xl font-black text-white group-hover:text-primary transition-colors uppercase tracking-tight mb-4">{session.title || session.name}</h4>

@@ -30,6 +30,14 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
     });
 
     useEffect(() => {
+        // Lock body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
+    useEffect(() => {
         if (initialData) {
             let days = [] as string[];
             let startTime = '16:00';
@@ -211,7 +219,7 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                         </button>
                     </div>
 
-                    <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar grow">
+                    <div className="p-6 space-y-6 overflow-hidden grow">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-6">
                                 <div className="space-y-2">
@@ -300,7 +308,7 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                                 </div>
                             </div>
 
-                            <div className="border-l border-white/5 pl-6 flex flex-col min-h-[400px]">
+                            <div className="border-l border-white/5 pl-6 flex flex-col h-[480px]">
                                 <label className="text-xs font-black text-white/40 uppercase tracking-widest pl-1 mb-2">
                                     {t('dashboard.addStudent')} <span className="text-primary ml-1">({selectedStudents.length})</span>
                                 </label>

@@ -113,9 +113,14 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
     };
 
     const calculateExpiry = (start: string, planId: string) => {
+        if (!start || !plans || plans.length === 0) return format(addMonths(new Date(), 1), 'yyyy-MM-dd');
+
         const date = parseISO(start);
         const plan = plans.find(p => p.id === planId) || plans[0];
-        const monthsToAdd = plan.duration_months;
+
+        if (!plan) return format(addMonths(date, 1), 'yyyy-MM-dd');
+
+        const monthsToAdd = plan.duration_months || 1;
         return format(addMonths(date, monthsToAdd), 'yyyy-MM-dd');
     };
 
@@ -124,6 +129,12 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
         setLoading(true);
 
         try {
+            if (plans.length === 0) {
+                toast.error("No subscription plans found. Please create a plan first.");
+                setLoading(false);
+                return;
+            }
+
             // Use manual expiry date from form (already calculated by useEffect or manually edited)
             // Ensure we don't send empty string - fallback to calculated expiry
             const expiry = (formData.subscription_expiry && formData.subscription_expiry.trim() !== '')
@@ -382,7 +393,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.phone', "Father's Phone")}</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.fatherPhone', "Father's Phone")}</label>
                             <input
                                 required
                                 type="tel"
@@ -402,7 +413,7 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.parentPhone', "Mother's Phone")}</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.motherPhone', "Mother's Phone")}</label>
                             <input
                                 type="tel"
                                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"

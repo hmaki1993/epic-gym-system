@@ -23,6 +23,8 @@ export interface GymSettings {
     clock_integration?: boolean;
     weather_integration?: boolean;
     language?: string;
+    premium_badge_color?: string;
+    brand_label_color?: string;
 }
 
 export const applySettingsToRoot = (settings: GymSettings) => {
@@ -71,6 +73,8 @@ export const applySettingsToRoot = (settings: GymSettings) => {
     root.style.setProperty('--color-hover', settings.hover_color || 'rgba(16, 185, 129, 0.8)');
     root.style.setProperty('--color-hover-border', settings.hover_border_color || 'rgba(16, 185, 129, 0.3)');
     root.style.setProperty('--color-input-bg', settings.input_bg_color || '#0f172a');
+    root.style.setProperty('--color-premium-badge', settings.premium_badge_color || settings.primary_color || '#A30000');
+    root.style.setProperty('--color-brand-label', settings.brand_label_color || settings.primary_color || '#A30000');
 
     // Dynamic Text Colors based on background luminance
     const bgLuminance = getLuminance(settings.secondary_color);
@@ -145,7 +149,9 @@ export const defaultSettings: GymSettings = {
     clock_position: 'dashboard',
     clock_integration: true,
     weather_integration: true,
-    language: 'en'
+    language: 'en',
+    premium_badge_color: '#A30000',
+    brand_label_color: '#A30000'
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -370,7 +376,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 'font_scale', 'border_radius', 'glass_opacity', 'surface_color',
                 'search_icon_color', 'search_bg_color', 'search_border_color', 'search_text_color',
                 'hover_color', 'hover_border_color', 'input_bg_color', 'clock_position',
-                'clock_integration', 'weather_integration', 'language'
+                'clock_integration', 'weather_integration', 'language', 'premium_badge_color', 'brand_label_color'
             ];
 
             keys.forEach(key => {

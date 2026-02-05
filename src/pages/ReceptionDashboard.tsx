@@ -19,8 +19,10 @@ import {
     ChevronRight,
     Search,
     RotateCcw,
-    ArrowUpRight
+    ArrowUpRight,
+    Wallet
 } from 'lucide-react';
+import { useCurrency } from '../context/CurrencyContext';
 import { supabase } from '../lib/supabase';
 import AddStudentForm from '../components/AddStudentForm';
 import AddPTSubscriptionForm from '../components/AddPTSubscriptionForm';
@@ -30,10 +32,13 @@ import toast from 'react-hot-toast';
 
 export default function ReceptionDashboard() {
     const { t, i18n } = useTranslation();
-    const { settings } = useTheme();
+    const { settings, userProfile } = useTheme();
     const navigate = useNavigate();
     const { role: contextRole } = useOutletContext<{ role: string }>() || { role: null };
-    // currentTime removed as PremiumClock handles it.
+    const { currency } = useCurrency();
+    const [salary, setSalary] = useState(0);
+    const [totalEarnings, setTotalEarnings] = useState(0);
+    const [loadingEarnings, setLoadingEarnings] = useState(true);
 
     // Modals State
     const [showAddStudent, setShowAddStudent] = useState(false);
@@ -125,11 +130,32 @@ export default function ReceptionDashboard() {
                 setDebugAuth('Logged In: ' + user.id.slice(0, 5));
 
                 // 1. Try to find a coach record for this user
+                // 1. Try to find a coach/staff record for this user
+                // Check Coaches Table
                 const { data: coachData } = await supabase
                     .from('coaches')
-                    .select('id')
+                    .select('id, salary')
                     .eq('profile_id', user.id)
                     .maybeSingle();
+
+                if (coachData) {
+                    setSalary(Number(coachData.salary) || 0);
+                    setMyCoachId(coachData.id);
+                } else {
+                    // Check Staff Table
+                    const { data: staffData } = await supabase
+                        .from('staff')
+                        .select('id, salary')
+                        .eq('profile_id', user.id)
+                        .maybeSingle();
+
+                    if (staffData) {
+                        setSalary(Number(staffData.salary) || 0);
+                    }
+                }
+                setLoadingEarnings(false);
+
+                // logic continues
 
                 if (coachData) {
                     setMyCoachId(coachData.id);
@@ -317,7 +343,7 @@ export default function ReceptionDashboard() {
             const today = format(new Date(), 'yyyy-MM-dd');
             const { data } = await supabase
                 .from('student_attendance')
-                .select('*, students(full_name)')
+                .select('*, students!inner(full_name)')
                 .eq('date', today)
                 .order('check_in_time', { ascending: false })
                 .limit(20);
@@ -492,6 +518,7 @@ export default function ReceptionDashboard() {
                     .from('pt_sessions')
                     .insert({
                         coach_id: sub.coach_id,
+                        subscription_id: subscriptionId,
                         date: today,
                         sessions_count: 1,
                         student_name: displayName
@@ -848,7 +875,7 @@ export default function ReceptionDashboard() {
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="w-2 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></div>
                                 <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text uppercase tracking-tighter leading-none">
-                                    {t('reception.dashboard') || 'Reception Dashboard'}
+                                    {t('dashboard.welcome') || 'WELCOME BACK'}, {userProfile?.full_name || contextRole?.replace('_', ' ') || 'Staff Member'}
                                 </h1>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -871,7 +898,7 @@ export default function ReceptionDashboard() {
                                     {contextRole?.[0]?.toUpperCase() || 'S'}
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('dashboard.welcome') || 'Welcome Back'}</p>
+                                    <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('common.role') || 'Role'}</p>
                                     <p className="text-sm font-black text-white uppercase tracking-tight">{contextRole?.replace('_', ' ') || 'Staff Member'}</p>
                                 </div>
                             </div>
@@ -935,6 +962,47 @@ export default function ReceptionDashboard() {
                             </div>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* Personal Earnings Widget */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group">
+                    <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl transition-all duration-700"></div>
+                    <div className="flex items-center justify-between mb-4 relative z-10">
+                        <div>
+                            <h2 className="text-lg font-black text-white uppercase tracking-tight">Personal Earnings</h2>
+                            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">Salary {contextRole !== 'reception' && '+ PT Month'}</p>
+                        </div>
+                        <div className="p-3 bg-amber-500/20 rounded-xl text-amber-500">
+                            <Wallet className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-center items-center py-4 relative z-10">
+                        {loadingEarnings ? (
+                            <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-5xl font-black text-amber-500 tracking-tighter">{(salary + totalEarnings).toLocaleString()}</h3>
+                                    <span className="text-xs font-black text-white/20 uppercase tracking-widest">{currency.code || 'KWD'}</span>
+                                </div>
+                                {contextRole !== 'reception' && (
+                                    <div className="flex gap-4 mt-4">
+                                        <div className="text-center">
+                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Base</p>
+                                            <p className="text-xs font-bold text-white/60">{salary.toLocaleString()} {currency.code || 'KWD'}</p>
+                                        </div>
+                                        <div className="w-px h-6 bg-white/10"></div>
+                                        <div className="text-center">
+                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">PT</p>
+                                            <p className="text-xs font-bold text-white/60">{totalEarnings.toLocaleString()} {currency.code || 'KWD'}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -1566,8 +1634,8 @@ function AttendanceHistoryModal({ entityId, type, onClose }: { entityId: string,
             let idField = '';
 
             if (type === 'pt') {
-                table = 'pt_attendance';
-                idField = 'pt_subscription_id';
+                table = 'pt_sessions';
+                idField = 'subscription_id';
             } else if (type === 'student') {
                 table = 'student_attendance';
                 idField = 'student_id';
@@ -1653,7 +1721,8 @@ function AttendanceHistoryModal({ entityId, type, onClose }: { entityId: string,
                             ))}
                             {monthDays.map((day) => {
                                 const record = getRecordForDay(day);
-                                const status = record?.status || 'none';
+                                // For PT sessions, the existence of a record implies 'present'
+                                const status = record?.status || (record ? 'present' : 'none');
                                 return (
                                     <div
                                         key={day.toISOString()}
@@ -1666,9 +1735,9 @@ function AttendanceHistoryModal({ entityId, type, onClose }: { entityId: string,
                                         <span className="text-sm font-black">{format(day, 'd')}</span>
                                         {record && (
                                             <div className="flex flex-col items-center leading-none mt-1">
-                                                {record.check_in_time && (
+                                                {(record.check_in_time || record.created_at) && (
                                                     <span className="text-[10.5px] font-black text-white">
-                                                        {format(new Date(record.check_in_time), 'HH:mm')}
+                                                        {format(new Date(record.check_in_time || record.created_at), 'HH:mm')}
                                                     </span>
                                                 )}
                                                 {record.check_out_time && (
@@ -1677,7 +1746,7 @@ function AttendanceHistoryModal({ entityId, type, onClose }: { entityId: string,
                                                     </span>
                                                 )}
                                                 {/* If no times but has status, show dot */}
-                                                {!record.check_in_time && !record.check_out_time && status !== 'none' && (
+                                                {!record.check_in_time && !record.created_at && !record.check_out_time && status !== 'none' && (
                                                     <div className="w-1 h-1 rounded-full bg-current mt-1" />
                                                 )}
                                             </div>
@@ -1695,11 +1764,15 @@ function AttendanceHistoryModal({ entityId, type, onClose }: { entityId: string,
 
                     <div className="grid grid-cols-3 gap-4 mt-8">
                         <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-2xl text-center">
-                            <div className="text-2xl font-black text-emerald-400">{history.filter(h => h.status === 'present').length}</div>
+                            <div className="text-2xl font-black text-emerald-400">
+                                {history.filter(h => h.status === 'present' || type === 'pt').length}
+                            </div>
                             <div className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest mt-1">Present</div>
                         </div>
                         <div className="bg-rose-500/5 border border-rose-500/10 p-4 rounded-2xl text-center">
-                            <div className="text-2xl font-black text-rose-400">{history.filter(h => h.status === 'absent').length}</div>
+                            <div className="text-2xl font-black text-rose-400">
+                                {type === 'pt' ? 0 : history.filter(h => h.status === 'absent').length}
+                            </div>
                             <div className="text-[10px] font-black text-rose-500/60 uppercase tracking-widest mt-1">Absent</div>
                         </div>
                         <div className="bg-white/5 border border-white/10 p-4 rounded-2xl text-center">

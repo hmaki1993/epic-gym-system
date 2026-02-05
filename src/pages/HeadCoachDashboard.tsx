@@ -12,6 +12,8 @@ import AddStudentForm from '../components/AddStudentForm'; // Need this to add s
 import { useCurrency } from '../context/CurrencyContext';
 import PremiumClock from '../components/PremiumClock';
 import { useTheme } from '../context/ThemeContext';
+import ConfirmModal from '../components/ConfirmModal';
+import { RotateCcw, Trash2, TrendingUp, ChevronRight, Globe } from 'lucide-react';
 
 export default function HeadCoachDashboard() {
     const { t, i18n } = useTranslation();
@@ -32,9 +34,6 @@ export default function HeadCoachDashboard() {
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showStudentModal, setShowStudentModal] = useState(false);
 
-    // Earnings (Optional for Head Coach, but good to have)
-    const [baseSalary, setBaseSalary] = useState<number>(0);
-    const [totalEarnings, setTotalEarnings] = useState<number>(0);
 
     // setInterval removed as PremiumClock handles it.
     // currentTime is kept static for the date display.
@@ -72,7 +71,6 @@ export default function HeadCoachDashboard() {
 
                     if (coachData) {
                         setCoachId(coachData.id);
-                        setBaseSalary(Number(coachData.salary) || 0);
 
                         // Sync Attendance: Priority to OPEN sessions
                         let { data: attendance } = await supabase
@@ -177,13 +175,33 @@ export default function HeadCoachDashboard() {
         }
     };
 
+    // --- Personal Dashboard Logic ---
+
+    const fetchPersonalTodaySessions = async (id: string) => {
+        try {
+            // STRICTLY filter for THIS coach (Head Coach's personal sessions)
+            const { data } = await supabase
+                .from('pt_sessions')
+                .select('*')
+                .eq('coach_id', id)
+                .order('created_at', { ascending: false })
+                .limit(100);
+            setSavedSessions(data || []);
+        } catch (error) {
+            console.error('Error fetching sessions:', error);
+        }
+    };
+
+
+
+
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Welcome Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
                 <div className="text-center sm:text-left">
                     <h1 className="text-xl sm:text-2xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('dashboard.welcome')} {fullName || 'HEAD COACH'}
+                        {t('dashboard.welcome')}, {fullName || t('roles.head_coach')}
                     </h1>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
                         <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
@@ -286,28 +304,35 @@ export default function HeadCoachDashboard() {
                 <GroupsList showAll={true} />
             </div>
 
-            {/* Modals */}
-            {showGroupModal && (
-                <GroupFormModal
-                    onClose={() => setShowGroupModal(false)}
-                    onSuccess={() => {
-                        setShowGroupModal(false);
-                        // Trigger group list refresh ideally, but GroupsList has realtime
-                        toast.success('Group created successfully');
-                    }}
-                />
-            )}
 
-            {showStudentModal && (
-                <AddStudentForm
-                    onClose={() => setShowStudentModal(false)}
-                    onSuccess={() => {
-                        setShowStudentModal(false);
-                        toast.success('Student added successfully');
-                    }}
-                />
-            )}
-        </div>
+            {/* Modals */}
+
+            {/* Modals */}
+            {
+                showGroupModal && (
+                    <GroupFormModal
+                        onClose={() => setShowGroupModal(false)}
+                        onSuccess={() => {
+                            setShowGroupModal(false);
+                            // Trigger group list refresh ideally, but GroupsList has realtime
+                            toast.success('Group created successfully');
+                        }}
+                    />
+                )
+            }
+
+            {
+                showStudentModal && (
+                    <AddStudentForm
+                        onClose={() => setShowStudentModal(false)}
+                        onSuccess={() => {
+                            setShowStudentModal(false);
+                            toast.success('Student added successfully');
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 }
 

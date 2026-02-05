@@ -195,7 +195,7 @@ export default function Finance() {
                 <div className="max-w-2xl text-center lg:text-left">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary mb-6 animate-in slide-in-from-left duration-500">
                         <Wallet className="w-4 h-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{t('finance.title')}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--color-brand-label)' }}>{t('finance.title')}</span>
                     </div>
                     <h1 className="text-5xl sm:text-7xl font-black text-white tracking-tighter uppercase leading-[0.9] mb-4">
                         {t('finance.titlePart1')} <span className="premium-gradient-text">{t('finance.titlePart2')}</span>
@@ -216,7 +216,7 @@ export default function Finance() {
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
                             <div className="flex flex-col items-center px-6 min-w-[160px]">
-                                <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mb-1">{t('finance.period')}</span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.4em] mb-1" style={{ color: 'var(--color-brand-label)' }}>{t('finance.period')}</span>
                                 <span className="text-base font-black text-white uppercase tracking-tight">
                                     {format(selectedDate, 'MMMM yyyy')}
                                 </span>
@@ -493,11 +493,11 @@ export default function Finance() {
                                         className="w-5 h-5 rounded-lg border-2 border-white/10 bg-white/5 checked:bg-primary checked:border-primary transition-all cursor-pointer accent-primary"
                                     />
                                 </th>
-                                <th className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.4em] text-white/20">{t('common.student')}</th>
-                                <th className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.4em] text-white/20">{t('common.role')}</th>
-                                <th className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.4em] text-white/20">{t('common.date')}</th>
-                                <th className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.4em] text-white/20">{t('common.method')}</th>
-                                <th className="px-10 py-7 text-right text-[10px] font-black uppercase tracking-[0.4em] text-white/20">{t('finance.amount')}</th>
+                                <th className="pl-32 pr-10 py-7 text-[10px] font-black uppercase tracking-widest text-white/20">{t('common.student')}</th>
+                                <th className="pl-16 pr-10 py-7 text-[10px] font-black uppercase tracking-widest text-white/20">{t('common.role')}</th>
+                                <th className="pl-14 pr-10 py-7 text-[10px] font-black uppercase tracking-widest text-white/20">{t('common.date')}</th>
+                                <th className="px-10 py-7 text-[10px] font-black uppercase tracking-widest text-white/20">{t('common.method')}</th>
+                                <th className="pl-10 pr-16 py-7 text-right text-[10px] font-black uppercase tracking-widest text-white/20">{t('common.amount')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -534,17 +534,24 @@ export default function Finance() {
                                                         <div className="font-black text-white text-xl tracking-tight leading-none mb-1 group-hover:text-primary transition-colors">
                                                             {payment.students?.full_name || (payment.notes?.split(' - ')[1] || t('common.guest'))}
                                                         </div>
-                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.1em]">
+                                                        <div
+                                                            className="text-[10px] font-black uppercase tracking-[0.1em]"
+                                                            style={{ color: payment.students?.full_name ? 'var(--color-brand-label)' : '#f59e0b' }}
+                                                        >
                                                             {payment.students?.full_name ? t('pt.academyStudent') : t('pt.guestStudent')}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
-                                                <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${isPT
-                                                    ? 'bg-primary/10 text-primary border-primary/20 group-hover:bg-primary/20'
-                                                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 group-hover:bg-emerald-500/20'
-                                                    }`}>
+                                                <span
+                                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-500 ${!isPT ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 group-hover:bg-emerald-500/20' : ''}`}
+                                                    style={isPT ? {
+                                                        color: 'var(--color-brand-label)',
+                                                        backgroundColor: 'color-mix(in srgb, var(--color-brand-label), transparent 90%)',
+                                                        borderColor: 'color-mix(in srgb, var(--color-brand-label), transparent 80%)'
+                                                    } : {}}
+                                                >
                                                     {isPT ? t('pt.title') : t('common.student')}
                                                 </span>
                                             </td>
@@ -555,7 +562,7 @@ export default function Finance() {
                                             </td>
                                             <td className="px-10 py-8">
                                                 <span className="inline-flex items-center px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] bg-white/5 text-white/40 border border-white/5 group-hover:border-primary/30 group-hover:text-primary transition-all duration-500 shadow-inner">
-                                                    {payment.payment_method.replace('_', ' ')}
+                                                    {(payment.payment_method || 'Cash').replace('_', ' ')}
                                                 </span>
                                             </td>
                                             <td className="px-10 py-8 text-right">
