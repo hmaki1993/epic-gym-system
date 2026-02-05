@@ -100,33 +100,33 @@ export default function FinanceTrashModal({ isOpen, onClose, onRestore }: TrashM
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="glass-card w-full max-w-4xl max-h-[85vh] flex flex-col rounded-[3rem] border border-white/10 shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="glass-card w-full max-w-4xl max-h-[90dvh] md:max-h-[85vh] flex flex-col rounded-2xl md:rounded-[3rem] border border-white/10 shadow-2xl relative animate-in zoom-in-95 duration-300 overflow-hidden">
                 {/* Header */}
-                <div className="p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                    <div className="flex items-center gap-5">
-                        <div className="p-4 bg-rose-500/20 rounded-2xl text-rose-400 shadow-inner">
-                            <History className="w-8 h-8" />
+                <div className="p-4 md:p-10 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between bg-white/[0.02] gap-4">
+                    <div className="flex items-center gap-3 md:gap-5">
+                        <div className="p-2 md:p-4 bg-rose-500/20 rounded-xl md:rounded-2xl text-rose-400 shadow-inner">
+                            <History className="w-5 h-5 md:w-8 md:h-8" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black text-white uppercase tracking-tight">Recycle Bin</h2>
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mt-1">Restore deleted transactions</p>
+                            <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight">Recycle Bin</h2>
+                            <p className="text-[8px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.2em] md:tracking-[0.3em] mt-0.5 md:mt-1">Restore deleted transactions</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
                         <button
                             onClick={() => setShowClearConfirm(true)}
                             disabled={deletedItems.length === 0}
-                            className="flex items-center gap-2 px-6 py-4 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20 disabled:scale-100 active:scale-95"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-3 md:py-4 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all disabled:opacity-20 disabled:scale-100 active:scale-95"
                         >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 h-4 md:w-5 h-5" />
                             Empty Trash
                         </button>
                         <button
                             onClick={onClose}
-                            className="p-4 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-2xl transition-all active:scale-95"
+                            className="p-3 md:p-4 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl md:rounded-2xl transition-all active:scale-95"
                         >
-                            <X className="w-6 h-6" />
+                            <X className="w-5 h-5 md:w-6 md:h-6" />
                         </button>
                     </div>
                 </div>
@@ -149,34 +149,34 @@ export default function FinanceTrashModal({ isOpen, onClose, onRestore }: TrashM
                     ) : (
                         <div className="space-y-4">
                             {deletedItems.map((item) => (
-                                <div key={item.id} className="group p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all duration-500 flex items-center justify-between">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-sm font-black text-white/40 group-hover:text-primary transition-colors">
+                                <div key={item.id} className="group p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all duration-500 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4 md:gap-6">
+                                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center text-xs md:text-sm font-black text-white/40 group-hover:text-primary transition-colors shrink-0">
                                             {item.table_name?.[0]?.toUpperCase() || 'T'}
                                         </div>
-                                        <div>
-                                            <div className="font-black text-white text-lg tracking-tight mb-1">
+                                        <div className="min-w-0">
+                                            <div className="font-black text-white text-base md:text-lg tracking-tight mb-0.5 md:mb-1 truncate">
                                                 {item.row_data?.description || item.row_data?.notes || 'Unknown Transaction'}
                                             </div>
-                                            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/20">
-                                                <span className="px-2 py-1 bg-white/5 rounded-lg border border-white/5">{item.table_name}</span>
-                                                <span className="w-1 h-1 bg-white/10 rounded-full"></span>
+                                            <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/20">
+                                                <span className="px-1.5 py-0.5 bg-white/5 rounded-md border border-white/5">{item.table_name?.replace('finance_', '')}</span>
+                                                <span className="hidden sm:inline w-1 h-1 bg-white/10 rounded-full"></span>
                                                 <span>Deleted {format(new Date(item.created_at), 'MMM dd, HH:mm')}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="text-right mr-4">
-                                            <div className="text-xl font-black text-white/60 tracking-tighter">
+                                    <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                                        <div className="text-left sm:text-right">
+                                            <div className="text-lg md:text-xl font-black text-white/60 tracking-tighter">
                                                 {Number(item.row_data?.amount).toLocaleString()} {currency.code}
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => handleRestore(item)}
-                                            className="p-4 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-2xl transition-all duration-500 shadow-lg shadow-primary/5 active:scale-95 flex items-center gap-2 group/btn"
+                                            className="px-4 py-2.5 md:p-4 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl md:rounded-2xl transition-all duration-500 shadow-lg shadow-primary/5 active:scale-95 flex items-center gap-2 group/btn"
                                         >
-                                            <RotateCcw className="w-5 h-5 group-hover/btn:rotate-[-45deg] transition-transform duration-500" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] pr-2">Restore</span>
+                                            <RotateCcw className="w-4 h-4 md:w-5 h-5 group-hover/btn:rotate-[-45deg] transition-transform duration-500" />
+                                            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em]">Restore</span>
                                         </button>
                                     </div>
                                 </div>

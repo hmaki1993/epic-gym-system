@@ -62,7 +62,7 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
     const { days, time } = getScheduleInfo(group.schedule_key);
 
     return (
-        <div className="glass-card p-4 rounded-2xl border border-white/10 relative group hover:-translate-y-1 transition-transform duration-300 flex flex-col">
+        <div className="glass-card p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/10 relative group hover:-translate-y-1 transition-transform duration-300 flex flex-col">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
             <div className="relative z-10 flex-1">
                 <div className="flex justify-between items-start mb-4">
@@ -90,7 +90,7 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
                         </div>
                     )}
                 </div>
-                <h3 className="text-lg font-black text-white tracking-wide mb-0.5 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-black text-white tracking-wide mb-0.5 flex items-center gap-2">
                     {group.name}
                 </h3>
 
@@ -107,8 +107,8 @@ export default function GroupCard({ group, onViewDetails, onEdit, onDelete }: {
 
                 {group.schedule_key && (
                     <div className="flex flex-col gap-1.5 mt-2 mb-4">
-                        <div className="flex items-center gap-2 text-white/40 text-[10px] font-mono tracking-widest uppercase">
-                            <Clock className="w-2.5 h-2.5 text-primary" />
+                        <div className="flex items-center gap-2 text-white/40 text-[9px] md:text-[10px] font-mono tracking-widest uppercase">
+                            <Clock className="w-2 md:w-2.5 h-2 md:h-2.5 text-primary" />
                             <span>{time}</span>
                         </div>
                         <div className="flex items-center gap-2 text-white/40 text-[10px] font-mono tracking-widest uppercase">

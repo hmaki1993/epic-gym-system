@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { X, Save, DollarSign, ChevronDown } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface Student {
     id: number;
@@ -15,16 +16,19 @@ interface AddPaymentFormProps {
 }
 
 export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormProps) {
+    const { t } = useTranslation();
     const { currency } = useCurrency();
     const [loading, setLoading] = useState(false);
     const [students, setStudents] = useState<Student[]>([]);
 
     const [formData, setFormData] = useState({
         student_id: '',
+        guest_name: '',
         amount: '',
         payment_method: 'cash',
         notes: '',
-        date: new Date().toISOString().slice(0, 10)
+        date: new Date().toISOString().slice(0, 10),
+        is_guest: false
     });
 
     useEffect(() => {
@@ -48,26 +52,30 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
 
         try {
             // Get student name for notification
-            const selectedStudent = students.find(s => s.id === parseInt(formData.student_id));
+            const selectedStudent = !formData.is_guest ? students.find(s => s.id === parseInt(formData.student_id)) : null;
+            const finalNotes = formData.is_guest
+                ? `Guest - ${formData.guest_name}${formData.notes ? ' - ' + formData.notes : ''}`
+                : formData.notes;
 
             const { error } = await supabase.from('payments').insert([
                 {
-                    student_id: parseInt(formData.student_id),
+                    student_id: formData.is_guest ? null : parseInt(formData.student_id),
                     amount: parseFloat(formData.amount),
                     payment_method: formData.payment_method,
                     payment_date: formData.date,
-                    notes: formData.notes
+                    notes: finalNotes
                 }
             ]);
 
             if (error) throw error;
 
             // Create notification for admin
-            if (selectedStudent) {
+            if (selectedStudent || formData.is_guest) {
+                const payerName = formData.is_guest ? formData.guest_name : (selectedStudent?.full_name || 'Student');
                 await supabase.from('notifications').insert({
                     type: 'payment',
                     title: 'Payment Received',
-                    message: `Payment: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} from ${selectedStudent.full_name}`,
+                    message: `Payment: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} from ${payerName}`,
                     user_id: null, // null means all admins
                     is_read: false
                 });
@@ -104,24 +112,50 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Gymnast</label>
-                        <div className="relative group/student">
-                            <select
-                                required
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
-                                value={formData.student_id}
-                                onChange={e => setFormData({ ...formData, student_id: e.target.value })}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between ml-1">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{t('common.student')}</label>
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, is_guest: !prev.is_guest, student_id: '', guest_name: '' }))}
+                                className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border transition-all ${formData.is_guest
+                                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/20'
+                                    : 'bg-white/5 text-white/40 border-white/10 hover:text-white'
+                                    }`}
                             >
-                                <option value="" className="bg-slate-900">Select Gymnast</option>
-                                {students.map(s => (
-                                    <option key={s.id} value={s.id} className="bg-slate-900">{s.full_name}</option>
-                                ))}
-                            </select>
-                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/student:opacity-100 transition-opacity">
-                                <ChevronDown className="w-4 h-4 text-white" />
-                            </div>
+                                {formData.is_guest ? 'Guest Student' : 'Switch to Guest'}
+                            </button>
                         </div>
+
+                        {!formData.is_guest ? (
+                            <div className="relative group/student">
+                                <select
+                                    required
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12"
+                                    value={formData.student_id}
+                                    onChange={e => setFormData({ ...formData, student_id: e.target.value })}
+                                >
+                                    <option value="" className="bg-slate-900">Select Gymnast</option>
+                                    {students.map(s => (
+                                        <option key={s.id} value={s.id} className="bg-slate-900">{s.full_name}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/student:opacity-100 transition-opacity">
+                                    <ChevronDown className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative group/guest">
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="Enter Guest Name..."
+                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/50 outline-none transition-all text-white placeholder:text-white/20"
+                                    value={formData.guest_name}
+                                    onChange={e => setFormData({ ...formData, guest_name: e.target.value })}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -49,20 +49,20 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="glass-card max-w-2xl w-full p-10 rounded-[3rem] border border-white/10 shadow-2xl relative animate-in zoom-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="glass-card max-w-2xl w-full p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-white/10 shadow-2xl relative animate-in zoom-in duration-300 max-h-[90dvh] overflow-y-auto custom-scrollbar">
                 <button
                     onClick={onClose}
-                    className="absolute top-8 right-8 p-3 text-white/40 hover:text-white hover:bg-white/10 rounded-2xl transition-all"
+                    className="absolute top-4 right-4 md:top-8 md:right-8 p-3 text-white/40 hover:text-white hover:bg-white/10 rounded-xl md:rounded-2xl transition-all"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center gap-4 mb-10">
-                    <div className="p-4 bg-rose-500/20 rounded-2xl text-rose-400">
-                        <DollarSign className="w-7 h-7" />
+                <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-10">
+                    <div className="p-3 md:p-4 bg-rose-500/20 rounded-xl md:rounded-2xl text-rose-400">
+                        <DollarSign className="w-6 h-6 md:w-7 md:h-7" />
                     </div>
-                    <h2 className="text-3xl font-black text-white uppercase tracking-tight">Add Refund</h2>
+                    <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight">Add Refund</h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
@@ -83,7 +83,7 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-2">Amount ({currency.code}) *</label>
                             <input
@@ -105,7 +105,8 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
                                 onChange={e => setFormData({ ...formData, refund_date: e.target.value })}
                                 className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white outline-none focus:border-rose-500/50 transition-all font-bold text-center [color-scheme:dark] cursor-pointer"
                                 style={{
-                                    colorScheme: 'dark'
+                                    colorScheme: 'dark',
+                                    height: '58px' // Consistent height with text inputs
                                 }}
                                 required
                             />

@@ -379,6 +379,7 @@ i18n
                         ptEarnings: 'PT Earnings',
                         refunds: 'Refunds',
                         expenses: 'General Expenses',
+                        netProfit: 'Net Profit',
                         netProfitSummary: 'Net Profit Summary',
                         bulkDelete: 'Bulk Delete'
                     },
@@ -756,6 +757,7 @@ i18n
                         ptEarnings: 'أرباح الـ PT',
                         refunds: 'المرتجع',
                         expenses: 'المصاريف العامة',
+                        netProfit: 'صافي الربح',
                         netProfitSummary: 'ملخص صافي الربح',
                         restore: 'استعادة',
                         delete: 'حذف',

@@ -259,7 +259,7 @@ export default function Schedule() {
         <div className="flex flex-col gap-3 mb-4">
             <div className="flex flex-col md:flex-row justify-between items-center gap-3 border-b border-white/5 pb-3">
                 <div className="text-center md:text-left">
-                    <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter mb-0.5">
+                    <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter mb-0.5">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">{t('dashboard.schedule')}</span>
                         <span className="text-primary">.</span>
                     </h1>
@@ -276,28 +276,28 @@ export default function Schedule() {
                             <button
                                 onClick={handleCheckIn}
                                 disabled={attendanceLoading}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all flex items-center gap-2 active:scale-95 group"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[9px] shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all flex items-center gap-1.5 md:gap-2 active:scale-95 group"
                             >
-                                <Clock className="w-3.5 h-3.5 text-emerald-900 group-hover:rotate-12 transition-transform" />
+                                <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 text-emerald-900 group-hover:rotate-12 transition-transform" />
                                 {t('common.checkIn')}
                             </button>
                         ) : !attendanceToday.check_out_time ? (
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-3 bg-black/40 px-6 py-4 rounded-2xl border border-white/5">
-                                    <span className="relative flex h-2 w-2">
+                            <div className="flex items-center gap-1.5 md:gap-2">
+                                <div className="flex items-center gap-2 md:gap-3 bg-black/40 px-3 md:px-6 py-2 md:py-4 rounded-xl md:rounded-2xl border border-white/5">
+                                    <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-emerald-500"></span>
                                     </span>
-                                    <span className="text-base font-mono font-black text-emerald-400 min-w-[70px] text-center tracking-tighter shadow-glow">
+                                    <span className="text-xs md:text-base font-mono font-black text-emerald-400 min-w-[60px] md:min-w-[70px] text-center tracking-tighter shadow-glow">
                                         {elapsedTime}
                                     </span>
                                 </div>
                                 <button
                                     onClick={handleCheckOut}
                                     disabled={attendanceLoading}
-                                    className="bg-rose-500 hover:bg-rose-400 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-[0_0_20px_rgba(244,63,94,0.2)] hover:shadow-[0_0_30px_rgba(244,63,94,0.4)] transition-all flex items-center gap-2 active:scale-95 group"
+                                    className="bg-rose-500 hover:bg-rose-400 text-white px-4 md:px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[9px] shadow-[0_0_20px_rgba(244,63,94,0.2)] hover:shadow-[0_0_30px_rgba(244,63,94,0.4)] transition-all flex items-center gap-1.5 md:gap-2 active:scale-95 group"
                                 >
-                                    <LogOut className="w-3.5 h-3.5 text-white group-hover:-translate-x-1 transition-transform" />
+                                    <LogOut className="w-3 md:w-3.5 h-3 md:h-3.5 text-white group-hover:-translate-x-1 transition-transform" />
                                     {t('common.out')}
                                 </button>
                             </div>
@@ -321,27 +321,27 @@ export default function Schedule() {
                 )}
             </div>
 
-            <div className="w-full xl:w-auto flex items-center gap-3 p-1.5 rounded-[1.5rem] bg-[#0a0c10]/40 backdrop-blur-xl border border-white/5 shadow-2xl">
+            <div className="w-full xl:w-auto flex flex-col sm:flex-row items-center gap-3 p-1.5 rounded-[1.5rem] md:rounded-[2rem] bg-[#0a0c10]/40 backdrop-blur-xl border border-white/5 shadow-2xl">
                 {/* Date Nav */}
-                <div className="flex items-center gap-1 bg-white/5 rounded-2xl p-1 border border-white/5">
-                    <button onClick={() => navigateDate('prev')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
+                <div className="flex items-center justify-between w-full sm:w-auto gap-1 bg-white/5 rounded-2xl p-1 border border-white/5">
+                    <button onClick={() => navigateDate('prev')} className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="font-black text-white px-4 min-w-[140px] text-center uppercase tracking-widest text-[10px]">
+                    <span className="font-black text-white px-2 md:px-4 min-w-[120px] md:min-w-[140px] text-center uppercase tracking-widest text-[9px] md:text-[10px]">
                         {format(currentDate, viewMode === 'month' ? 'MMMM yyyy' : 'MMM dd, yyyy')}
                     </span>
-                    <button onClick={() => navigateDate('next')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
+                    <button onClick={() => navigateDate('next')} className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/40 hover:text-white transition-all active:scale-95">
                         <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 
                 {/* View Switcher */}
-                <div className="flex p-1 bg-black/20 rounded-2xl border border-white/5">
+                <div className="flex w-full sm:w-auto p-1 bg-black/20 rounded-2xl border border-white/5">
                     {['month', 'week', 'day'].map((mode) => (
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode as ViewMode)}
-                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === mode ? 'bg-white/10 text-white shadow-lg border border-white/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
+                            className={`flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-xl text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === mode ? 'bg-white/10 text-white shadow-lg border border-white/10' : 'text-white/20 hover:text-white hover:bg-white/5'}`}
                         >
                             {t(`dashboard.${mode}`)}
                         </button>
@@ -380,7 +380,7 @@ export default function Schedule() {
             <div className="overflow-x-auto pb-6 custom-scrollbar animate-in slide-in-from-bottom-4 duration-500">
                 <div className="grid grid-cols-7 gap-px bg-white/5 rounded-[2.5rem] overflow-hidden border border-white/10 min-w-[900px] shadow-2xl backdrop-blur-sm">
                     {['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-                        <div key={day} className="bg-[#0a0c10]/80 p-6 text-center text-[10px] font-black text-white/30 uppercase tracking-[0.2em] border-b border-white/5">
+                        <div key={day} className="bg-[#0a0c10]/80 p-3 md:p-6 text-center text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] border-b border-white/5">
                             {t(`students.days.${day.toLowerCase()}`)}
                         </div>
                     ))}
@@ -398,7 +398,7 @@ export default function Schedule() {
                                     setViewMode('day');
                                 }}
                             >
-                                <span className={`text-xs font-black tracking-widest inline-flex items-center justify-center w-8 h-8 rounded-xl transition-all ${isToday ? 'bg-primary text-white shadow-[0_0_20px_rgba(var(--primary),0.4)] scale-110' : isCurrentMonth ? 'text-white/60 group-hover:bg-white/10 group-hover:text-white' : 'text-white/20'}`}>
+                                <span className={`text-[10px] md:text-xs font-black tracking-widest inline-flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg md:rounded-xl transition-all ${isToday ? 'bg-primary text-white shadow-[0_0_20px_rgba(var(--primary),0.4)] scale-110' : isCurrentMonth ? 'text-white/60 group-hover:bg-white/10 group-hover:text-white' : 'text-white/20'}`}>
                                     {format(day, 'd')}
                                 </span>
 
@@ -411,7 +411,7 @@ export default function Schedule() {
                                         return (
                                             <div
                                                 key={session.id || idx}
-                                                className="px-2.5 py-1 rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/40 hover:bg-primary/5 transition-all w-full group/item cursor-pointer"
+                                                className="px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-lg md:rounded-xl bg-white/[0.03] border border-white/10 hover:border-primary/40 hover:bg-primary/5 transition-all w-full group/item cursor-pointer"
                                                 title={`${session.name || session.title} - ${session.coaches?.full_name} `}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -420,14 +420,11 @@ export default function Schedule() {
                                             >
                                                 <div className="flex flex-col">
                                                     <div className="flex items-center justify-between gap-1 overflow-hidden">
-                                                        <p className="text-[9px] font-black text-white/90 uppercase truncate tracking-tighter leading-none">
+                                                        <p className="text-[7px] md:text-[9px] font-black text-white/90 uppercase truncate tracking-tighter leading-none">
                                                             {session.name || session.title}
                                                         </p>
-                                                        {startTime && <span className="text-[8px] font-mono font-bold text-accent shrink-0">{startTime}</span>}
+                                                        {startTime && <span className="text-[6px] md:text-[8px] font-mono font-bold text-accent shrink-0">{startTime}</span>}
                                                     </div>
-                                                    <p className="text-[7px] font-bold text-white/20 uppercase truncate group-hover/item:text-white/40 transition-colors mt-0.5">
-                                                        {session.coaches?.full_name?.split(' ')[0]}
-                                                    </p>
                                                 </div>
                                             </div>
                                         );
@@ -514,14 +511,14 @@ export default function Schedule() {
                 <div className="bg-[#0a0c10]/40 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white/10 overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-                    <div className="relative z-10 p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                        <h3 className="font-black text-xl text-white uppercase tracking-tighter flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
-                                <CalendarDays className="w-5 h-5 text-white" />
+                    <div className="relative z-10 p-4 md:p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <h3 className="font-black text-lg md:text-xl text-white uppercase tracking-tighter flex items-center gap-3 md:gap-4">
+                            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary to-accent rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
+                                <CalendarDays className="w-4 h-4 md:w-5 md:h-5 text-white" />
                             </div>
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">{t('dashboard.selectedDate')}</span>
-                                <span>{format(currentDate, 'EEEE, MMMM do', { locale: i18n.language === 'ar' ? ar : enUS })}</span>
+                                <span className="text-[7px] md:text-[9px] font-black text-white/30 tracking-[0.3em] md:tracking-[0.4em] uppercase">{t('dashboard.selectedDate')}</span>
+                                <span className="text-sm md:text-xl">{format(currentDate, 'EEEE, MMMM do', { locale: i18n.language === 'ar' ? ar : enUS })}</span>
                             </div>
                         </h3>
                     </div>
@@ -541,7 +538,7 @@ export default function Schedule() {
                             daySessions.map((session, idx) => (
                                 <div
                                     key={session.id || idx}
-                                    className="p-8 flex items-center gap-10 hover:bg-white/[0.02] transition-all cursor-pointer group relative overflow-hidden"
+                                    className="p-4 md:p-8 flex flex-col sm:flex-row sm:items-center gap-4 md:gap-10 hover:bg-white/[0.02] transition-all cursor-pointer group relative overflow-hidden"
                                     onClick={() => setSelectedGroup(session)}
                                 >
                                     <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -558,34 +555,34 @@ export default function Schedule() {
                                         const displayM = String(m || 0).padStart(2, '0');
 
                                         return (
-                                            <div className="text-center min-w-[120px] bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 group-hover:border-primary/20 group-hover:bg-primary/10 transition-all shadow-lg">
-                                                <p className="font-black text-white/40 text-xs mb-1 uppercase tracking-widest group-hover:text-primary/60 transition-colors">Start</p>
-                                                <p className="font-black text-white text-2xl tracking-tighter group-hover:text-primary transition-colors">
-                                                    {displayH}:{displayM} <span className="text-sm text-white/20">{ampm}</span>
+                                            <div className="text-center w-full sm:min-w-[120px] sm:w-auto bg-white/[0.02] p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/5 group-hover:border-primary/20 group-hover:bg-primary/10 transition-all shadow-lg flex sm:flex-col justify-between items-center sm:justify-center">
+                                                <p className="font-black text-white/40 text-[9px] md:text-xs uppercase tracking-widest group-hover:text-primary/60 transition-colors">Start Time</p>
+                                                <p className="font-black text-white text-base md:text-2xl tracking-tighter group-hover:text-primary transition-colors">
+                                                    {displayH}:{displayM} <span className="text-[10px] md:text-sm text-white/20">{ampm}</span>
                                                 </p>
                                             </div>
                                         );
                                     })()}
 
                                     <div className="flex-1">
-                                        <h4 className="text-2xl font-black text-white group-hover:text-primary transition-colors uppercase tracking-tight mb-4">{session.title || session.name}</h4>
-                                        <div className="flex flex-wrap items-center gap-6">
-                                            <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
-                                                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 flex items-center justify-center border border-white/10">
-                                                    <User className="w-3 h-3 text-primary" />
+                                        <h4 className="text-lg md:text-2xl font-black text-white group-hover:text-primary transition-colors uppercase tracking-tight mb-2 md:mb-4">{session.title || session.name}</h4>
+                                        <div className="flex flex-wrap items-center gap-3 md:gap-6">
+                                            <div className="flex items-center gap-2 md:gap-3 bg-white/5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl border border-white/5">
+                                                <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-gradient-to-tr from-primary/20 to-accent/20 flex items-center justify-center border border-white/10">
+                                                    <User className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary" />
                                                 </div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                                                    {session.coaches?.full_name}
+                                                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/60">
+                                                    {session.coaches?.full_name?.split(' ')[0]}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse"></div>
+                                            <div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/30">
+                                                <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse"></div>
                                                 {t('dashboard.activeSession')}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-4 rounded-2xl bg-white/5 text-white/10 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-white/5 group-hover:border-primary/20 rotate-45 group-hover:rotate-0 duration-500">
+                                    <div className="hidden sm:block p-4 rounded-2xl bg-white/5 text-white/10 group-hover:text-primary group-hover:bg-primary/10 transition-all border border-white/5 group-hover:border-primary/20 rotate-45 group-hover:rotate-0 duration-500">
                                         <ArrowRight className="w-6 h-6" />
                                     </div>
                                 </div>

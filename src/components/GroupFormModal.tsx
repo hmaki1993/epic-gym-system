@@ -203,9 +203,9 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-2xl bg-[#1a1f37] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+            <div className="w-full max-w-2xl bg-[#1a1f37] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95dvh] md:max-h-[90vh] my-auto">
+                <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0 overflow-hidden">
                     <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
                         <h2 className="text-xl font-black text-white uppercase tracking-tight">
                             {initialData ? t('common.editGroup') : t('common.createGroup')}
@@ -219,7 +219,7 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                         </button>
                     </div>
 
-                    <div className="p-6 space-y-6 overflow-hidden grow">
+                    <div className="p-4 md:p-6 space-y-6 overflow-y-auto grow custom-scrollbar min-h-0 overscroll-contain touch-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-6">
                                 <div className="space-y-2">
@@ -308,7 +308,7 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                                 </div>
                             </div>
 
-                            <div className="border-l border-white/5 pl-6 flex flex-col h-[480px]">
+                            <div className="border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-6 flex flex-col h-72 md:h-[480px]">
                                 <label className="text-xs font-black text-white/40 uppercase tracking-widest pl-1 mb-2">
                                     {t('dashboard.addStudent')} <span className="text-primary ml-1">({selectedStudents.length})</span>
                                 </label>
@@ -324,7 +324,7 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within/search:text-primary transition-colors" />
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0d1321]/50 rounded-2xl border border-white/5 p-2 space-y-1">
+                                <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0d1321]/50 rounded-2xl border border-white/5 p-2 space-y-1 min-h-0">
                                     {filteredStudents.length === 0 ? (
                                         <div className="h-full flex flex-col items-center justify-center text-white/20 p-4 text-center">
                                             <User className="w-8 h-8 mb-2 opacity-50" />
