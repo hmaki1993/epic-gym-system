@@ -25,6 +25,10 @@ export interface GymSettings {
     language?: string;
     premium_badge_color?: string;
     brand_label_color?: string;
+    academy_name?: string;
+    logo_url?: string;
+    gym_address?: string;
+    gym_phone?: string;
 }
 
 export const applySettingsToRoot = (settings: GymSettings) => {
@@ -151,7 +155,10 @@ export const defaultSettings: GymSettings = {
     weather_integration: true,
     language: 'en',
     premium_badge_color: '#A30000',
-    brand_label_color: '#A30000'
+    brand_label_color: '#A30000',
+    academy_name: 'Epic Gym Academy',
+    gym_address: 'Cairo, Egypt',
+    gym_phone: '+20 123 456 7890'
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -168,6 +175,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         applySettingsToRoot(settings);
     }, [settings]);
+
+    useEffect(() => {
+        if (settings.academy_name) {
+            document.title = settings.academy_name;
+        }
+    }, [settings.academy_name]);
 
     useEffect(() => {
         // Only force change if it's different and we are NOT in the middle of a manual switch
@@ -369,47 +382,91 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            // Sanitize payload
-            const payload: any = { user_id: user.id };
-            const keys: (keyof GymSettings)[] = [
+            // Separate gym-wide settings from user-specific settings
+            const gymWideKeys: (keyof GymSettings)[] = [
+                'academy_name', 'logo_url', 'gym_address', 'gym_phone'
+            ];
+
+            const userSpecificKeys: (keyof GymSettings)[] = [
                 'primary_color', 'secondary_color', 'accent_color', 'font_family',
                 'font_scale', 'border_radius', 'glass_opacity', 'surface_color',
                 'search_icon_color', 'search_bg_color', 'search_border_color', 'search_text_color',
                 'hover_color', 'hover_border_color', 'input_bg_color', 'clock_position',
-                'clock_integration', 'weather_integration', 'language', 'premium_badge_color', 'brand_label_color'
+                'clock_integration', 'weather_integration', 'language', 'premium_badge_color',
+                'brand_label_color'
             ];
 
-            keys.forEach(key => {
+            // Build gym_settings payload
+            const gymPayload: any = {};
+            let hasGymUpdates = false;
+            gymWideKeys.forEach(key => {
                 if (key in newSettings) {
-                    payload[key] = newSettings[key];
+                    gymPayload[key] = newSettings[key];
+                    hasGymUpdates = true;
                 }
             });
 
-            console.log('💾 SAVING SETTINGS FOR USER:', user.id, user.email);
-            console.log('💾 PAYLOAD:', payload);
-            console.log('💾 TARGET TABLE: user_settings');
+            // Build user_settings payload
+            const userPayload: any = { user_id: user.id };
+            let hasUserUpdates = false;
+            userSpecificKeys.forEach(key => {
+                if (key in newSettings) {
+                    userPayload[key] = newSettings[key];
+                    hasUserUpdates = true;
+                }
+            });
 
-            const { error } = await supabase
-                .from('user_settings')
-                .upsert(payload);
+            // Save gym-wide settings if any
+            if (hasGymUpdates) {
+                console.log('💾 SAVING GYM SETTINGS:', gymPayload);
 
-            if (error) {
-                console.error('💾 SAVE FAILED:', error);
-                throw error;
+                // Fetch the existing gym_settings row to get its ID
+                const { data: existingGym, error: fetchError } = await supabase
+                    .from('gym_settings')
+                    .select('id')
+                    .limit(1)
+                    .maybeSingle();
+
+                if (fetchError) {
+                    console.error('💾 Failed to fetch gym_settings:', fetchError);
+                    throw fetchError;
+                }
+
+                if (existingGym) {
+                    // Update existing row
+                    gymPayload.id = existingGym.id;
+                    const { error: gymError } = await supabase
+                        .from('gym_settings')
+                        .upsert(gymPayload);
+
+                    if (gymError) {
+                        console.error('💾 GYM SETTINGS SAVE FAILED:', gymError);
+                        throw gymError;
+                    }
+                    console.log('💾 GYM SETTINGS SAVED SUCCESSFULLY');
+                } else {
+                    console.error('💾 No gym_settings row found in database');
+                    throw new Error('Gym settings not initialized');
+                }
             }
 
-            console.log('💾 SAVE SUCCESS - Settings saved to user_settings');
+            // Save user-specific settings if any
+            if (hasUserUpdates) {
+                console.log('💾 SAVING USER SETTINGS FOR:', user.id, user.email);
+                console.log('💾 USER PAYLOAD:', userPayload);
 
-            // Verify the save
-            const { data: verification } = await supabase
-                .from('user_settings')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
+                const { error: userError } = await supabase
+                    .from('user_settings')
+                    .upsert(userPayload);
 
-            console.log('💾 VERIFICATION - Data in DB:', verification);
+                if (userError) {
+                    console.error('💾 USER SETTINGS SAVE FAILED:', userError);
+                    throw userError;
+                }
+                console.log('💾 USER SETTINGS SAVED SUCCESSFULLY');
+            }
 
-            toast.success('Settings saved privately');
+            toast.success('Settings saved successfully');
         } catch (error: any) {
             console.error('Error updating theme:', error);
             toast.error(`Failed to update settings: ${error.message || 'Unknown error'}`);

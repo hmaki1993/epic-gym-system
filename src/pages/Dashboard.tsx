@@ -100,33 +100,31 @@ export default function Dashboard() {
 
             {/* Premium Welcome Header */}
             <div className="relative group">
-                <div className="flex flex-col gap-2 mb-8 animate-in fade-in slide-in-from-left duration-700">
-                    <h1 className="text-5xl sm:text-6xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('dashboard.welcome')}, {fullName || (role ? t(`roles.${role}`) : 'Admin')}
-                    </h1>
-                </div>
-
-                {/* Info Bar - Clean & Organized */}
-                <div className="flex flex-wrap items-center gap-x-10 gap-y-4 py-6 border-y border-white/5 animate-in fade-in slide-in-from-top-4 duration-1000 delay-200">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                            <Calendar className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{t('common.today') || 'Today'}</span>
-                            <span className="text-sm font-black text-white uppercase tracking-wider">{format(new Date(), 'EEEE, dd MMMM')}</span>
-                        </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8 animate-in fade-in slide-in-from-left duration-700">
+                    <div>
+                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">{t('common.today') || 'Today'}</p>
+                        <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                            <span className="text-white/60 font-medium">Welcome Back,</span>
+                            <span className="premium-gradient-text">{fullName || (role ? t(`roles.${role}`) : 'Admin')}</span>
+                        </h1>
                     </div>
 
-                    {settings.clock_position === 'dashboard' && (
-                        <div className="flex items-center gap-4">
-                            <div className="h-10 w-px bg-white/10 hidden sm:block mr-4"></div>
-                            <div className="scale-110">
-                                <PremiumClock />
-                            </div>
+                    {/* Compact Date & Clock Widget */}
+                    <div className="flex items-center gap-3 p-1.5 pr-4 bg-white/[0.03] border border-white/5 rounded-full shadow-inner backdrop-blur-md">
+                        <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+                            <Calendar className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-xs font-black text-white uppercase tracking-wider">{format(new Date(), 'MMM dd')}</span>
                         </div>
-                    )}
 
+                        {settings.clock_position === 'dashboard' && (
+                            <>
+                                <div className="h-4 w-px bg-white/10"></div>
+                                <div className="scale-90 origin-left">
+                                    <PremiumClock />
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

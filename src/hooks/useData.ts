@@ -199,6 +199,25 @@ export function useDeletePlan() {
     });
 }
 
+export function useUpdatePlan() {
+    return useMutation({
+        mutationFn: async (plan: { id: string, name: string, duration_months: number, price: number }) => {
+            const { data, error } = await supabase
+                .from('subscription_plans')
+                .update({
+                    name: plan.name,
+                    duration_months: plan.duration_months,
+                    price: plan.price
+                })
+                .eq('id', plan.id)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+    });
+}
+
 // --- Dashboard Hooks ---
 export function useDashboardStats() {
     return useQuery({

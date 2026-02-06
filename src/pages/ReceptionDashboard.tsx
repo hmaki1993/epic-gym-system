@@ -44,9 +44,7 @@ export default function ReceptionDashboard() {
     const [showAddStudent, setShowAddStudent] = useState(false);
     const [showAddPT, setShowAddPT] = useState(false);
 
-    // Note Editing State
-    const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-    const [noteText, setNoteText] = useState('');
+
 
     // Class Attendance State
     const [todaysClasses, setTodaysClasses] = useState<any[]>([]);
@@ -62,10 +60,7 @@ export default function ReceptionDashboard() {
     const [ptList, setPtList] = useState<any[]>([]);
     const [loadingPt, setLoadingPt] = useState(true);
 
-    // Attendance History State
-    const [historyEntityId, setHistoryEntityId] = useState<string | null>(null);
-    const [historyEntityType, setHistoryEntityType] = useState<'student' | 'coach' | 'pt' | null>(null);
-    const [showHistoryModal, setShowHistoryModal] = useState(false);
+
 
     // Self Check-In State
     const [myCoachId, setMyCoachId] = useState<string | null>(null);
@@ -629,39 +624,7 @@ export default function ReceptionDashboard() {
         }
     };
 
-    const handleSaveNote = async (studentId: string) => {
-        try {
-            const today = format(new Date(), 'yyyy-MM-dd');
 
-            const { data: existing } = await supabase
-                .from('student_attendance')
-                .select('*')
-                .eq('student_id', studentId)
-                .eq('date', today)
-                .maybeSingle();
-
-            if (existing) {
-                await supabase
-                    .from('student_attendance')
-                    .update({ note: noteText })
-                    .eq('id', existing.id);
-            } else {
-                await supabase
-                    .from('student_attendance')
-                    .insert({
-                        student_id: studentId,
-                        date: today,
-                        note: noteText,
-                        status: 'pending'
-                    });
-            }
-            setEditingNoteId(null);
-            fetchTodaysClasses();
-            toast.success(t('reception.noteSaved'));
-        } catch (error) {
-            console.error('Save note error:', error);
-        }
-    };
 
 
 
@@ -716,42 +679,7 @@ export default function ReceptionDashboard() {
         }
     };
 
-    const handleSaveStaffNote = async (coachId: string) => {
-        try {
-            const today = format(new Date(), 'yyyy-MM-dd');
 
-            const { data: existing } = await supabase
-                .from('coach_attendance')
-                .select('*')
-                .eq('coach_id', coachId)
-                .eq('date', today)
-                .maybeSingle();
-
-            if (existing) {
-                await supabase
-                    .from('coach_attendance')
-                    .update({ note: noteText })
-                    .eq('id', existing.id);
-            } else {
-                await supabase
-                    .from('coach_attendance')
-                    .insert({
-                        coach_id: coachId,
-                        date: today,
-                        note: noteText,
-                        status: 'pending'
-                    });
-            }
-
-            toast.success('Note saved');
-            setEditingNoteId(null);
-            setNoteText('');
-            fetchCoachesStatus();
-        } catch (error) {
-            console.error('Save staff note error:', error);
-            toast.error('Failed to save note');
-        }
-    };
 
     // --- Self Check-In Handlers ---
     const handleSelfCheckIn = async () => {
@@ -867,39 +795,39 @@ export default function ReceptionDashboard() {
             {/* Premium Header Architecture */}
             <div className="relative overflow-hidden group">
                 {/* Background Accent Glow - Hidden on mobile for performance */}
-                <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-primary/20 transition-all duration-1000 hidden md:block"></div>
+                <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 blur-[80px] rounded-full pointer-events-none group-hover:bg-primary/20 transition-all duration-1000 hidden md:block"></div>
 
-                <div className="glass-card rounded-[2rem] border border-white/10 p-8 sm:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
-                    <div className="space-y-6 flex-1">
+                <div className="glass-card rounded-[2rem] border border-white/10 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                    <div className="space-y-4 flex-1">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-2 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></div>
-                                <h1 className="text-4xl sm:text-5xl font-black premium-gradient-text uppercase tracking-tighter leading-none">
+                            <div className="flex items-center gap-3 mb-1.5">
+                                <div className="w-1.5 h-6 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></div>
+                                <h1 className="text-2xl sm:text-3xl font-black premium-gradient-text uppercase tracking-tighter leading-none">
                                     {t('dashboard.welcome') || 'WELCOME BACK'}, {userProfile?.full_name || contextRole?.replace('_', ' ') || 'Staff Member'}
                                 </h1>
                             </div>
-                            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                                <p className="text-white/40 text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                <p className="text-white/40 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-1.5">
                                     <Calendar className="w-3 h-3 text-primary" />
                                     {format(new Date(), 'EEEE, dd MMMM yyyy')}
                                 </p>
                                 {settings.clock_position === 'dashboard' && (
                                     <>
-                                        <div className="hidden sm:block w-px h-4 bg-white/10"></div>
-                                        <PremiumClock className="scale-90 origin-left !bg-transparent !border-none !px-0 shadow-none hover:scale-100 transition-transform" />
+                                        <div className="hidden sm:block w-px h-3 bg-white/10"></div>
+                                        <PremiumClock className="scale-75 origin-left !bg-transparent !border-none !px-0 shadow-none hover:scale-90 transition-transform" />
                                     </>
                                 )}
                             </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-white/5">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-primary text-xl shadow-inner">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-primary text-lg shadow-inner">
                                     {contextRole?.[0]?.toUpperCase() || 'S'}
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('common.role') || 'Role'}</p>
-                                    <p className="text-sm font-black text-white uppercase tracking-tight">{contextRole?.replace('_', ' ') || 'Staff Member'}</p>
+                                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none mb-0.5">{t('common.role') || 'Role'}</p>
+                                    <p className="text-xs font-black text-white uppercase tracking-tight leading-none">{contextRole?.replace('_', ' ') || 'Staff Member'}</p>
                                 </div>
                             </div>
 
@@ -908,15 +836,15 @@ export default function ReceptionDashboard() {
                                     href="/registration"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group/btn flex items-center gap-3 px-6 py-3 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 shadow-xl shadow-emerald-500/5"
+                                    className="group/btn flex items-center gap-2.5 px-4 py-2 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 shadow-xl shadow-emerald-500/5"
                                 >
-                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
-                                        <UserPlus className="w-4 h-4 text-emerald-400" />
+                                    <div className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                                        <UserPlus className="w-3 h-3 text-emerald-400" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="text-[10px] font-black text-emerald-400/50 uppercase tracking-widest leading-none mb-1">{t('common.registrationPage') || 'Registration'}</p>
-                                        <p className="text-xs font-black text-white uppercase tracking-tight flex items-center gap-1">
-                                            Open Portal <ArrowUpRight className="w-3 h-3 opacity-40 group-hover/btn:opacity-100 transition-all" />
+                                        <p className="text-[8px] font-black text-emerald-400/50 uppercase tracking-widest leading-none mb-0.5">{t('common.registrationPage') || 'Registration'}</p>
+                                        <p className="text-[10px] font-black text-white uppercase tracking-tight flex items-center gap-0.5 leading-none">
+                                            Open Portal <ArrowUpRight className="w-2.5 h-2.5 opacity-40 group-hover/btn:opacity-100 transition-all" />
                                         </p>
                                     </div>
                                 </a>
@@ -927,35 +855,35 @@ export default function ReceptionDashboard() {
                     {/* Ultra-Chic Duty Control Center */}
                     {myCoachId && (
                         <div className="relative group/duty lg:ml-auto">
-                            <div className={`relative flex items-center gap-3 p-2 pr-4 rounded-[1.25rem] border transition-all duration-500 shadow-lg
+                            <div className={`relative flex items-center gap-2.5 p-1.5 pr-3 rounded-2xl border transition-all duration-500 shadow-lg
                                 ${isCheckedIn
                                     ? 'bg-emerald-500/5 border-emerald-500/10'
                                     : 'bg-white/[0.02] border-white/5'}`}>
 
                                 <button
                                     onClick={isCheckedIn ? handleSelfCheckOut : handleSelfCheckIn}
-                                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-105 active:scale-95
+                                    className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-500 hover:scale-105 active:scale-95
                                         ${isCheckedIn
                                             ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
                                             : 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'}`}
                                 >
-                                    {isCheckedIn ? <XCircle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                                    {isCheckedIn ? <XCircle className="w-4.5 h-4.5" /> : <Clock className="w-4.5 h-4.5" />}
                                 </button>
 
-                                <div className="space-y-0 min-w-[80px]">
-                                    <span className="text-[7px] font-black text-white/20 uppercase tracking-[0.2em] block leading-none mb-0.5">Status</span>
+                                <div className="space-y-0 min-w-[70px]">
+                                    <span className="text-[6px] font-black text-white/20 uppercase tracking-[0.2em] block leading-none mb-0.5">Status</span>
                                     {isCheckedIn ? (
                                         <div className="space-y-0">
-                                            <div className="text-lg font-black text-white font-mono tracking-tighter tabular-nums leading-none">
+                                            <div className="text-base font-black text-white font-mono tracking-tighter tabular-nums leading-none">
                                                 {formatTimer(elapsedTime)}
                                             </div>
-                                            <div className="text-emerald-400/60 text-[7px] font-black uppercase tracking-widest leading-none mt-1">
+                                            <div className="text-emerald-400/60 text-[6px] font-black uppercase tracking-widest leading-none mt-0.5">
                                                 ACTIVE
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="space-y-0">
-                                            <div className="text-sm font-black text-white/20 uppercase tracking-tighter leading-none">Offline</div>
+                                            <div className="text-xs font-black text-white/20 uppercase tracking-tighter leading-none">Offline</div>
                                         </div>
                                     )}
                                 </div>
@@ -967,36 +895,36 @@ export default function ReceptionDashboard() {
 
             {/* Personal Earnings Widget */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group">
-                    <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl transition-all duration-700"></div>
-                    <div className="flex items-center justify-between mb-4 relative z-10">
+                <div className="glass-card p-6 rounded-2xl border border-white/10 shadow-premium relative overflow-hidden group">
+                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl transition-all duration-700"></div>
+                    <div className="flex items-center justify-between mb-3 relative z-10">
                         <div>
-                            <h2 className="text-lg font-black text-white uppercase tracking-tight">Personal Earnings</h2>
-                            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">Salary {contextRole !== 'reception' && '+ PT Month'}</p>
+                            <h2 className="text-base font-black text-white uppercase tracking-tight">Personal Earnings</h2>
+                            <p className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mt-0.5">Salary {contextRole !== 'reception' && '+ PT Month'}</p>
                         </div>
-                        <div className="p-3 bg-amber-500/20 rounded-xl text-amber-500">
-                            <Wallet className="w-5 h-5" />
+                        <div className="p-2.5 bg-amber-500/20 rounded-xl text-amber-500">
+                            <Wallet className="w-4 h-4" />
                         </div>
                     </div>
-                    <div className="flex-1 flex flex-col justify-center items-center py-4 relative z-10">
+                    <div className="flex-1 flex flex-col justify-center items-center py-2 relative z-10">
                         {loadingEarnings ? (
-                            <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                            <div className="w-6 h-6 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
                         ) : (
                             <>
-                                <div className="flex items-baseline gap-2">
-                                    <h3 className="text-5xl font-black text-amber-500 tracking-tighter">{(salary + totalEarnings).toLocaleString()}</h3>
-                                    <span className="text-xs font-black text-white/20 uppercase tracking-widest">{currency.code || 'KWD'}</span>
+                                <div className="flex items-baseline gap-1.5">
+                                    <h3 className="text-3xl font-black text-amber-500 tracking-tighter">{(salary + totalEarnings).toLocaleString()}</h3>
+                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{currency.code || 'KWD'}</span>
                                 </div>
                                 {contextRole !== 'reception' && (
-                                    <div className="flex gap-4 mt-4">
+                                    <div className="flex gap-4 mt-3">
                                         <div className="text-center">
-                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Base</p>
-                                            <p className="text-xs font-bold text-white/60">{salary.toLocaleString()} {currency.code || 'KWD'}</p>
+                                            <p className="text-[7px] font-black text-white/30 uppercase tracking-widest mb-0.5">Base</p>
+                                            <p className="text-[10px] font-bold text-white/60">{salary.toLocaleString()} {currency.code || 'KWD'}</p>
                                         </div>
-                                        <div className="w-px h-6 bg-white/10"></div>
+                                        <div className="w-px h-5 bg-white/10"></div>
                                         <div className="text-center">
-                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">PT</p>
-                                            <p className="text-xs font-bold text-white/60">{totalEarnings.toLocaleString()} {currency.code || 'KWD'}</p>
+                                            <p className="text-[7px] font-black text-white/30 uppercase tracking-widest mb-0.5">PT</p>
+                                            <p className="text-[10px] font-bold text-white/60">{totalEarnings.toLocaleString()} {currency.code || 'KWD'}</p>
                                         </div>
                                     </div>
                                 )}
@@ -1007,563 +935,184 @@ export default function ReceptionDashboard() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                     onClick={() => setShowAddStudent(true)}
-                    className="glass-card p-6 rounded-3xl border border-white/10 hover:border-primary/50 group transition-all text-left relative overflow-hidden"
+                    className="glass-card p-5 rounded-2xl border border-white/10 hover:border-primary/50 group transition-all text-left relative overflow-hidden"
                 >
-                    <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <UserPlus className="w-24 h-24 text-primary" />
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <UserPlus className="w-16 h-16 text-primary" />
                     </div>
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/20 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <UserPlus className="w-6 h-6" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <UserPlus className="w-5 h-5" />
                         </div>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-1">
-                            {t('students.addStudent') || 'Add Student'}
-                        </h3>
-                        <p className="text-xs text-white/50 font-bold uppercase tracking-wider">
-                            Register new gymnast
-                        </p>
+                        <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-0.5">
+                                {t('students.addStudent') || 'Add Student'}
+                            </h3>
+                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider">
+                                Register new gymnast
+                            </p>
+                        </div>
                     </div>
                 </button>
 
                 <button
                     onClick={() => setShowAddPT(true)}
-                    className="glass-card p-6 rounded-3xl border border-white/10 hover:border-accent/50 group transition-all text-left relative overflow-hidden"
+                    className="glass-card p-5 rounded-2xl border border-white/10 hover:border-accent/50 group transition-all text-left relative overflow-hidden"
                 >
-                    <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Dumbbell className="w-24 h-24 text-accent" />
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Dumbbell className="w-16 h-16 text-accent" />
                     </div>
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 rounded-2xl bg-accent/20 text-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <Dumbbell className="w-6 h-6" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-accent/20 text-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Dumbbell className="w-5 h-5" />
                         </div>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-1">
-                            {t('students.addSubscription') || 'Add Subscription'}
-                        </h3>
-                        <p className="text-xs text-white/50 font-bold uppercase tracking-wider">
-                            New Private Training
-                        </p>
+                        <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-0.5">
+                                {t('students.addSubscription') || 'Add Subscription'}
+                            </h3>
+                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider">
+                                New Private Training
+                            </p>
+                        </div>
                     </div>
                 </button>
 
                 <button
                     onClick={() => navigate('/schedule')}
-                    className="glass-card p-6 rounded-3xl border border-white/10 hover:border-purple-500/50 group transition-all text-left relative overflow-hidden"
+                    className="glass-card p-5 rounded-2xl border border-white/10 hover:border-purple-500/50 group transition-all text-left relative overflow-hidden"
                 >
-                    <div className="absolute right-0 top-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Calendar className="w-24 h-24 text-purple-500" />
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Calendar className="w-16 h-16 text-purple-500" />
                     </div>
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <Calendar className="w-6 h-6" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Calendar className="w-5 h-5" />
                         </div>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-1">
-                            {t('common.schedule') || 'View Schedule'}
-                        </h3>
-                        <p className="text-xs text-white/50 font-bold uppercase tracking-wider">
-                            Check classes timing
-                        </p>
+                        <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-0.5">
+                                {t('common.schedule') || 'View Schedule'}
+                            </h3>
+                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider">
+                                Check classes timing
+                            </p>
+                        </div>
                     </div>
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                {/* Student Attendance Section */}
-                <div className="glass-card rounded-3xl border border-white/10 p-8 flex flex-col h-[650px]">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                            <Users className="w-6 h-6 text-primary" />
-                            {t('reception.studentAttendance') || 'Student Attendance'}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 bg-white/5 text-xs font-bold uppercase tracking-wider rounded-lg text-white/50">
-                                {todaysClasses.filter(c => c.status === 'present' || c.status === 'completed').length} / {todaysClasses.length} Present
-                            </span>
+            {/* Dashboard Summary Widgets */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {/* Student Attendance Widget */}
+                <div
+                    onClick={() => navigate('/attendance/students')}
+                    className="glass-card p-6 rounded-2xl border border-white/10 hover:border-primary/50 cursor-pointer group relative overflow-hidden transition-all duration-300"
+                >
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Users className="w-24 h-24 text-primary" />
+                    </div>
+                    <div className="relative z-10 flex flex-col justify-between h-full space-y-4">
+                        <div className="flex items-start justify-between">
+                            <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                                <span className="text-xs font-bold text-white/60">
+                                    {todaysClasses.length} Scheduled
+                                </span>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Class List Table */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        {loadingClasses ? (
-                            <div className="text-center py-20 text-white/30 uppercase tracking-widest font-bold">
-                                <Users className="w-12 h-12 mx-auto mb-4 animate-pulse opacity-50" />
-                                Loading Today&apos;s Classes...
-                            </div>
-                        ) : todaysClasses.length === 0 ? (
-                            <div className="text-center py-20 opacity-30">
-                                <Calendar className="w-12 h-12 mx-auto mb-4" />
-                                <p className="uppercase tracking-widest font-bold">No Classes Scheduled Today</p>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-4 pb-12">
-                                {filteredGymnasts.map((student, index) => (
-                                    <div key={student.id}
-                                        style={{ zIndex: filteredGymnasts.length - index }}
-                                        className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500 cursor-pointer
-                                            hover:-translate-y-2 hover:z-[100] hover:shadow-2xl hover:shadow-emerald-500/20
-                                            ${student.status === 'present' ? 'bg-emerald-500/5 backdrop-blur-xl border-emerald-500/20' :
-                                                student.status === 'completed' ? 'bg-white/5 backdrop-blur-md border-white/5 opacity-60' :
-                                                    student.status === 'absent' ? 'bg-rose-500/5 backdrop-blur-xl border-rose-500/20' :
-                                                        'bg-white/5 backdrop-blur-xl border-white/10'}`}
-                                    >
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-5 min-w-0 flex-1">
-                                                    <div className={`w-16 h-16 rounded-2xl flex-shrink-0 flex flex-col items-center justify-center font-black transition-transform group-hover:scale-110
-                                                        ${student.status === 'present' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                            student.status === 'absent' ? 'bg-rose-500/20 text-rose-400' :
-                                                                'bg-white/5 text-white/40'}`}>
-                                                        <span className="text-xl leading-none">{student.scheduledStart ? format(new Date(`2000-01-01T${student.scheduledStart}`), 'HH:mm') : '--'}</span>
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        {student.status === 'present' && (
-                                                            <div className="mb-1.5 self-start">
-                                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                                                                    <CheckCircle className="w-3 h-3" /> {t('students.active') || 'Present'}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {student.status === 'absent' && (
-                                                            <div className="mb-1.5 self-start">
-                                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-500/20">
-                                                                    <XCircle className="w-3 h-3" /> {t('coaches.away') || 'Absent'}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {student.status === 'completed' && (
-                                                            <div className="mb-1.5 self-start">
-                                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 text-white/50 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5">
-                                                                    <CheckCircle className="w-3 h-3" /> {t('coach.completed') || 'Finished'}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        <h4
-                                                            onClick={(e) => { e.stopPropagation(); setHistoryEntityId(student.id); setHistoryEntityType('student'); setShowHistoryModal(true); }}
-                                                            className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate block w-full"
-                                                        >
-                                                            {student.full_name}
-                                                        </h4>
-                                                        <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-white/30 mt-1">
-                                                            <span className="flex items-center gap-1.5 truncate max-w-[150px]">
-                                                                <Users className="w-3 h-3 flex-shrink-0" />
-                                                                <span className="truncate">
-                                                                    {Array.isArray(student.coaches)
-                                                                        ? (student.coaches[0]?.full_name || 'No Coach')
-                                                                        : (student.coaches?.full_name || 'No Coach')}
-                                                                </span>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Compact Action Footer */}
-                                            <div className="mt-5 pt-3 border-t border-white/10 grid grid-cols-3 gap-1.5">
-                                                <div className={`flex flex-col justify-center min-w-0 rounded-lg px-2 transition-colors
-                                                    ${student.status === 'present' ? 'bg-emerald-500/10' :
-                                                        student.status === 'absent' ? 'bg-rose-500/10' :
-                                                            student.status === 'completed' ? 'bg-white/5 opacity-50' : 'bg-white/5'}`}>
-                                                    <span className={`text-[9.5px] font-black uppercase tracking-tight
-                                                        ${student.status === 'present' ? 'text-emerald-400/50' :
-                                                            student.status === 'absent' ? 'text-rose-400/50' : 'text-white/20'}`}>
-                                                        {student.status === 'completed' ? 'Checked Out' : student.status === 'present' ? 'Checked In' : 'Scheduled'}
-                                                    </span>
-                                                    <span className={`text-[13px] font-black truncate
-                                                        ${student.status === 'present' ? 'text-emerald-400' :
-                                                            student.status === 'absent' ? 'text-rose-400' : 'text-white'}`}>
-                                                        {student.status === 'completed' ? (student.checkOutTime ? format(new Date(student.checkOutTime), 'HH:mm') : '--:--') :
-                                                            student.status === 'present' ? (student.checkInTime ? format(new Date(student.checkInTime), 'HH:mm') : '--:--') :
-                                                                (student.scheduledStart ? format(new Date(`2000-01-01T${student.scheduledStart}`), 'HH:mm') : '--:--')}
-                                                    </span>
-                                                </div>
-
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setEditingNoteId(student.id);
-                                                        setNoteText(student.note || '');
-                                                    }}
-                                                    className={`h-8 px-1 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all flex items-center justify-center gap-1 min-w-0
-                                                        ${student.note ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20' : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'}`}
-                                                >
-                                                    <MessageSquare className="w-3 h-3 flex-shrink-0" />
-                                                    <span className="truncate">{student.note ? 'Note' : 'Add Note'}</span>
-                                                </button>
-
-                                                <div className="min-w-0 flex items-center gap-1.5">
-                                                    {(student.status === 'pending' || student.status === 'absent') && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleStatusUpdate(student.id, 'present'); }}
-                                                            className="h-10 px-3 rounded-lg text-[10px] font-black uppercase tracking-tight bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 hover:bg-emerald-600 transition-all flex items-center justify-center gap-1 min-w-0"
-                                                        >
-                                                            <CheckSquare className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">Check In</span>
-                                                        </button>
-                                                    )}
-                                                    {(student.status === 'pending' || student.status === 'present') && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleStatusUpdate(student.id, 'absent'); }}
-                                                            className={`h-10 px-3 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all flex items-center justify-center gap-1 min-w-0
-                                                                ${student.status === 'present' ? 'bg-white/5 text-rose-400 border border-white/5 hover:bg-rose-500/10' : 'bg-rose-500 text-white shadow-lg shadow-rose-500/40 hover:bg-rose-600'}`}
-                                                        >
-                                                            <XSquare className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">Absent</span>
-                                                        </button>
-                                                    )}
-                                                    {student.status === 'completed' && (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleStatusUpdate(student.id, 'present'); }}
-                                                            className="h-10 w-full px-1 rounded-lg text-[8.5px] font-black uppercase tracking-tight bg-white/5 text-white/40 border border-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-1 min-w-0"
-                                                        >
-                                                            <RotateCcw className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">Reset</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Hidden/Expanded Details */}
-                                        <div className="max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-500 ease-in-out">
-                                            <div className="pt-6 mt-6 border-t border-white/5 flex flex-wrap gap-4">
-                                                {student.note && (
-                                                    <div className="text-sm text-yellow-400 bg-yellow-400/10 px-4 py-2 rounded-xl flex items-center gap-2">
-                                                        <MessageSquare className="w-4 h-4" />
-                                                        {student.note}
-                                                    </div>
-                                                )}
-                                                {student.checkInTime && (
-                                                    <div className="text-sm text-white/40 bg-white/5 px-4 py-2 rounded-xl flex items-center gap-2">
-                                                        <Clock className="w-4 h-4" />
-                                                        Checked in at {format(new Date(student.checkInTime), 'HH:mm')}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Note Input Modal/Overlay in Card */}
-                                        {editingNoteId === student.id && (
-                                            <div className="absolute inset-0 bg-[#0E1D21]/95 z-[110] rounded-2xl p-6 flex items-center gap-4 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-                                                <input
-                                                    autoFocus
-                                                    type="text"
-                                                    value={noteText}
-                                                    onChange={(e) => setNoteText(e.target.value)}
-                                                    placeholder="Add a staff note..."
-                                                    className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50"
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveNote(student.id)}
-                                                />
-                                                <button onClick={() => handleSaveNote(student.id)} className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20"><Save className="w-6 h-6" /></button>
-                                                <button onClick={() => setEditingNoteId(null)} className="p-4 bg-white/10 text-white rounded-2xl"><X className="w-6 h-6" /></button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Recent Check-ins List */}
-                    {/* Only show recent checkins that are NOT 'absent' if we want, or show all actions? user didn't specify. 
-                        Let's keep recent checkins as 'Activity Log' basically. 
-                        But the 'Recent' list in original code was just a view.
-                        I'll keep it as is, but maybe filter out 'absent' if check_in_time is null?
-                        Original logic: eq('date', today). order('check_in_time', false).
-                        If check_in_time is null (absent), they might appear at end or beginning depending on sort nulls.
-                        Let's verify logic of fetchRecentCheckIns. */}
-                </div>
-
-                {/* Staff Attendance Section */}
-                <div className="glass-card rounded-3xl border border-white/10 p-8 flex flex-col h-[650px]">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                            <Users className="w-6 h-6 text-emerald-400" />
-                            {t('reception.coachAttendance') || 'Staff Attendance'}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 bg-white/5 text-xs font-bold uppercase tracking-wider rounded-lg text-white/50">
-                                {filteredCoaches.filter(c => c.status === 'present').length} / {filteredCoaches.length} Present
-                            </span>
+                        <div>
+                            <h2 className="text-3xl font-black text-white tracking-tighter">
+                                {todaysClasses.filter(c => c.status === 'present' || c.status === 'completed').length}
+                                <span className="text-lg text-white/30 ml-2 font-bold uppercase">/ {todaysClasses.length}</span>
+                            </h2>
+                            <p className="text-xs font-bold text-primary uppercase tracking-wider mt-1">Gymnast Attendance</p>
                         </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="flex flex-col gap-4 pb-12">
-                            {filteredCoaches.map((coach, index) => (
-                                <div key={coach.id}
-                                    style={{ zIndex: filteredCoaches.length - index }}
-                                    className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500 cursor-pointer
-                                            hover:-translate-y-2 hover:z-[100] hover:shadow-2xl hover:shadow-emerald-500/20
-                                            ${coach.status === 'present' ? 'bg-[#152b24]/60 backdrop-blur-xl border-emerald-500/30' :
-                                            coach.status === 'absent' ? 'bg-[#2b1515]/60 backdrop-blur-xl border-rose-500/30' :
-                                                'bg-white/5 backdrop-blur-xl border-white/10'}`}
-                                >
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-5 min-w-0 flex-1">
-                                                <div className="relative group-hover:scale-110 transition-transform duration-500 flex-shrink-0">
-                                                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center overflow-hidden border border-white/10">
-                                                        {coach.avatar_url ? (
-                                                            <img src={coach.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className="font-black text-white/50 text-2xl">{coach.full_name[0]}</span>
-                                                        )}
-                                                    </div>
-                                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0E1D21] 
-                                                                ${coach.status === 'present' ? 'bg-emerald-400' :
-                                                            coach.status === 'absent' ? 'bg-rose-500' : 'bg-white/20'}`}>
-                                                    </div>
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    {coach.status === 'present' && (
-                                                        <div className="mb-1.5">
-                                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border border-emerald-500/20">
-                                                                <CheckCircle className="w-3 h-3" /> Active Shift
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    <h4
-                                                        onClick={(e) => { e.stopPropagation(); setHistoryEntityId(coach.id); setHistoryEntityType('coach'); setShowHistoryModal(true); }}
-                                                        className="font-black text-white text-xl tracking-tight group-hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate"
-                                                    >
-                                                        {coach.full_name}
-                                                    </h4>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Compact Action Footer */}
-                                        <div className="mt-5 pt-3 border-t border-white/10 grid grid-cols-3 gap-1.5">
-                                            <div className={`flex flex-col justify-center min-w-0 rounded-lg px-2 transition-colors
-                                                ${coach.status === 'present' ? 'bg-emerald-500/10' :
-                                                    coach.status === 'absent' ? 'bg-rose-500/10' :
-                                                        coach.status === 'completed' ? 'bg-white/5 opacity-50' : 'bg-white/5'}`}>
-                                                <span className={`text-[9.5px] font-black uppercase tracking-tight
-                                                    ${coach.status === 'present' ? 'text-emerald-400/50' :
-                                                        coach.status === 'absent' ? 'text-rose-400/50' : 'text-white/20'}`}>
-                                                    {coach.status === 'completed' ? 'Total Time' : coach.status === 'present' ? 'Active Since' : 'Status'}
-                                                </span>
-                                                <span className={`text-[13px] font-black truncate
-                                                    ${coach.status === 'present' ? 'text-emerald-400' :
-                                                        coach.status === 'absent' ? 'text-rose-400' : 'text-white'}`}>
-                                                    {coach.status === 'completed' ? (
-                                                        (() => {
-                                                            if (!coach.checkInTime || !coach.checkOutTime) return '--:--';
-                                                            const start = new Date(coach.checkInTime).getTime();
-                                                            const end = new Date(coach.checkOutTime).getTime();
-                                                            const diffSeconds = Math.floor((end - start) / 1000);
-                                                            const h = Math.floor(diffSeconds / 3600);
-                                                            const m = Math.floor((diffSeconds % 3600) / 60);
-                                                            return `${h}h ${m}m`;
-                                                        })()
-                                                    ) : coach.status === 'present' ? (coach.checkInTime ? format(new Date(coach.checkInTime), 'HH:mm') : '--:--') :
-                                                        'Offline'}
-                                                </span>
-                                            </div>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingNoteId(coach.id);
-                                                    setNoteText(coach.note || '');
-                                                }}
-                                                className={`h-8 px-1 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all flex items-center justify-center gap-1 min-w-0
-                                                    ${coach.note ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/20' : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'}`}
-                                            >
-                                                <MessageSquare className="w-3 h-3 flex-shrink-0" />
-                                                <span className="truncate">{coach.note ? 'Note' : 'Add Note'}</span>
-                                            </button>
-
-                                            <div className="min-w-0">
-                                                {coach.status === 'present' ? (
-                                                    <div className="h-8 w-full px-1 rounded-lg text-[10px] font-black uppercase tracking-tight bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center gap-1 min-w-0">
-                                                        <Clock className="w-3 h-3 flex-shrink-0 animate-pulse" />
-                                                        <div className="truncate"><StaffTimer startTime={coach.checkInTime} /></div>
-                                                    </div>
-                                                ) : coach.status === 'absent' ? (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleStaffStatusUpdate(coach.id, 'present'); }}
-                                                        className="h-8 w-full px-1 rounded-lg text-[8.5px] font-black uppercase tracking-tight bg-white/5 text-white/40 border border-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-1 min-w-0"
-                                                    >
-                                                        <RotateCcw className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">Reset</span>
-                                                    </button>
-                                                ) : coach.status === 'completed' ? (
-                                                    <div className="h-8 w-full px-1 rounded-lg text-[10px] font-black uppercase tracking-tight bg-white/5 text-white/40 border border-white/5 flex items-center justify-center gap-1 min-w-0 overflow-hidden">
-                                                        <CheckCircle className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">Finished</span>
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleStaffStatusUpdate(coach.id, 'absent'); }}
-                                                        className="h-8 w-full px-1 rounded-lg text-[10px] font-black uppercase tracking-tight bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition-all flex items-center justify-center gap-1 min-w-0"
-                                                    >
-                                                        <XSquare className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">Absent</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="max-h-0 overflow-hidden group-hover:max-h-40 transition-all duration-500 ease-in-out">
-                                        <div className="pt-6 mt-6 border-t border-white/5 flex flex-wrap gap-4">
-                                            {coach.checkInTime && coach.status === 'present' && (
-                                                <div className="text-sm text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl flex items-center gap-2">
-                                                    <Clock className="w-4 h-4" />
-                                                    Shift Start: {format(new Date(coach.checkInTime), 'HH:mm')}
-                                                    <span className="ml-2 font-mono opacity-60">
-                                                        [<StaffTimer startTime={coach.checkInTime} />]
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {coach.note && (
-                                                <div className="text-sm text-yellow-400 bg-yellow-400/10 px-4 py-2 rounded-xl flex items-center gap-2">
-                                                    <MessageSquare className="w-4 h-4" />
-                                                    {coach.note}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {editingNoteId === coach.id && (
-                                        <div className="absolute inset-0 bg-[#0E1D21]/95 z-[110] rounded-2xl p-6 flex items-center gap-4 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-                                            <input
-                                                autoFocus
-                                                type="text"
-                                                value={noteText}
-                                                onChange={(e) => setNoteText(e.target.value)}
-                                                placeholder="Staff note..."
-                                                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50"
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSaveStaffNote(coach.id)}
-                                            />
-                                            <button onClick={() => handleSaveStaffNote(coach.id)} className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20"><Save className="w-6 h-6" /></button>
-                                            <button onClick={() => setEditingNoteId(null)} className="p-4 bg-white/10 text-white rounded-2xl"><X className="w-6 h-6" /></button>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                        <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                            <div
+                                className="h-full bg-primary transition-all duration-500"
+                                style={{ width: `${todaysClasses.length > 0 ? (todaysClasses.filter(c => c.status === 'present' || c.status === 'completed').length / todaysClasses.length) * 100 : 0}%` }}
+                            />
                         </div>
                     </div>
                 </div>
-                {/* PT Attendance Section */}
-                <div className="glass-card rounded-3xl border border-white/10 p-8 flex flex-col h-[650px]">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                            <Dumbbell className="w-6 h-6 text-accent" />
-                            {t('reception.ptGymnast') || 'PT GYMNAST'}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 bg-white/5 text-xs font-bold uppercase tracking-wider rounded-lg text-white/50">
-                                {filteredPT.filter(s => s.status === 'present').length} Active
-                            </span>
-                        </div>
+
+                {/* Staff Attendance Widget */}
+                <div
+                    onClick={() => navigate('/attendance/staff')}
+                    className="glass-card p-6 rounded-2xl border border-white/10 hover:border-emerald-500/50 cursor-pointer group relative overflow-hidden transition-all duration-300"
+                >
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Users className="w-24 h-24 text-emerald-500" />
                     </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="flex flex-col gap-4 pb-12">
-                            {filteredPT.map((item, index) => (
-                                <div key={item.id}
-                                    style={{ zIndex: filteredPT.length - index }}
-                                    className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500 cursor-pointer
-                                            hover:-translate-y-2 hover:z-[100] hover:shadow-2xl hover:shadow-accent/20
-                                            ${item.status === 'present' ? 'bg-emerald-500/5 backdrop-blur-xl border-emerald-500/20' :
-                                            'bg-white/5 backdrop-blur-xl border-white/10'}`}
-                                >
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-5 min-w-0 flex-1">
-                                                <div className={`w-16 h-16 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden font-black text-white/50 text-2xl group-hover:scale-110 transition-transform duration-500
-                                                        ${item.status === 'present' ? 'bg-accent/20 text-accent' : 'bg-white/5'}`}>
-                                                    {item.displayName ? item.displayName[0] : '?'}
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    {item.status === 'present' && (
-                                                        <div className="mb-1.5 self-start">
-                                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                                                                <CheckCircle className="w-3 h-3" /> {t('coach.completed') || 'Attended'}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    <h4
-                                                        onClick={(e) => { e.stopPropagation(); setHistoryEntityId(item.id); setHistoryEntityType('pt'); setShowHistoryModal(true); }}
-                                                        className="font-black text-white text-xl tracking-tight group-hover:text-accent transition-colors hover:underline decoration-accent/30 underline-offset-4 truncate block w-full"
-                                                    >
-                                                        {item.displayName}
-                                                    </h4>
-                                                    <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-white/30 mt-1">
-                                                        <span className="flex items-center gap-1.5 truncate">
-                                                            <Clock className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">{item.coachName || 'No Coach'}</span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Compact Action Footer */}
-                                        <div className="mt-5 pt-3 border-t border-white/10 grid grid-cols-3 gap-1.5">
-                                            {/* Sessions Left */}
-                                            <div className="flex flex-col justify-center min-w-0 rounded-lg px-2 py-1 bg-white/5 transition-colors">
-                                                <span className="text-[9.5px] font-black uppercase tracking-tight text-white/20">
-                                                    Sessions
-                                                </span>
-                                                <span className="text-[13px] font-black truncate text-primary">
-                                                    {item.sessions_total}/{item.sessions_remaining}
-                                                </span>
-                                            </div>
-
-                                            {/* Arrival Time */}
-                                            <div className={`flex flex-col justify-center min-w-0 rounded-lg px-2 py-1 transition-colors
-                                                ${item.status === 'present' ? 'bg-emerald-500/10' : 'bg-white/5'}`}>
-                                                <span className={`text-[9.5px] font-black uppercase tracking-tight
-                                                    ${item.status === 'present' ? 'text-emerald-500/50' : 'text-white/20'}`}>
-                                                    Time
-                                                </span>
-                                                <span className={`text-[13px] font-black truncate
-                                                    ${item.status === 'present' ? 'text-emerald-400' : 'text-white/20'}`}>
-                                                    {item.status === 'present' ? (item.checkInTime ? format(new Date(item.checkInTime), 'HH:mm') : '--:--') : '--:--'}
-                                                </span>
-                                            </div>
-
-                                            <div className="min-w-0">
-                                                {item.status !== 'present' && item.sessions_remaining > 0 ? (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handlePtStatusUpdate(item.id, item.sessions_remaining, 'present'); }}
-                                                        className="h-10 w-full px-1 rounded-lg text-[10px] font-black uppercase tracking-tight bg-accent text-white shadow-lg shadow-accent/40 transition-all hover:bg-accent/80 flex items-center justify-center gap-1 min-w-0"
-                                                    >
-                                                        <CheckSquare className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">Check In</span>
-                                                    </button>
-                                                ) : item.status === 'present' ? (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handlePtStatusUpdate(item.id, item.sessions_remaining, 'pending'); }}
-                                                        className="h-10 w-full px-1 rounded-lg text-[10px] font-black uppercase tracking-tight bg-white/5 text-white/40 border border-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-1 min-w-0 overflow-hidden"
-                                                    >
-                                                        <RotateCcw className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">Reset</span>
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        disabled
-                                                        className="h-10 w-full px-1 rounded-lg text-[10px] font-black uppercase tracking-tight bg-white/5 text-white/20 border border-white/5 transition-all flex items-center justify-center gap-1 min-w-0"
-                                                    >
-                                                        <XCircle className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">No Subs</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                    <div className="relative z-10 flex flex-col justify-between h-full space-y-4">
+                        <div className="flex items-start justify-between">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                                <span className="text-xs font-bold text-white/60">
+                                    {filteredCoaches.length} Staff
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-black text-white tracking-tighter">
+                                {filteredCoaches.filter(c => c.status === 'present').length}
+                                <span className="text-lg text-white/30 ml-2 font-bold uppercase">Active</span>
+                            </h2>
+                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mt-1">Staff Attendance</p>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                            <div
+                                className="h-full bg-emerald-500 transition-all duration-500"
+                                style={{ width: `${filteredCoaches.length > 0 ? (filteredCoaches.filter(c => c.status === 'present').length / filteredCoaches.length) * 100 : 0}%` }}
+                            />
                         </div>
                     </div>
                 </div>
+
+                {/* PT Attendance Widget */}
+                <div
+                    onClick={() => navigate('/attendance/pt')}
+                    className="glass-card p-6 rounded-2xl border border-white/10 hover:border-accent/50 cursor-pointer group relative overflow-hidden transition-all duration-300"
+                >
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Dumbbell className="w-24 h-24 text-accent" />
+                    </div>
+                    <div className="relative z-10 flex flex-col justify-between h-full space-y-4">
+                        <div className="flex items-start justify-between">
+                            <div className="w-12 h-12 rounded-xl bg-accent/20 text-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Dumbbell className="w-6 h-6" />
+                            </div>
+                            <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                                <span className="text-xs font-bold text-white/60">
+                                    {filteredPT.length} Subs
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-black text-white tracking-tighter">
+                                {filteredPT.filter(s => s.status === 'present').length}
+                                <span className="text-lg text-white/30 ml-2 font-bold uppercase">Active</span>
+                            </h2>
+                            <p className="text-xs font-bold text-accent uppercase tracking-wider mt-1">PT Sessions</p>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                            <div
+                                className="h-full bg-accent transition-all duration-500"
+                                style={{ width: `${filteredPT.length > 0 ? (filteredPT.filter(s => s.status === 'present').length / filteredPT.length) * 100 : 0}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
             {/* Modals */}
             {showAddStudent && (
                 <AddStudentForm
@@ -1586,230 +1135,10 @@ export default function ReceptionDashboard() {
                 />
             )}
 
-            {showHistoryModal && historyEntityId && historyEntityType && (
-                <AttendanceHistoryModal
-                    entityId={historyEntityId}
-                    type={historyEntityType}
-                    onClose={() => {
-                        setShowHistoryModal(false);
-                        setHistoryEntityId(null);
-                        setHistoryEntityType(null);
-                    }}
-                />
-            )}
+
         </div>
     );
 }
 
-function AttendanceHistoryModal({ entityId, type, onClose }: { entityId: string, type: 'student' | 'coach' | 'pt', onClose: () => void }) {
-    const { t } = useTranslation();
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [history, setHistory] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [name, setName] = useState('');
 
-    useEffect(() => {
-        fetchHistory();
-        fetchEntityName();
-    }, [entityId, currentMonth]);
-
-    const fetchEntityName = async () => {
-        if (type === 'pt') {
-            const { data } = await supabase.from('pt_subscriptions').select('student_name, students(full_name)').eq('id', entityId).single();
-            if (data) setName((data.students as any)?.full_name || data.student_name);
-            return;
-        }
-        const table = type === 'student' ? 'students' : 'coaches';
-        const { data } = await supabase.from(table).select('full_name').eq('id', entityId).single();
-        if (data) setName(data.full_name);
-    };
-
-    const fetchHistory = async () => {
-        setLoading(true);
-        try {
-            const start = startOfMonth(currentMonth);
-            const end = endOfMonth(currentMonth);
-
-            let table = '';
-            let idField = '';
-
-            if (type === 'pt') {
-                table = 'pt_sessions';
-                idField = 'subscription_id';
-            } else if (type === 'student') {
-                table = 'student_attendance';
-                idField = 'student_id';
-            } else {
-                table = 'coach_attendance';
-                idField = 'coach_id';
-            }
-
-            const { data, error } = await supabase
-                .from(table)
-                .select('*')
-                .eq(idField, entityId)
-                .gte('date', format(start, 'yyyy-MM-dd'))
-                .lte('date', format(end, 'yyyy-MM-dd'));
-
-            if (error) throw error;
-            setHistory(data || []);
-        } catch (error) {
-            console.error('Error fetching history:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const monthDays = eachDayOfInterval({
-        start: startOfMonth(currentMonth),
-        end: endOfMonth(currentMonth)
-    });
-
-    const getRecordForDay = (day: Date) => {
-        return history.find(h => isSameDay(new Date(h.date), day));
-    };
-
-    return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="glass-card w-full max-w-2xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-                <div className="p-8 border-b border-white/10 flex items-center justify-between bg-white/5">
-                    <div>
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                            <Calendar className="w-6 h-6 text-primary" />
-                            {t('reception.attendanceHistory') || 'Attendance History'}
-                        </h2>
-                        <p className="text-white/40 font-bold uppercase tracking-wider text-xs mt-1">{name || 'Loading...'}</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-white/40" />
-                    </button>
-                </div>
-
-                <div className="p-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <button
-                            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                            className="p-3 hover:bg-white/5 rounded-2xl transition-all border border-white/5 text-white/60 hover:text-white"
-                        >
-                            <ChevronLeft className="w-6 h-6" />
-                        </button>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                            {format(currentMonth, 'MMMM yyyy')}
-                        </h3>
-                        <button
-                            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                            className="p-3 hover:bg-white/5 rounded-2xl transition-all border border-white/5 text-white/60 hover:text-white"
-                        >
-                            <ChevronRight className="w-6 h-6" />
-                        </button>
-                    </div>
-
-                    {loading ? (
-                        <div className="h-64 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-7 gap-3">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                                <div key={i} className="text-center text-[10px] font-black text-white/20 uppercase tracking-widest mb-2">
-                                    {day}
-                                </div>
-                            ))}
-                            {/* Empty cells for padding */}
-                            {Array.from({ length: startOfMonth(currentMonth).getDay() }).map((_, i) => (
-                                <div key={`empty-${i}`} className="aspect-square" />
-                            ))}
-                            {monthDays.map((day) => {
-                                const record = getRecordForDay(day);
-                                // For PT sessions, the existence of a record implies 'present'
-                                const status = record?.status || (record ? 'present' : 'none');
-                                return (
-                                    <div
-                                        key={day.toISOString()}
-                                        className={`aspect-square rounded-xl flex flex-col items-center justify-center border transition-all relative group/day
-                                    ${isToday(day) ? 'ring-2 ring-primary/50 ring-offset-2 ring-offset-[#0E1D21]' : ''}
-                                    ${status === 'present' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                                status === 'absent' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
-                                                    'bg-white/5 border-white/5 text-white/20 hover:border-white/10'}`}
-                                    >
-                                        <span className="text-sm font-black">{format(day, 'd')}</span>
-                                        {record && (
-                                            <div className="flex flex-col items-center leading-none mt-1">
-                                                {(record.check_in_time || record.created_at) && (
-                                                    <span className="text-[10.5px] font-black text-white">
-                                                        {format(new Date(record.check_in_time || record.created_at), 'HH:mm')}
-                                                    </span>
-                                                )}
-                                                {record.check_out_time && (
-                                                    <span className="text-[10.5px] font-black text-white/50">
-                                                        {format(new Date(record.check_out_time), 'HH:mm')}
-                                                    </span>
-                                                )}
-                                                {/* If no times but has status, show dot */}
-                                                {!record.check_in_time && !record.created_at && !record.check_out_time && status !== 'none' && (
-                                                    <div className="w-1 h-1 rounded-full bg-current mt-1" />
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Tooltip on hover */}
-                                        <div className="absolute bottom-[110%] left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-lg border border-white/10 text-[10px] font-black uppercase tracking-wider text-white opacity-0 group-hover/day:opacity-100 pointer-events-none transition-all scale-95 group-hover/day:scale-100 z-10 whitespace-nowrap shadow-xl">
-                                            {status === 'none' ? 'No Record' : status.toUpperCase()}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-3 gap-4 mt-8">
-                        <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-2xl text-center">
-                            <div className="text-2xl font-black text-emerald-400">
-                                {history.filter(h => h.status === 'present' || type === 'pt').length}
-                            </div>
-                            <div className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest mt-1">Present</div>
-                        </div>
-                        <div className="bg-rose-500/5 border border-rose-500/10 p-4 rounded-2xl text-center">
-                            <div className="text-2xl font-black text-rose-400">
-                                {type === 'pt' ? 0 : history.filter(h => h.status === 'absent').length}
-                            </div>
-                            <div className="text-[10px] font-black text-rose-500/60 uppercase tracking-widest mt-1">Absent</div>
-                        </div>
-                        <div className="bg-white/5 border border-white/10 p-4 rounded-2xl text-center">
-                            <div className="text-2xl font-black text-white/40">
-                                {monthDays.length > 0 ? Math.round((history.filter(h => h.status === 'present').length / monthDays.length) * 100) : 0}%
-                            </div>
-                            <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-1">Rate</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function StaffTimer({ startTime }: { startTime: string }) {
-    const [elapsed, setElapsed] = useState(0);
-
-    useEffect(() => {
-        const start = new Date(startTime).getTime();
-        const update = () => {
-            const now = new Date().getTime();
-            setElapsed(Math.floor((now - start) / 1000));
-        };
-        update();
-        const interval = setInterval(update, 1000);
-        return () => clearInterval(interval);
-    }, [startTime]);
-
-    const h = Math.floor(elapsed / 3600);
-    const m = Math.floor((elapsed % 3600) / 60);
-    const s = elapsed % 60;
-
-    return (
-        <span>
-            {h.toString().padStart(2, '0')}:{m.toString().padStart(2, '0')}:{s.toString().padStart(2, '0')}
-        </span>
-    );
-}
 

@@ -20,6 +20,9 @@ const PublicRegistration = lazy(() => import('./pages/PublicRegistration'));
 const AdminCameras = lazy(() => import('./pages/AdminCameras'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const PersonalDashboard = lazy(() => import('./pages/PersonalDashboard'));
+const StudentAttendance = lazy(() => import('./pages/StudentAttendance'));
+const StaffAttendance = lazy(() => import('./pages/StaffAttendance'));
+const PTAttendance = lazy(() => import('./pages/PTAttendance'));
 
 // Premium Loading Fallback
 const PageLoader = () => (
@@ -105,6 +108,11 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="my-work" element={<PersonalDashboard />} />
                   <Route path="admin/cameras" element={<AdminCameras />} />
+
+                  {/* Attendance Pages */}
+                  <Route path="attendance/students" element={<StudentAttendance />} />
+                  <Route path="attendance/staff" element={<StaffAttendance />} />
+                  <Route path="attendance/pt" element={<PTAttendance />} />
                 </Route>
               </Route>
 

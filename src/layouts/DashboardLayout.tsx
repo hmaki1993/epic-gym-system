@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -45,22 +45,6 @@ export default function DashboardLayout() {
     const [profileOpen, setProfileOpen] = useState(false);
 
     const isRtl = i18n.language === 'ar' || document.dir === 'rtl';
-    const [gymProfile, setGymProfile] = useState(() => {
-        try {
-            const saved = localStorage.getItem('gymProfile');
-            return saved ? JSON.parse(saved) : {
-                name: t('common.gymNameFallback'),
-                phone: '+20 123 456 7890',
-                address: t('common.gymAddressFallback'),
-            };
-        } catch (e) {
-            return {
-                name: t('common.gymNameFallback'),
-                phone: '+20 123 456 7890',
-                address: t('common.gymAddressFallback'),
-            };
-        }
-    });
 
     // Real notifications state
     const [notifications, setNotifications] = useState<{
@@ -75,6 +59,10 @@ export default function DashboardLayout() {
         related_student_id?: string;
         target_role?: string;
     }[]>([]);
+
+    // Track processed IDs to prevent duplicate toasts/state updates
+    // This persists across renders and isn't affected by fresh closures or StrictMode double-invokes
+    const processedIds = useRef(new Set<string>());
 
     useEffect(() => {
         // Fetch initial notifications
@@ -99,7 +87,11 @@ export default function DashboardLayout() {
                 .limit(20);
 
             const { data } = await query;
-            if (data) setNotifications(data);
+            if (data) {
+                setNotifications(data);
+                // Mark initial loaded IDs as processed so we don't toast them if a race condition happens
+                data.forEach((n: any) => processedIds.current.add(n.id));
+            }
         };
 
         fetchNotifications();
@@ -117,25 +109,30 @@ export default function DashboardLayout() {
                 async (payload) => {
                     const newNote = payload.new as any;
 
-                    // We need a fresh userId from Auth if it's not available in closure
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) return;
 
                     // Only add if it's for this user OR global
                     if (!newNote.user_id || newNote.user_id === user.id) {
+                        // Check against ref to prevent processing same ID twice
+                        if (processedIds.current.has(newNote.id)) return;
+
+                        // Add to processed set immediately
+                        processedIds.current.add(newNote.id);
+
+                        // Trigger toast for new notification if it's unread
+                        // DO THIS OUTSIDE the state updater to avoid StrictMode double-invocation
+                        if (!newNote.is_read) {
+                            toast.success(newNote.title, {
+                                icon: '🔔',
+                                duration: 4000
+                            });
+                        }
+
                         setNotifications(prev => {
-                            // Prevent duplicates
+                            // Double check state just in case (though ref should catch it)
                             if (prev.some(n => n.id === newNote.id)) return prev;
                             const newList = [newNote, ...prev];
-
-                            // Trigger toast for new notification if it's unread
-                            if (!newNote.is_read) {
-                                toast.success(newNote.title, {
-                                    icon: '🔔',
-                                    duration: 4000
-                                });
-                            }
-
                             return newList;
                         });
                     }
@@ -187,8 +184,7 @@ export default function DashboardLayout() {
         fetchStatus();
 
         const handleProfileUpdate = () => {
-            const saved = localStorage.getItem('gymProfile');
-            if (saved) setGymProfile(JSON.parse(saved));
+            // No need to fetch from localStorage anymore, ThemeContext handles it
         };
 
         // Debugging: Monitor Role
@@ -366,18 +362,26 @@ export default function DashboardLayout() {
                     <div className="p-8 pb-4 flex flex-col items-center">
                         <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                            <img src="/logo.png" alt="Epic Gym Logo" className="relative h-24 w-auto object-contain transition-transform hover:scale-110 duration-500" />
+                            <img src={settings.logo_url || "/logo.png"} alt="Epic Gym Logo" className="relative h-24 w-auto object-contain transition-transform hover:scale-110 duration-500" />
                         </div>
 
                         <div className="text-center w-full mt-4">
                             <h2 className="relative flex flex-col items-center">
-                                <span className="text-[10px] font-black tracking-[0.4em] uppercase mb-1" style={{ color: 'var(--color-brand-label)' }}>Epic</span>
-                                <span className="text-sm font-black tracking-[0.2em] text-text-base premium-gradient-text uppercase">Gymnastic Academy</span>
+                                <span
+                                    className="text-sm font-black tracking-[0.2em] uppercase transition-colors duration-300"
+                                    style={{ color: 'var(--color-brand-label)' }}
+                                >
+                                    {settings.academy_name}
+                                </span>
                                 <div className="mt-2 w-8 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
                             </h2>
                             <div className="text-xs text-white/60 mt-2 font-bold space-y-1">
-                                <p className="flex items-center justify-center gap-1"><Building2 className="w-3 h-3" /> {gymProfile.address}</p>
-                                <p dir="ltr" className="flex items-center justify-center gap-1">{gymProfile.phone}</p>
+                                {(settings.gym_address || settings.gym_phone) && (
+                                    <>
+                                        {settings.gym_address && <p className="flex items-center justify-center gap-1"><Building2 className="w-3 h-3" /> {settings.gym_address}</p>}
+                                        {settings.gym_phone && <p dir="ltr" className="flex items-center justify-center gap-1">{settings.gym_phone}</p>}
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -385,7 +389,7 @@ export default function DashboardLayout() {
                     {/* User Profile Section in Sidebar */}
                     <div className="mt-8 px-6 flex flex-col items-center">
                         <div className="text-center">
-                            <h3 className="font-extrabold text-white uppercase tracking-tight text-sm truncate max-w-[200px]">
+                            <h3 className="font-extrabold text-white tracking-tight text-sm truncate max-w-[200px]">
                                 {fullName || t('common.adminRole')}
                             </h3>
                             {role && (
@@ -468,9 +472,9 @@ export default function DashboardLayout() {
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
                         {/* Quick Action Hub */}
-                        <div className="flex items-center gap-2 p-1.5 bg-text-base/5 border border-surface-border rounded-[2rem] shadow-inner backdrop-blur-md">
+                        <div className="flex items-center gap-3 p-2 bg-text-base/5 border border-surface-border rounded-[2rem] shadow-inner backdrop-blur-md">
                             {settings.clock_position === 'header' && (
                                 <div className="hidden md:flex items-center gap-3">
                                     <PremiumClock className="!bg-transparent !border-none !shadow-none !px-2" />
@@ -589,30 +593,20 @@ export default function DashboardLayout() {
                         <div className="relative">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); setNotificationsOpen(false); }}
-                                className={`flex items-center gap-4 px-2 md:pl-6 md:pr-3 py-2 rounded-full md:rounded-[2rem] transition-all group ${profileOpen ? 'bg-white/10 shadow-inner' : 'bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/5 shadow-premium'}`}
+                                className={`flex items-center gap-3 pl-4 pr-1.5 py-1.5 rounded-full transition-all group ${profileOpen ? 'bg-white/10 shadow-inner ring-1 ring-white/10' : 'bg-white/[0.02] border border-white/5 hover:border-white/20 hover:bg-white/5 shadow-sm hover:shadow-premium'}`}
                             >
-                                <div className="hidden sm:flex flex-col items-end leading-none gap-1.5">
-                                    <p className="text-sm font-black text-white uppercase tracking-tight">
-                                        {fullName || userEmail || 'Elite User'}
+                                <div className="hidden sm:flex flex-col items-end leading-none gap-1">
+                                    <p className="text-xs font-black text-white tracking-tight">
+                                        {fullName || 'Elite User'}
                                     </p>
-                                    <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] text-right">
-                                        {role ? t(`roles.${role}`) : 'Admin'}
-                                    </p>
-                                    {userEmail && (
-                                        <p className="text-[8px] font-medium text-white/20 text-right">
-                                            {userEmail}
-                                        </p>
-                                    )}
-                                    <div className="flex items-center gap-1.5">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'} animate-pulse`}></span>
-                                        <span className={`text-[8px] font-black uppercase tracking-widest ${userStatus === 'online' ? 'text-emerald-400/80' : 'text-orange-400/80'}`}>
-                                            {userStatus === 'online' ? t('common.onlineLabel') : t('common.busyLabel')}
-                                        </span>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'} animate-pulse shadow-[0_0_8px_currentColor]`}></span>
+                                        <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{role || 'Admin'}</span>
                                     </div>
                                 </div>
 
                                 <div className="relative">
-                                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-accent p-[1px] group-hover:scale-105 transition-transform duration-500">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent p-[1px] group-hover:scale-105 transition-transform duration-500">
                                         <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
                                             {avatarUrl ? (
                                                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
