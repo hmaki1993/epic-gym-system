@@ -42,6 +42,8 @@ import { initializeTheme } from './utils/theme';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { ThemeProvider } from './context/ThemeContext';
 
+import BackButtonHandler from './components/BackButtonHandler';
+
 function App() {
   console.log('App: Rendering component');
   const { i18n } = useTranslation();
@@ -59,6 +61,7 @@ function App() {
     <CurrencyProvider>
       <ThemeProvider>
         <BrowserRouter>
+          <BackButtonHandler />
           <Toaster
             position="top-center"
             toastOptions={{

@@ -216,7 +216,8 @@ export default function Settings() {
             const inputEmail = userData.email.trim().toLowerCase();
             const currentAuthEmail = user.email?.trim().toLowerCase();
 
-            if (inputEmail && currentAuthEmail && inputEmail !== currentAuthEmail) {
+            // Only allow admin users to update email
+            if (role === 'admin' && inputEmail && currentAuthEmail && inputEmail !== currentAuthEmail) {
                 const { error: authError } = await supabase.auth.updateUser({
                     email: inputEmail
                 });
@@ -532,13 +533,14 @@ export default function Settings() {
                                 </div>
                             </div>
                             <div className="flex justify-center gap-3 mt-8 bg-black/20 p-4 rounded-3xl border border-white/5">
-                                <button onClick={handleSaveTheme} className="relative group overflow-hidden bg-gradient-to-r from-primary via-accent to-primary bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all duration-500 shadow-[0_0_20px_rgba(var(--color-primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--color-primary),0.5)] hover:scale-105 active:scale-95 border border-white/10">
-                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-xl"></div>
-                                    <Save className="w-4 h-4 relative z-10" />
-                                    <span className="relative z-10">{t('settings.saveTheme')}</span>
+                                <button onClick={handleSaveTheme} className="relative group overflow-hidden bg-gradient-to-r from-primary via-accent to-primary bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-[0.25em] text-[11px] flex items-center justify-center transition-all duration-500 shadow-[0_0_30px_rgba(var(--color-primary),0.4)] hover:shadow-[0_0_50px_rgba(var(--color-primary),0.6)] hover:scale-105 active:scale-95 border border-white/20">
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-50"></div>
+                                    <Save className="w-4 h-4 absolute left-5 top-1/2 -translate-y-1/2 z-10 drop-shadow-md opacity-80 group-hover:opacity-100 transition-opacity" />
+                                    <span className="relative z-10 drop-shadow-md">SAVE</span>
                                 </button>
-                                <button onClick={() => setDraftSettings(defaultSettings)} className="bg-white/[0.03] hover:bg-white/[0.08] text-white/40 hover:text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all hover:scale-105 active:scale-95 border border-white/5 hover:border-white/20 backdrop-blur-md flex items-center justify-center">
-                                    {t('settings.discardChanges')}
+                                <button onClick={() => setDraftSettings(defaultSettings)} className="bg-white/[0.03] hover:bg-white/[0.08] text-white/40 hover:text-white px-8 py-4 rounded-2xl font-black uppercase tracking-[0.25em] text-[11px] transition-all hover:scale-105 active:scale-95 border border-white/5 hover:border-white/20 backdrop-blur-md flex items-center justify-center min-w-[120px]">
+                                    RESET
                                 </button>
                             </div>
                         </div>
@@ -661,7 +663,8 @@ export default function Settings() {
                                             type="email"
                                             value={userData.email}
                                             onChange={e => setUserData({ ...userData, email: e.target.value })}
-                                            className={`w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white outline-none font-bold text-sm ${role !== 'admin' ? 'opacity-50' : ''}`}
+                                            disabled={role !== 'admin'}
+                                            className={`w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white outline-none font-bold text-sm ${role !== 'admin' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
                                     </div>
                                     <button type="submit" className="w-full bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl border border-white/10 font-black uppercase tracking-widest text-[10px]">

@@ -585,12 +585,12 @@ export default function CoachDashboard() {
                     </div>
                     <div className="flex flex-col items-center gap-6 relative z-10">
                         {isCheckedIn ? (
-                            <div className="text-5xl font-black text-white tracking-widest font-mono animate-in zoom-in-95 duration-500">
+                            <div className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-widest font-mono animate-in zoom-in-95 duration-500">
                                 {formatTimer(elapsedTime)}
                             </div>
                         ) : dailyTotalSeconds > 0 ? (
                             <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-4 duration-700">
-                                <div className="text-5xl font-black text-emerald-400 tracking-widest font-mono drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+                                <div className="text-3xl sm:text-4xl md:text-5xl font-black text-emerald-400 tracking-widest font-mono drop-shadow-[0_0_20px_rgba(52,211,153,0.3)]">
                                     {formatTimer(dailyTotalSeconds)}
                                 </div>
                                 <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
@@ -598,7 +598,7 @@ export default function CoachDashboard() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-5xl font-black text-white/10 tracking-widest font-mono">00:00:00</div>
+                            <div className="text-3xl sm:text-4xl md:text-5xl font-black text-white/10 tracking-widest font-mono">00:00:00</div>
                         )}
                         <button
                             onClick={isCheckedIn ? handleCheckOut : handleCheckIn}

@@ -390,17 +390,17 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-8 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] transition-all border border-white/10"
+                            className="hidden md:flex px-8 py-4 rounded-3xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white font-black uppercase tracking-[0.2em] text-[10px] transition-all border border-transparent hover:border-white/10 items-center justify-center h-full"
                         >
                             {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-10 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-black uppercase tracking-[0.2em] text-[10px] transition-all flex items-center gap-3 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.4)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                            className="w-full md:w-auto px-12 py-4 rounded-3xl bg-gradient-to-br from-primary via-primary to-emerald-400 text-white font-black uppercase tracking-[0.25em] text-xs transition-all flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] border border-white/20 hover:border-white/40 hover:-translate-y-1 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group/btn"
                         >
-                            <Save className="w-4 h-4" />
-                            {loading ? t('common.saving') : t('common.saveGroup')}
+                            <Save className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" />
+                            {loading ? t('common.saving') : 'SAVE'}
                         </button>
                     </div>
                 </form>

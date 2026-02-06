@@ -46,13 +46,27 @@ export default function Login() {
     return (
         <div className="min-h-screen bg-[#0E1D21] flex flex-col items-center justify-center p-4 relative overflow-hidden font-cairo">
 
-            {/* Background Effects - Premium Atmosphere */}
+            {/* Background Image with Overlay */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[#0B1518]"></div>
-                <div className="absolute top-[10%] right-[10%] w-[60%] h-[60%] bg-[#122E34]/40 rounded-full blur-[180px] animate-pulse"></div>
-                <div className="absolute bottom-[20%] left-[5%] w-[50%] h-[50%] bg-[#622347]/15 rounded-full blur-[150px] transition-all duration-1000"></div>
+                {/* Background Image */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{
+                        backgroundImage: 'url(https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070&auto=format&fit=crop)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }}
+                >
+                    {/* Dark Overlay for readability */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#0E1D21]/95 via-[#122E34]/90 to-[#0E1D21]/95"></div>
 
-                {/* Subtle Moving Particles Overlay */}
+                    {/* Accent Gradient Overlays - Colorful ribbons effect */}
+                    <div className="absolute top-[10%] right-[10%] w-[60%] h-[60%] bg-[#622347]/20 rounded-full blur-[180px] animate-pulse"></div>
+                    <div className="absolute bottom-[20%] left-[5%] w-[50%] h-[50%] bg-[#122E34]/30 rounded-full blur-[150px]"></div>
+                    <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] bg-[#FF6B35]/10 rounded-full blur-[120px]"></div>
+                </div>
+
+                {/* Subtle Texture Overlay */}
                 <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
             </div>
 
@@ -64,7 +78,7 @@ export default function Login() {
                         <img
                             src="/logo.png"
                             alt="Epic Gym Logo"
-                            className="relative h-20 w-auto mx-auto drop-shadow-2xl transition-transform hover:scale-105 duration-500 brightness-110"
+                            className="relative h-28 w-auto mx-auto drop-shadow-2xl transition-transform hover:scale-105 duration-500 brightness-110"
                         />
                     </div>
                 </div>

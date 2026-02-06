@@ -209,6 +209,18 @@ export default function DashboardLayout() {
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
+    // Prevent background scrolling when mobile sidebar is open
+    useEffect(() => {
+        if (sidebarOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [sidebarOpen]);
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         navigate('/login');
@@ -522,7 +534,7 @@ export default function DashboardLayout() {
                             <div className="hidden md:block h-8 w-px bg-surface-border mx-2"></div>
 
                             {/* Notifications Center */}
-                            <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:relative">
+                            <div className="relative">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setNotificationsOpen(!notificationsOpen); setProfileOpen(false); }}
                                     className={`w-10 h-10 flex items-center justify-center rounded-full transition-all relative ${notificationsOpen ? 'bg-primary/20 text-primary shadow-[inset_0_0_15px_rgba(var(--primary-rgb),0.3)] border border-primary/20' : 'text-white/70 bg-white/5 hover:bg-white/10 border border-white/5 shadow-sm hover:shadow-premium'}`}
