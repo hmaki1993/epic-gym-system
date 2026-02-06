@@ -532,11 +532,12 @@ export default function Settings() {
                                 </div>
                             </div>
                             <div className="flex justify-center gap-3 mt-8 bg-black/20 p-4 rounded-3xl border border-white/5">
-                                <button onClick={handleSaveTheme} className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center gap-2 transition-all hover:scale-105">
-                                    <Save className="w-3.5 h-3.5" />
-                                    {t('settings.saveTheme')}
+                                <button onClick={handleSaveTheme} className="relative group overflow-hidden bg-gradient-to-r from-primary via-accent to-primary bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all duration-500 shadow-[0_0_20px_rgba(var(--color-primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--color-primary),0.5)] hover:scale-105 active:scale-95 border border-white/10">
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-xl"></div>
+                                    <Save className="w-4 h-4 relative z-10" />
+                                    <span className="relative z-10">{t('settings.saveTheme')}</span>
                                 </button>
-                                <button onClick={() => setDraftSettings(defaultSettings)} className="bg-white/5 hover:bg-white/10 text-white/40 hover:text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all">
+                                <button onClick={() => setDraftSettings(defaultSettings)} className="bg-white/[0.03] hover:bg-white/[0.08] text-white/40 hover:text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all hover:scale-105 active:scale-95 border border-white/5 hover:border-white/20 backdrop-blur-md flex items-center justify-center">
                                     {t('settings.discardChanges')}
                                 </button>
                             </div>
@@ -830,7 +831,13 @@ function SubscriptionPlansManager() {
             queryClient.invalidateQueries({ queryKey: ['subscription_plans'] });
         } catch (error: any) {
             console.error('Failed to delete plan:', error);
-            toast.error(`Error: ${error.message || 'Failed to delete plan'}`);
+
+            // Check for foreign key constraint violation (Postgres code 23503)
+            if (error?.code === '23503' || error?.message?.includes('foreign key constraint') || error?.details?.includes('still referenced')) {
+                toast.error(t('settings.planInUseError') || 'Cannot delete: Plan is assigned to students/subscriptions.');
+            } else {
+                toast.error(`Error: ${error.message || 'Failed to delete plan'}`);
+            }
             setPlanToDelete(null);
         }
     };

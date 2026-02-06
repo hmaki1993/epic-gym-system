@@ -230,18 +230,7 @@ export default function Finance() {
                         </div>
 
                         <div className="flex items-center gap-2 pr-1 md:pr-2 border-l border-white/10 pl-3 md:pl-4 ml-1 md:ml-2">
-                            <button
-                                onClick={async () => {
-                                    setIsSyncing(true);
-                                    await refetch();
-                                    setTimeout(() => setIsSyncing(false), 500);
-                                    toast.success('Synced');
-                                }}
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90"
-                                title={t('common.sync')}
-                            >
-                                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                            </button>
+
                             <button
                                 onClick={() => setShowTrashModal(true)}
                                 className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-white/5 hover:bg-rose-500/10 flex items-center justify-center text-white/40 hover:text-rose-400 transition-all active:scale-90"

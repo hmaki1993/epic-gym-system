@@ -198,40 +198,50 @@ export default function HeadCoachDashboard() {
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Welcome Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-10">
-                <div className="text-center sm:text-left">
-                    <h1 className="text-xl sm:text-2xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('dashboard.welcome')}, {fullName || t('roles.head_coach')}
-                    </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
-                        <p className="text-white/60 text-sm sm:text-lg font-bold tracking-[0.2em] uppercase opacity-100 italic">
-                            {format(new Date(), 'EEEE, dd MMMM yyyy')}
-                        </p>
-                        {settings.clock_position === 'dashboard' && (
-                            <>
-                                <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-                                <PremiumClock className="scale-110 !px-6 !py-3" />
-                            </>
-                        )}
+            {/* Premium Welcome Header */}
+            <div className="relative group p-8 rounded-[3rem] bg-white/[0.02] border border-white/5 backdrop-blur-md overflow-hidden mb-12 transition-all hover:border-white/10 shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-[100px] rounded-full -mr-32 -mt-32"></div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 animate-in fade-in slide-in-from-left duration-700">
+                    <div>
+                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-2">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
+                        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
+                            <span className="text-white/40 font-medium lowercase italic">{t('dashboard.welcome')},</span>
+                            <span className="premium-gradient-text">{fullName || t('roles.head_coach')}</span>
+                        </h1>
                     </div>
+
+                    {/* Compact Date & Clock Widget */}
+                    {settings.clock_position === 'dashboard' && (
+                        <div className="flex items-center gap-4 p-2 pr-6 bg-black/20 border border-white/5 rounded-full shadow-inner backdrop-blur-xl">
+                            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-accent/20 border border-accent/20 text-accent">
+                                <Calendar className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">{format(new Date(), 'hh:mm a')}</span>
+                            </div>
+
+                            <div className="h-6 w-px bg-white/10"></div>
+                            <div className="scale-95 origin-left">
+                                <PremiumClock className="!bg-transparent !border-none !shadow-none !p-0" />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {/* Attendance Card */}
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
+                <div className="glass-card p-10 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2 bg-white/[0.02]">
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl transition-all duration-700"></div>
                     <div className="flex items-center justify-between mb-8 relative z-10">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-                                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isCheckedIn ? 'bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.8)] animate-pulse' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]'}`}></span>
+                                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isCheckedIn ? 'bg-emerald-400 shadow-[0_0_12px_2px_rgba(52,211,153,0.8)] animate-pulse' : 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]'}`}></span>
                                 <span className={isCheckedIn ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]'}>
                                     {isCheckedIn ? t('coaches.workingNow') : t('coaches.away')}
                                 </span>
                             </p>
                         </div>
-                        <div className="p-4 bg-primary/20 rounded-2xl text-primary">
+                        <div className="p-4 bg-primary/20 rounded-2xl text-primary border border-primary/20">
                             <Clock className="w-6 h-6" />
                         </div>
                     </div>
@@ -246,7 +256,7 @@ export default function HeadCoachDashboard() {
                                     {formatTimer(dailyTotalSeconds)}
                                 </div>
                                 <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Daily Work Summary</span>
+                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Summary</span>
                                 </div>
                             </div>
                         ) : (
@@ -254,7 +264,7 @@ export default function HeadCoachDashboard() {
                         )}
                         <button
                             onClick={isCheckedIn ? handleCheckOut : handleCheckIn}
-                            className={`group/btn w-full py-6 rounded-[2rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-premium ${isCheckedIn ? 'bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white' : 'bg-primary text-white hover:bg-primary/90'}`}
+                            className={`group/btn w-full py-6 rounded-[2rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-98 shadow-premium ${isCheckedIn ? 'bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white' : 'bg-primary text-white hover:bg-primary/90'}`}
                         >
                             {isCheckedIn ? <XCircle className="w-6 h-6" /> : <CheckCircle className="w-6 h-6" />}
                             {isCheckedIn ? t('coach.checkOut') : t('coach.checkIn')}
@@ -262,45 +272,47 @@ export default function HeadCoachDashboard() {
                     </div>
                 </div>
 
-                {/* Quick Actions Actions */}
-                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2">
+                {/* Quick Actions */}
+                <div className="glass-card p-10 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group col-span-1 md:col-span-2 bg-white/[0.02]">
                     <div className="flex items-center justify-between mb-8 relative z-10">
                         <div>
                             <h2 className="text-xl font-black text-white uppercase tracking-tight">Quick Actions</h2>
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mt-2">Manage Academy</p>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mt-2">Elite Management</p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4 relative z-10">
                         <button
                             onClick={() => setShowStudentModal(true)}
-                            className="p-6 rounded-[2rem] bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
+                            className="p-8 rounded-[2rem] bg-accent/5 hover:bg-accent/20 border border-accent/10 hover:border-accent/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
                         >
-                            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-accent group-hover/action:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center text-accent group-hover/action:scale-110 transition-transform shadow-lg shadow-accent/20">
                                 <Plus className="w-6 h-6" />
                             </div>
-                            <span className="text-xs font-black text-white uppercase tracking-widest">Add Student</span>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest text-center">Add Student</span>
                         </button>
                         <button
                             onClick={() => setShowGroupModal(true)}
-                            className="p-6 rounded-[2rem] bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
+                            className="p-8 rounded-[2rem] bg-primary/5 hover:bg-primary/20 border border-primary/10 hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
                         >
-                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover/action:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary group-hover/action:scale-110 transition-transform shadow-lg shadow-primary/20">
                                 <Users className="w-6 h-6" />
                             </div>
-                            <span className="text-xs font-black text-white uppercase tracking-widest">Create Group</span>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest text-center">Create Group</span>
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* Live Floor View (Admin Mode) */}
-            <LiveStudentsWidget />
+            <div className="rounded-[3rem] overflow-hidden border border-white/5 shadow-premium">
+                <LiveStudentsWidget />
+            </div>
 
             {/* All Groups Management */}
-            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium">
+            <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium bg-white/[0.01]">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
-                    <div className="p-3 bg-accent/20 rounded-2xl text-accent"><Users className="w-6 h-6" /></div>
-                    All Academy Groups
+                    <div className="p-3 bg-accent/20 rounded-2xl text-accent border border-accent/20 shadow-lg shadow-accent/5"><Users className="w-6 h-6" /></div>
+                    Academy Structure
                 </h2>
                 <GroupsList showAll={true} />
             </div>

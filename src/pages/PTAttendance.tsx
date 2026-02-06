@@ -149,8 +149,8 @@ export default function PTAttendance() {
                 </div>
             </div>
 
-            <div className="glass-card rounded-2xl border border-white/10 p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="glass-card rounded-2xl border border-white/10 p-3 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                     {filteredPT.map((item) => (
                         <div key={item.id}
                             onClick={() => {

@@ -124,6 +124,14 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
         return format(addMonths(date, monthsToAdd), 'yyyy-MM-dd');
     };
 
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -547,7 +555,9 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                         {/* Start Date & Expiry Date */}
                         <div className="grid grid-cols-2 gap-6 mt-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Start Date</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center gap-2 h-5">
+                                    Start Date
+                                </label>
                                 <input
                                     type="date"
                                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
@@ -556,9 +566,9 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center gap-2">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center gap-2 h-5">
                                     Expiry Date
-                                    <span className="px-2 py-0.5 bg-accent/10 text-accent text-[8px] rounded-full border border-accent/20">Editable</span>
+                                    <span className="px-2 py-0.5 bg-accent/10 text-accent text-[8px] rounded-full border border-accent/20 leading-none">Editable</span>
                                 </label>
                                 <input
                                     type="date"

@@ -260,46 +260,60 @@ export default function PersonalDashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-2">
-                <div className="w-2 h-8 bg-accent rounded-full shadow-[0_0_15px_rgba(var(--accent-rgb),0.5)]"></div>
-                <h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter leading-none">
-                    My Work
-                </h1>
+            {/* Premium Header Architecture */}
+            <div className="relative overflow-hidden group mb-10">
+                <div className="absolute -top-24 -left-24 w-64 h-64 bg-accent/10 blur-[80px] rounded-full pointer-events-none group-hover:bg-accent/20 transition-all duration-1000"></div>
+
+                <div className="glass-card rounded-[2.5rem] border border-white/10 p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 bg-white/[0.02] backdrop-blur-md">
+                    <div className="flex items-center gap-6">
+                        <div className="w-3 h-12 bg-accent rounded-full shadow-[0_0_20px_rgba(var(--accent-rgb),0.5)]"></div>
+                        <div>
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-1.5 italic">personal workspace</p>
+                            <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter leading-none">
+                                My Activity
+                            </h1>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 px-6 py-3 bg-black/20 border border-white/5 rounded-full shadow-inner backdrop-blur-xl shrink-0">
+                        <Calendar className="w-4 h-4 text-accent" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">{format(new Date(), 'dd MMMM yyyy')}</span>
+                    </div>
+                </div>
             </div>
 
             {/* Earnings Widget (Common for Everyone) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
-                <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium relative overflow-hidden group">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mb-12">
+                <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium relative overflow-hidden group bg-white/[0.02]">
                     <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl transition-all duration-700"></div>
-                    <div className="flex items-center justify-between mb-4 relative z-10">
+                    <div className="flex items-center justify-between mb-8 relative z-10">
                         <div>
-                            <h2 className="text-lg font-black text-white uppercase tracking-tight">Personal Earnings</h2>
-                            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">Salary {role !== 'reception' && '+ PT Month'}</p>
+                            <h2 className="text-xl font-black text-white uppercase tracking-tight">Financial Status</h2>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mt-2">Personal Earnings</p>
                         </div>
-                        <div className="p-3 bg-amber-500/20 rounded-xl text-amber-500">
-                            <Wallet className="w-5 h-5" />
+                        <div className="p-4 bg-amber-500/20 rounded-2xl text-amber-500 border border-amber-500/20 shadow-lg shadow-amber-500/5">
+                            <Wallet className="w-6 h-6" />
                         </div>
                     </div>
-                    <div className="flex-1 flex flex-col justify-center items-center py-4 relative z-10">
+                    <div className="flex flex-col items-center py-4 relative z-10">
                         {isLoading ? (
-                            <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                            <div className="w-10 h-10 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
                         ) : (
                             <>
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className="text-5xl font-black text-amber-500 tracking-tighter">{(salary + totalEarnings).toLocaleString()}</h3>
-                                    <span className="text-xs font-black text-white/20 uppercase tracking-widest">{currency.code}</span>
+                                    <h3 className="text-6xl font-black text-amber-500 tracking-tighter drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]">{(salary + totalEarnings).toLocaleString()}</h3>
+                                    <span className="text-xs font-black text-white/20 uppercase tracking-[0.3em]">{currency.code}</span>
                                 </div>
                                 {role !== 'reception' && (
-                                    <div className="flex gap-4 mt-4">
+                                    <div className="flex gap-8 mt-8 p-4 px-8 bg-black/20 rounded-[1.5rem] border border-white/5">
                                         <div className="text-center">
-                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Base</p>
-                                            <p className="text-xs font-bold text-white/60">{salary.toLocaleString()} {currency.code}</p>
+                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1.5 italic">Base Salary</p>
+                                            <p className="text-sm font-black text-white/80 tracking-tight">{salary.toLocaleString()} <span className="text-[9px] opacity-40">{currency.code}</span></p>
                                         </div>
-                                        <div className="w-px h-6 bg-white/10"></div>
+                                        <div className="w-px h-8 bg-white/10"></div>
                                         <div className="text-center">
-                                            <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">PT</p>
-                                            <p className="text-xs font-bold text-white/60">{totalEarnings.toLocaleString()} {currency.code}</p>
+                                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1.5 italic">PT Earnings</p>
+                                            <p className="text-sm font-black text-accent tracking-tight">{totalEarnings.toLocaleString()} <span className="text-[9px] opacity-40">{currency.code}</span></p>
                                         </div>
                                     </div>
                                 )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
-import { X, Save, Clock, Calendar, User, Timer, Search, Check, Users } from 'lucide-react';
+import { X, Save, Clock, Calendar, User, Timer, Search, Check, Users, ChevronDown } from 'lucide-react';
 import { useCoaches, useStudents } from '../hooks/useData';
 import toast from 'react-hot-toast';
 
@@ -203,13 +203,16 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-            <div className="w-full max-w-2xl bg-[#1a1f37] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95dvh] md:max-h-[90vh] my-auto">
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto custom-scrollbar pt-10 md:pt-4">
+            <div className="w-full max-w-3xl bg-[#0E1D21]/95 backdrop-blur-3xl rounded-[3rem] border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[92dvh] md:max-h-[90vh] my-auto">
                 <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0 overflow-hidden">
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight">
-                            {initialData ? t('common.editGroup') : t('common.createGroup')}
-                        </h2>
+                    <div className="p-8 sm:p-10 border-b border-white/10 flex items-center justify-between bg-white/[0.05] shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]"></div>
+                            <h2 className="text-2xl sm:text-3xl font-black premium-gradient-text uppercase tracking-tighter leading-none">
+                                {initialData ? t('common.editGroup') : t('common.createGroup')}
+                            </h2>
+                        </div>
                         <button
                             type="button"
                             onClick={onClose}
@@ -223,34 +226,39 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black text-white/40 uppercase tracking-widest pl-1">{t('common.groupName')}</label>
+                                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] pl-1">{t('common.groupName')}</label>
                                     <input
                                         required
                                         type="text"
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full bg-[#0d1321] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 font-bold placeholder:text-white/10"
+                                        className="w-full bg-white/[0.05] border border-white/10 rounded-2xl px-4 py-4 text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 font-bold placeholder:text-white/10 transition-all shadow-inner"
                                         placeholder=""
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black text-white/40 uppercase tracking-widest pl-1">{t('common.coach')}</label>
-                                    <div className="relative">
+                                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] pl-1 flex items-center gap-2">
+                                        <User className="w-3 h-3" />
+                                        {t('common.coach')}
+                                    </label>
+                                    <div className="relative group/field">
                                         <select
                                             required
                                             value={formData.coach_id}
                                             onChange={e => setFormData({ ...formData, coach_id: e.target.value })}
-                                            className="w-full bg-[#0d1321] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 font-bold appearance-none cursor-pointer"
+                                            className="w-full bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 font-bold appearance-none cursor-pointer transition-all"
                                         >
-                                            <option value=""></option>
+                                            <option value="" className="bg-[#0E1D21]"></option>
                                             {coaches?.filter((c: any) => c.role !== 'reception' && c.role !== 'cleaner').map((coach: any) => (
-                                                <option key={coach.id} value={coach.id}>
+                                                <option key={coach.id} value={coach.id} className="bg-[#0E1D21]">
                                                     {coach.full_name}
                                                 </option>
                                             ))}
                                         </select>
-                                        <User className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-focus-within/field:opacity-100 group-focus-within/field:text-primary transition-all">
+                                            <Users className="w-4 h-4" />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -275,34 +283,41 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black text-white/40 uppercase tracking-widest pl-1">{t('students.startTime')}</label>
-                                        <div className="relative">
+                                        <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] pl-1 flex items-center gap-2">
+                                            <Clock className="w-3 h-3" />
+                                            {t('students.startTime')}
+                                        </label>
+                                        <div className="relative group/field">
                                             <input
                                                 type="time"
                                                 required
                                                 value={formData.startTime}
                                                 onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                                                className="w-full bg-[#0d1321] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 font-bold"
+                                                className="w-full bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 font-bold transition-all"
                                             />
-                                            <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black text-white/40 uppercase tracking-widest pl-1">{t('coaches.duration')}</label>
-                                        <div className="relative">
+                                        <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] pl-1 flex items-center gap-2">
+                                            <Timer className="w-3 h-3" />
+                                            {t('coaches.duration')}
+                                        </label>
+                                        <div className="relative group/field">
                                             <select
                                                 value={formData.duration}
                                                 onChange={e => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                                                className="w-full bg-[#0d1321] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 font-bold appearance-none cursor-pointer"
+                                                className="w-full bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 font-bold appearance-none cursor-pointer transition-all"
                                             >
-                                                <option value="60">{t('common.hour1')}</option>
-                                                <option value="90">{t('common.hour1_5')}</option>
-                                                <option value="120">{t('common.hour2')}</option>
-                                                <option value="150">{t('common.hour2_5')}</option>
-                                                <option value="180">{t('common.hour3')}</option>
-                                                <option value="240">{t('common.hour4')}</option>
+                                                <option value="60" className="bg-[#0E1D21]">{t('common.hour1')}</option>
+                                                <option value="90" className="bg-[#0E1D21]">{t('common.hour1_5')}</option>
+                                                <option value="120" className="bg-[#0E1D21]">{t('common.hour2')}</option>
+                                                <option value="150" className="bg-[#0E1D21]">{t('common.hour2_5')}</option>
+                                                <option value="180" className="bg-[#0E1D21]">{t('common.hour3')}</option>
+                                                <option value="240" className="bg-[#0E1D21]">{t('common.hour4')}</option>
                                             </select>
-                                            <Timer className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                                            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-focus-within/field:opacity-100 group-focus-within/field:text-primary transition-all">
+                                                <ChevronDown className="w-4 h-4" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -313,15 +328,15 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                                     {t('dashboard.addStudent')} <span className="text-primary ml-1">({selectedStudents.length})</span>
                                 </label>
 
-                                <div className="relative mb-4 group/search">
+                                <div className="relative mb-6 group/search">
                                     <input
                                         type="text"
                                         value={studentSearch}
                                         onChange={e => setStudentSearch(e.target.value)}
                                         placeholder=""
-                                        className="w-full bg-[#0d1321] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 text-sm font-bold placeholder:text-white/20 transition-all"
+                                        className="w-full bg-white/[0.05] border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 text-sm font-bold placeholder:text-white/20 transition-all shadow-inner"
                                     />
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within/search:text-primary transition-colors" />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within/search:text-primary transition-colors" />
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0d1321]/50 rounded-2xl border border-white/5 p-2 space-y-1 min-h-0">
@@ -371,18 +386,18 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                         </div>
                     </div>
 
-                    <div className="p-6 border-t border-white/5 bg-white/[0.02] flex justify-end gap-3 shrink-0">
+                    <div className="p-8 border-t border-white/10 bg-white/[0.05] flex justify-end gap-4 shrink-0">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-wide text-xs transition-colors"
+                            className="px-8 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] transition-all border border-white/10"
                         >
                             {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold uppercase tracking-wide text-xs transition-colors flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                            className="px-10 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-black uppercase tracking-[0.2em] text-[10px] transition-all flex items-center gap-3 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.4)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
                         >
                             <Save className="w-4 h-4" />
                             {loading ? t('common.saving') : t('common.saveGroup')}

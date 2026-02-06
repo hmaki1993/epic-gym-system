@@ -52,7 +52,7 @@ export default function DashboardLayout() {
         title: string;
         message: string;
         created_at: string;
-        type: 'student' | 'payment' | 'schedule' | 'coach' | 'check_in' | 'attendance_absence' | 'pt_subscription';
+        type: 'student' | 'payment' | 'schedule' | 'coach' | 'check_in' | 'check_out' | 'attendance_absence' | 'pt_subscription';
         is_read: boolean;
         user_id?: string;
         related_coach_id?: string;
@@ -269,7 +269,7 @@ export default function DashboardLayout() {
         if (normalizedRole === 'admin') return true; // Admin sees all global notes
 
         if (normalizedRole === 'head_coach') {
-            const allowedTypes: string[] = ['coach', 'check_in', 'attendance_absence', 'pt_subscription', 'student'];
+            const allowedTypes: string[] = ['coach', 'check_in', 'check_out', 'attendance_absence', 'pt_subscription', 'student'];
             return allowedTypes.includes(note.type);
         }
 
@@ -280,7 +280,7 @@ export default function DashboardLayout() {
         }
 
         if (normalizedRole === 'reception' || normalizedRole === 'receptionist') {
-            const allowedTypes: string[] = ['payment', 'student', 'check_in', 'attendance_absence', 'pt_subscription'];
+            const allowedTypes: string[] = ['payment', 'student', 'check_in', 'check_out', 'attendance_absence', 'pt_subscription'];
             return allowedTypes.includes(note.type);
         }
 
@@ -303,23 +303,17 @@ export default function DashboardLayout() {
 
             let query = supabase.from('notifications').delete();
 
-            // Broad deletion based on the same logic as filteredNotifications
-            if (normalizedRole === 'admin') {
-                query = query.in('type', ['payment', 'pt_subscription']);
-            } else if (normalizedRole === 'head_coach') {
-                query = query.or(`target_role.eq.head_coach,type.in.(coach,check_in,attendance_absence,pt_subscription,student)`);
-            } else if (normalizedRole === 'reception' || normalizedRole === 'receptionist') {
-                query = query.or(`target_role.in.(reception,receptionist,admin_reception),type.in.(payment,student,check_in,attendance_absence)`);
-            } else if (normalizedRole === 'coach') {
-                query = query.or(`user_id.eq.${userId},target_role.eq.coach`);
-            } else {
-                // Fallback: only delete IDs we definitely know about
-                query = query.in('id', idsToClear);
-            }
+            // Use the explicit list of IDs we want to clear.
+            // This guarantees we delete exactly what the user sees, instead of guessing types/roles.
+            query = query.in('id', idsToClear);
 
             // Safety check: ensure we only delete things targeted to us or global
             // This prevents role filters from accidentally deleting other roles' private notes
-            query = query.or(`user_id.eq.${userId},user_id.is.null`);
+            // UPDATE: For 'Clear All', if the user sees it (in idsToClear), they should be able to delete it.
+            // Especially for Admin who sees everything.
+            if (normalizedRole !== 'admin') {
+                query = query.or(`user_id.eq.${userId},user_id.is.null,target_role.eq.${normalizedRole}`);
+            }
 
             const { error, count } = await query;
 
@@ -358,55 +352,76 @@ export default function DashboardLayout() {
             {/* Sidebar */}
             <aside className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 transition-transform duration-300 transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : isRtl ? 'translate-x-[110%]' : '-translate-x-full'}`}>
                 <div className="h-full glass-card flex flex-col m-4 rounded-[2.5rem] overflow-hidden border border-surface-border shadow-premium">
-                    {/* Sidebar Header */}
-                    <div className="p-8 pb-4 flex flex-col items-center">
-                        <div className="relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                            <img src={settings.logo_url || "/logo.png"} alt="Epic Gym Logo" className="relative h-24 w-auto object-contain transition-transform hover:scale-110 duration-500" />
+                    {/* Sidebar Header - Academy Branding */}
+                    <div className="p-6 pb-2 text-center">
+                        <div className="relative group inline-block mb-3">
+                            <div className="absolute -inset-2 bg-gradient-to-r from-primary/40 to-accent/40 rounded-full blur-md opacity-0 group-hover:opacity-100 transition duration-700"></div>
+                            <img
+                                src={settings.logo_url || "/logo.png"}
+                                alt="Logo"
+                                className="relative h-14 w-auto object-contain transition-all hover:scale-110 duration-500 mx-auto"
+                            />
                         </div>
 
-                        <div className="text-center w-full mt-4">
-                            <h2 className="relative flex flex-col items-center">
-                                <span
-                                    className="text-sm font-black tracking-[0.2em] uppercase transition-colors duration-300"
-                                    style={{ color: 'var(--color-brand-label)' }}
-                                >
-                                    {settings.academy_name}
-                                </span>
-                                <div className="mt-2 w-8 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                        <div className="space-y-1">
+                            <h2 className="text-[13px] font-black tracking-[0.25em] uppercase text-white leading-tight">
+                                {settings.academy_name}
                             </h2>
-                            <div className="text-xs text-white/60 mt-2 font-bold space-y-1">
-                                {(settings.gym_address || settings.gym_phone) && (
-                                    <>
-                                        {settings.gym_address && <p className="flex items-center justify-center gap-1"><Building2 className="w-3 h-3" /> {settings.gym_address}</p>}
-                                        {settings.gym_phone && <p dir="ltr" className="flex items-center justify-center gap-1">{settings.gym_phone}</p>}
-                                    </>
+                            <div className="flex flex-col items-center gap-1 opacity-40">
+                                {settings.gym_address && (
+                                    <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest">
+                                        <Building2 className="w-2.5 h-2.5" />
+                                        {settings.gym_address}
+                                    </p>
                                 )}
+                                {settings.gym_phone && (
+                                    <p dir="ltr" className="text-[9px] font-black flex items-center gap-1 tracking-widest">
+                                        {settings.gym_phone}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-4 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto"></div>
+                    </div>
+
+                    {/* User Profile Card - Premium Glassmorphism */}
+                    <div className="px-5 mt-2 mb-4">
+                        <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/10 shadow-2xl backdrop-blur-md relative overflow-hidden group/profile">
+                            {/* Decorative Glow */}
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 blur-2xl rounded-full -mr-8 -mt-8 group-hover/profile:bg-primary/20 transition-all duration-700"></div>
+
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-accent p-[1px] shadow-lg">
+                                        <div className="w-full h-full rounded-2xl bg-[#0E1D21] flex items-center justify-center overflow-hidden">
+                                            {avatarUrl ? (
+                                                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-white font-black text-sm">
+                                                    {(fullName || role || 'E')[0]}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#122E34] shadow-lg ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'} animate-pulse`}></div>
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-extrabold text-white tracking-tight text-xs truncate">
+                                        {fullName || t('common.adminRole')}
+                                    </h3>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-[9px] text-primary font-black uppercase tracking-wider">{t(`roles.${role}`)}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* User Profile Section in Sidebar */}
-                    <div className="mt-8 px-6 flex flex-col items-center">
-                        <div className="text-center">
-                            <h3 className="font-extrabold text-white tracking-tight text-sm truncate max-w-[200px]">
-                                {fullName || t('common.adminRole')}
-                            </h3>
-                            {role && (
-                                <p className="text-[10px] text-white/40 font-bold truncate uppercase tracking-[0.2em] mt-1 max-w-[200px]">
-                                    {t(`roles.${role}`)}
-                                </p>
-                            )}
-                            {userEmail && (
-                                <p className="text-[9px] text-white/20 font-medium truncate mt-1 max-w-[200px]">
-                                    {userEmail}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Navigation */}
-                    <nav className="flex-1 px-6 mt-8 space-y-2 overflow-y-auto custom-scrollbar">
+                    <nav className="flex-1 px-4 mt-2 mb-2 space-y-1 overflow-y-auto custom-scrollbar">
+                        <div className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em] px-4 mb-2">Main Menu</div>
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.to;
@@ -415,45 +430,44 @@ export default function DashboardLayout() {
                                     key={item.to}
                                     to={item.to}
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`flex items-center px-4 py-3.5 text-sm font-bold rounded-2xl transition-all duration-300 group ${isActive
-                                        ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg shadow-primary/30 scale-[1.02]'
-                                        : 'text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1'
+                                    className={`flex items-center px-4 py-2.5 text-xs font-bold rounded-2xl transition-all duration-300 group relative ${isActive
+                                        ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-xl shadow-primary/20 scale-[1.02]'
+                                        : 'text-white/50 hover:bg-white/[0.04] hover:text-white hover:translate-x-1'
                                         }`}
                                 >
-                                    <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'} ${isRtl ? 'ml-3' : 'mr-3'}`} />
-                                    <span className="tracking-wide">{item.label}</span>
+                                    <Icon className={`w-4 h-4 transition-transform duration-300 ${isActive ? 'scale-110 text-white' : 'group-hover:scale-110'} ${isRtl ? 'ml-3' : 'mr-3'}`} />
+                                    <span className="tracking-widest uppercase">{item.label}</span>
                                     {isActive && (
-                                        <div className={`absolute ${isRtl ? 'left-4' : 'right-4'} w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_white]`} />
+                                        <div className={`absolute ${isRtl ? 'left-4' : 'right-4'} w-1 h-3 rounded-full bg-white shadow-[0_0_12px_white] animate-pulse`} />
                                     )}
                                 </Link>
                             );
                         })}
                     </nav>
 
-                    {/* Sidebar Footer */}
-                    <div className="p-8 mt-auto border-t border-surface-border space-y-2">
-                        {/* Language Toggle - Sidebar */}
+                    {/* Sidebar Footer - Actions Tray */}
+                    <div className="p-4 mx-2 mb-4 rounded-3xl bg-black/20 border border-white/5 flex items-center gap-2">
                         <button
                             onClick={() => {
                                 const newLang = i18n.language === 'en' ? 'ar' : 'en';
                                 i18n.changeLanguage(newLang);
                                 document.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-
-                                // Persist language choice privately
                                 updateSettings({ language: newLang });
                             }}
-                            className="flex items-center w-full px-4 py-3.5 text-sm font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-2xl transition-all duration-300 group"
+                            className="w-10 h-10 flex-shrink-0 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 rounded-2xl transition-all duration-300 group border border-transparent hover:border-white/10 backdrop-blur-sm"
+                            title={i18n.language === 'en' ? 'Arabic' : 'English'}
                         >
-                            <Globe className={`w-5 h-5 transition-transform group-hover:scale-110 ${isRtl ? 'ml-3' : 'mr-3'}`} />
-                            <span className="tracking-wide">{i18n.language === 'en' ? 'العربية' : 'English'}</span>
-                            <span className="ml-auto text-[10px] bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 uppercase tracking-wider">{i18n.language.toUpperCase()}</span>
+                            <Globe className="w-5 h-5 transition-transform group-hover:rotate-45 duration-700" />
                         </button>
+
+                        <div className="h-6 w-px bg-white/5"></div>
+
                         <button
                             onClick={handleLogout}
-                            className="flex items-center w-full px-4 py-3.5 text-sm font-bold text-red-400 hover:text-red-300 hover:bg-white/5 rounded-2xl transition-all duration-300 group"
+                            className="flex-1 h-10 flex items-center justify-center px-2 text-[10px] font-black text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/5 rounded-2xl transition-all duration-300 group border border-transparent hover:border-rose-500/10 uppercase tracking-[0.2em]"
                         >
-                            <LogOut className={`w-5 h-5 transition-transform group-hover:-translate-x-1 ${isRtl ? 'ml-3' : 'mr-3'}`} />
-                            <span className="tracking-wide">{t('common.logout')}</span>
+                            <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isRtl ? 'ml-2' : 'mr-2'}`} />
+                            {t('common.logout')}
                         </button>
                     </div>
                 </div>
@@ -462,11 +476,11 @@ export default function DashboardLayout() {
             {/* Main Content Area */}
             <div className={`flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-500 ${isRtl ? 'lg:mr-72' : 'lg:ml-72'}`}>
                 {/* Header - Elite Reborn */}
-                <header className="h-16 flex items-center justify-between px-6 bg-background/50 backdrop-blur-3xl sticky top-0 z-30 w-full border-b border-surface-border">
+                <header className="relative h-16 flex items-center justify-between px-6 bg-background/50 backdrop-blur-3xl sticky top-0 z-30 w-full border-b border-surface-border">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-3 text-white/70 hover:bg-white/5 rounded-xl transition-all active:scale-90 border border-white/5"
+                            className="lg:hidden w-10 h-10 flex items-center justify-center text-white/70 bg-white/5 hover:bg-white/10 rounded-full transition-all active:scale-95 border border-white/5 shadow-sm hover:shadow-premium"
                         >
                             <Menu className="w-5 h-5" />
                         </button>
@@ -474,7 +488,7 @@ export default function DashboardLayout() {
 
                     <div className="flex items-center gap-6">
                         {/* Quick Action Hub */}
-                        <div className="flex items-center gap-3 p-2 bg-text-base/5 border border-surface-border rounded-[2rem] shadow-inner backdrop-blur-md">
+                        <div className="flex items-center gap-3 md:p-2 md:bg-text-base/5 md:border md:border-surface-border md:rounded-[2rem] md:shadow-inner md:backdrop-blur-md">
                             {settings.clock_position === 'header' && (
                                 <div className="hidden md:flex items-center gap-3">
                                     <PremiumClock className="!bg-transparent !border-none !shadow-none !px-2" />
@@ -508,10 +522,10 @@ export default function DashboardLayout() {
                             <div className="hidden md:block h-8 w-px bg-surface-border mx-2"></div>
 
                             {/* Notifications Center */}
-                            <div className="relative">
+                            <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:relative">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setNotificationsOpen(!notificationsOpen); setProfileOpen(false); }}
-                                    className={`w-11 h-11 flex items-center justify-center rounded-full transition-all relative ${notificationsOpen ? 'bg-primary/20 text-primary shadow-[inset_0_0_15px_rgba(var(--primary-rgb),0.3)]' : 'text-white/70 hover:bg-white/5 border border-transparent'}`}
+                                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all relative ${notificationsOpen ? 'bg-primary/20 text-primary shadow-[inset_0_0_15px_rgba(var(--primary-rgb),0.3)] border border-primary/20' : 'text-white/70 bg-white/5 hover:bg-white/10 border border-white/5 shadow-sm hover:shadow-premium'}`}
                                 >
                                     <Bell className="w-5 h-5" />
                                     {unreadCount > 0 && (
@@ -522,11 +536,11 @@ export default function DashboardLayout() {
                                 </button>
 
                                 {notificationsOpen && (
-                                    <div className={`fixed sm:absolute top-16 sm:top-full left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 right-auto sm:right-[-1rem] sm:mt-6 w-[94vw] sm:w-96 bg-[#0E1D21]/98 backdrop-blur-3xl rounded-[3rem] border border-white/20 shadow-2xl overflow-hidden z-[70] animate-in fade-in slide-in-from-top-4 duration-500`}>
-                                        <div className="p-10 border-b border-white/10 bg-white/[0.05]">
-                                            <h3 className="font-black text-white uppercase tracking-tighter text-2xl">{t('common.notifications') || t('common.recentActivity')}</h3>
+                                    <div className={`fixed sm:absolute top-16 sm:top-full left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 right-auto sm:right-[-1rem] sm:mt-6 w-[94vw] sm:w-96 bg-[#0E1D21]/98 backdrop-blur-3xl rounded-[3rem] border border-white/20 shadow-2xl overflow-hidden z-[70] animate-in fade-in slide-in-from-top-4 duration-500 flex flex-col max-h-[80vh] sm:max-h-auto`}>
+                                        <div className="p-6 sm:p-10 border-b border-white/10 bg-white/[0.05] flex-shrink-0">
+                                            <h3 className="font-black text-white uppercase tracking-tighter text-xl sm:text-2xl">{t('common.notifications') || t('common.recentActivity')}</h3>
                                         </div>
-                                        <div className="max-h-[75vh] sm:max-h-[70vh] overflow-y-auto custom-scrollbar">
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
                                             {filteredNotifications.length === 0 ? (
                                                 <div className="p-12 text-center text-white/10 font-black uppercase tracking-[0.3em] text-[10px]">
                                                     {t('common.noNotifications')}
@@ -541,6 +555,7 @@ export default function DashboardLayout() {
                                                     else if (note.type === 'schedule') { Icon = Calendar; color = 'text-accent'; }
                                                     else if (note.type === 'coach') { Icon = UserCircle; color = 'text-purple-400'; }
                                                     else if (note.type === 'check_in') { Icon = Calendar; color = 'text-green-400'; }
+                                                    else if (note.type === 'check_out') { Icon = Calendar; color = 'text-rose-500'; }
                                                     else if (note.type === 'attendance_absence') { Icon = Calendar; color = 'text-red-400'; }
                                                     else if (note.type === 'pt_subscription') { Icon = Wallet; color = 'text-amber-400'; }
 
@@ -574,7 +589,7 @@ export default function DashboardLayout() {
                                                 })
                                             )}
                                         </div>
-                                        <div className="p-4 bg-white/[0.03] border-t border-white/10">
+                                        <div className="p-4 bg-white/[0.03] border-t border-white/10 flex-shrink-0">
                                             {filteredNotifications.length > 0 && (
                                                 <button
                                                     onClick={handleClearAllNotifications}
@@ -593,12 +608,13 @@ export default function DashboardLayout() {
                         <div className="relative">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); setNotificationsOpen(false); }}
-                                className={`flex items-center gap-3 pl-4 pr-1.5 py-1.5 rounded-full transition-all group ${profileOpen ? 'bg-white/10 shadow-inner ring-1 ring-white/10' : 'bg-white/[0.02] border border-white/5 hover:border-white/20 hover:bg-white/5 shadow-sm hover:shadow-premium'}`}
+                                className={`flex items-center justify-center sm:justify-start gap-0 sm:gap-3 p-0 sm:pl-4 sm:pr-1.5 sm:py-1.5 rounded-full transition-all group w-10 h-10 sm:w-auto sm:h-auto ${profileOpen ? 'bg-white/10 shadow-inner ring-1 ring-white/10' : 'bg-white/[0.02] border border-white/5 hover:border-white/20 hover:bg-white/5 shadow-sm hover:shadow-premium'}`}
                             >
                                 <div className="hidden sm:flex flex-col items-end leading-none gap-1">
                                     <p className="text-xs font-black text-white tracking-tight">
                                         {fullName || 'Elite User'}
                                     </p>
+
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <span className={`w-1.5 h-1.5 rounded-full ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'} animate-pulse shadow-[0_0_8px_currentColor]`}></span>
                                         <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{role || 'Admin'}</span>

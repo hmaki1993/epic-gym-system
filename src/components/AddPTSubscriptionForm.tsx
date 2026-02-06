@@ -91,6 +91,14 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
         }
     };
 
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -200,40 +208,40 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-            <div className="glass-card p-10 rounded-[3rem] border border-white/10 shadow-premium max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
+            <div className="glass-card p-4 sm:p-6 md:p-10 rounded-none sm:rounded-2xl md:rounded-[3rem] border-x-0 sm:border border-white/10 shadow-premium w-full sm:max-w-xl md:max-w-2xl sm:w-full h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden relative animate-in zoom-in-95 duration-300">
                 {/* Gradient Background Effect */}
                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-accent/10 rounded-full blur-3xl pointer-events-none"></div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8 relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="p-4 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/20">
-                            <TrendingUp className="w-7 h-7 text-white" />
+                <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8 relative z-10">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="p-3 sm:p-4 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/20">
+                            <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black text-white uppercase tracking-tight">
+                            <h2 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none sm:leading-tight">
                                 {t('pt.addSubscription') || 'PT Subscription'}
                             </h2>
-                            <p className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] mt-1">
+                            <p className="text-[10px] sm:text-xs font-bold text-white/40 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-1">
                                 Professional Training
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-3 hover:bg-white/5 rounded-2xl transition-all text-white/40 hover:text-white"
+                        className="p-2 sm:p-3 hover:bg-white/5 rounded-2xl transition-all text-white/40 hover:text-white"
                     >
-                        <X className="w-6 h-6" />
+                        <X className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 md:space-y-8 relative z-10">
                     {/* Student Selection */}
                     <div className="group">
-                        <div className="flex items-center justify-between pointer-events-none mb-3 px-4">
-                            <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em]">
+                        <div className="flex items-center justify-between pointer-events-none mb-2 sm:mb-3 px-0 sm:px-4">
+                            <label className="text-[10px] font-medium text-white/30 uppercase tracking-widest sm:tracking-[0.3em]">
                                 {t('common.student') || 'Student'}
                             </label>
                             <button
@@ -254,14 +262,14 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 value={formData.student_name}
                                 onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
                                 placeholder=""
-                                className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                                className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-base sm:text-lg"
                                 required
                             />
                         ) : (
                             <select
                                 value={formData.student_id}
                                 onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                                className={`w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                                className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-base sm:text-lg' : 'text-white/20 font-medium text-sm'
                                     }`}
                                 required
                             >
@@ -277,7 +285,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
 
                     {/* Personal Phone */}
                     <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
                             <User className="w-3 h-3" />
                             {t('common.phone') || 'Personal Phone'}
                         </label>
@@ -285,20 +293,20 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                             type="tel"
                             value={formData.student_phone}
                             onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
-                            className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                            className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-base sm:text-lg"
                         />
                     </div>
 
                     {/* Coach Selection */}
                     <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
                             <User className="w-3 h-3" />
                             {t('common.coach') || 'Coach'}
                         </label>
                         <select
                             value={formData.coach_id}
                             onChange={(e) => setFormData({ ...formData, coach_id: e.target.value })}
-                            className={`w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.coach_id ? 'text-white font-bold text-lg' : 'text-white/20 font-medium text-sm'
+                            className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.coach_id ? 'text-white font-bold text-base sm:text-lg' : 'text-white/20 font-medium text-sm'
                                 }`}
                             required
                         >
@@ -313,7 +321,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
 
                     {/* Sessions Count */}
                     <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors">
                             {t('pt.sessionCount') || 'Number of Sessions'}
                         </label>
                         <input
@@ -321,14 +329,14 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                             min="1"
                             value={formData.sessions_total}
                             onChange={(e) => setFormData({ ...formData, sessions_total: e.target.value })}
-                            className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold text-lg"
+                            className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-base sm:text-lg"
                             required
                         />
                     </div>
 
                     {/* Date Range - Only Start Date Visible */}
                     <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
                             <Calendar className="w-3 h-3" />
                             {t('common.startDate') || 'Start Date'}
                         </label>
@@ -336,14 +344,14 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                             type="date"
                             value={formData.start_date}
                             onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                            className="w-full px-4 py-2 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-8 focus:ring-primary/5 font-bold"
+                            className="w-full px-2 sm:px-4 py-2 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-sm sm:text-base"
                             required
                         />
                     </div>
 
                     {/* Price Input & Display */}
                     <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-[0.3em] mb-3 ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
+                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
                             <DollarSign className="w-3 h-3" />
                             {t('common.price') || 'Price'}
                         </label>
@@ -353,7 +361,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 min="0"
                                 value={formData.price}
                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                className="w-full px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-8 focus:ring-primary/5 font-black text-2xl premium-gradient-text"
+                                className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-black text-xl sm:text-2xl premium-gradient-text"
                                 required
                             />
                             <div className="absolute right-8 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black uppercase tracking-widest pointer-events-none">
@@ -364,13 +372,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
 
                     {/* Action Buttons */}
                     <div className="flex gap-4 pt-6">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-6 py-3 rounded-[2rem] border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95"
-                        >
-                            {t('common.cancel')}
-                        </button>
+
                         <button
                             type="submit"
                             disabled={loading}

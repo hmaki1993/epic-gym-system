@@ -202,89 +202,81 @@ export default function StudentAttendance() {
                                     setSelectedStudentName(student.full_name);
                                     setShowHistoryModal(true);
                                 }}
-                                className={`group relative flex flex-col p-4 rounded-3xl border transition-all duration-300 cursor-pointer hover:shadow-2xl hover:-translate-y-1 backdrop-blur-md
+                                className={`group relative flex flex-col justify-between p-4 aspect-square rounded-[2rem] border transition-all duration-300 cursor-pointer hover:shadow-2xl hover:-translate-y-1 backdrop-blur-md overflow-hidden
                                     ${student.status === 'present' ? 'bg-[#0E1D21]/80 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]' :
                                         student.status === 'completed' ? 'bg-white/5 border-white/5 opacity-50' :
                                             student.status === 'absent' ? 'bg-[#0E1D21]/80 border-rose-500/30' :
                                                 'bg-[#0E1D21]/60 border-white/5 hover:bg-white/5 hover:border-white/10'}`}
                             >
-                                {/* Top Section: Time Box & Info */}
-                                <div className="flex items-center gap-4 mb-4">
-                                    {/* Time Squircle */}
-                                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner backdrop-blur-sm border transition-colors duration-300
+                                {/* Top: Time & Status */}
+                                <div className="flex flex-col items-center w-full pt-2">
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner backdrop-blur-sm border transition-colors duration-300 mb-3
                                         ${student.status === 'present' ? 'bg-emerald-500/10 border-emerald-500/20' :
                                             student.status === 'absent' ? 'bg-rose-500/10 border-rose-500/20' :
                                                 'bg-black/20 border-white/5'}`}>
-                                        <span className={`text-xl font-black tracking-tighter ${student.status === 'present' ? 'text-emerald-400' : student.status === 'absent' ? 'text-rose-400' : 'text-white/90'}`}>
+                                        <span className={`text-lg font-black tracking-tighter ${student.status === 'present' ? 'text-emerald-400' : student.status === 'absent' ? 'text-rose-400' : 'text-white/90'}`}>
                                             {student.scheduledStart ? format(new Date(`2000-01-01T${student.scheduledStart}`), 'HH:mm') : '--:--'}
                                         </span>
                                     </div>
 
-                                    {/* Student & Coach Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-2xl font-black text-white leading-none mb-1.5 tracking-tight drop-shadow-lg">
-                                            {student.full_name}
-                                        </h3>
-                                        <div className="flex items-center gap-2">
-                                            <Users className={`w-3.5 h-3.5 ${student.status === 'absent' ? 'text-white/40' : 'text-emerald-400/80'}`} />
-                                            <span className={`text-xs font-bold uppercase tracking-widest ${student.status === 'absent' ? 'text-white/40' : 'text-emerald-400/80'}`}>
-                                                {(() => {
-                                                    const coachName = Array.isArray(student.coaches)
-                                                        ? student.coaches[0]?.full_name
-                                                        : student.coaches?.full_name;
-                                                    return coachName || 'NOT ASSIGNED';
-                                                })()}
-                                            </span>
-                                        </div>
+                                    <h3 className="text-lg font-black text-white leading-tight text-center tracking-tight drop-shadow-lg mb-1 line-clamp-2 px-1">
+                                        {student.full_name}
+                                    </h3>
+
+                                    <div className="flex items-center gap-1.5 opacity-80">
+                                        <Users className={`w-3 h-3 ${student.status === 'absent' ? 'text-white/40' : 'text-emerald-400/80'}`} />
+                                        <span className={`text-[10px] font-bold uppercase tracking-widest truncate max-w-[120px] ${student.status === 'absent' ? 'text-white/40' : 'text-emerald-400/80'}`}>
+                                            {(() => {
+                                                const coachName = Array.isArray(student.coaches)
+                                                    ? student.coaches[0]?.full_name
+                                                    : student.coaches?.full_name;
+                                                return coachName || 'NO COACH';
+                                            })()}
+                                        </span>
                                     </div>
                                 </div>
 
-                                {/* Divider */}
-                                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
-
-                                {/* Bottom Section: Details & Actions */}
-                                <div className="flex items-center justify-between gap-3 h-10">
-                                    {/* Left: Badge */}
-                                    <div className="flex items-center gap-2 h-full">
-                                        <div className="h-full px-4 rounded-xl bg-black/20 border border-white/5 flex items-center gap-2 backdrop-blur-sm">
-                                            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">At</span>
-                                            <span className="text-sm font-black text-white/80 leading-none pt-0.5">
-                                                {student.scheduledStart ? format(new Date(`2000-01-01T${student.scheduledStart}`), 'HH:mm') : '--:--'}
-                                            </span>
-                                        </div>
+                                {/* Bottom: Info & Actions */}
+                                <div className="w-full flex items-center justify-between gap-2 mt-auto pt-3 border-t border-white/5">
+                                    {/* Time Badge */}
+                                    <div className="h-9 px-3 rounded-xl bg-black/20 border border-white/5 flex items-center gap-1.5 backdrop-blur-sm">
+                                        <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">At</span>
+                                        <span className="text-xs font-black text-white/80 leading-none pt-0.5">
+                                            {student.scheduledStart ? format(new Date(`2000-01-01T${student.scheduledStart}`), 'HH:mm') : '--:--'}
+                                        </span>
                                     </div>
 
-                                    {/* Right: Actions */}
-                                    <div className="flex items-center gap-2 h-full" onClick={e => e.stopPropagation()}>
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                                         {student.status === 'present' ? (
                                             <button
                                                 onClick={() => handleStatusUpdate(student.id, 'completed')}
-                                                className="w-12 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/30 transition-all"
+                                                className="w-10 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/30 transition-all"
                                                 title="Check Out"
                                             >
-                                                <CheckCircle className="w-5 h-5" />
+                                                <CheckCircle className="w-4 h-4" />
                                             </button>
                                         ) : student.status === 'absent' ? (
-                                            <div className="w-12 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center" title="Absent">
-                                                <XCircle className="w-5 h-5" />
+                                            <div className="w-10 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center" title="Absent">
+                                                <XCircle className="w-4 h-4" />
                                             </div>
                                         ) : student.status === 'completed' ? (
-                                            <div className="w-12 h-10 rounded-xl bg-white/5 border border-white/5 text-white/30 flex items-center justify-center" title="Completed">
-                                                <CheckCircle className="w-5 h-5" />
+                                            <div className="w-10 h-9 rounded-xl bg-white/5 border border-white/5 text-white/30 flex items-center justify-center" title="Completed">
+                                                <CheckCircle className="w-4 h-4" />
                                             </div>
                                         ) : (
                                             <>
                                                 <button
                                                     onClick={() => handleStatusUpdate(student.id, 'present')}
-                                                    className="w-12 h-full rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 hover:scale-105 transition-all"
+                                                    className="w-10 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 hover:scale-105 transition-all"
                                                 >
-                                                    <CheckCircle className="w-6 h-6" />
+                                                    <CheckCircle className="w-4.5 h-4.5" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleStatusUpdate(student.id, 'absent')}
-                                                    className="w-12 h-full rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500/20 hover:scale-105 transition-all"
+                                                    className="w-10 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500/20 hover:scale-105 transition-all"
                                                 >
-                                                    <XCircle className="w-6 h-6" />
+                                                    <XCircle className="w-4.5 h-4.5" />
                                                 </button>
                                             </>
                                         )}

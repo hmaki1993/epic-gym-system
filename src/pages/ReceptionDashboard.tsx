@@ -156,16 +156,24 @@ export default function ReceptionDashboard() {
                     setMyCoachId(coachData.id);
                     // 2. Check today's attendance
                     const todayStr = format(new Date(), 'yyyy-MM-dd');
-                    const { data: attendance } = await supabase
+                    const { data: attendanceRecords } = await supabase
                         .from('coach_attendance')
                         .select('*')
                         .eq('coach_id', coachData.id)
-                        .eq('date', todayStr)
-                        .maybeSingle();
+                        .eq('date', todayStr);
 
-                    if (attendance) {
-                        const start = new Date(attendance.check_in_time);
-                        if (!attendance.check_out_time && attendance.check_in_time) {
+                    // Find active record (no check_out_time)
+                    const activeRecord = attendanceRecords?.find(a => !a.check_out_time);
+                    // Or get latest if no active
+                    const latestRecord = attendanceRecords?.length
+                        ? attendanceRecords.sort((a, b) => new Date(b.created_at || b.check_in_time).getTime() - new Date(a.created_at || a.check_in_time).getTime())[0]
+                        : null;
+
+                    const recordToUse = activeRecord || latestRecord;
+
+                    if (recordToUse) {
+                        const start = new Date(recordToUse.check_in_time);
+                        if (!recordToUse.check_out_time && recordToUse.check_in_time) {
                             setIsCheckedIn(true);
                             setCheckInTime(format(start, 'HH:mm:ss'));
                             setElapsedTime(Math.floor((new Date().getTime() - start.getTime()) / 1000));
@@ -173,10 +181,10 @@ export default function ReceptionDashboard() {
                             // Restore timer from local storage if needed or just sync with server time
                             localStorage.setItem(`receptionCheckInStart_${todayStr}`, JSON.stringify({
                                 timestamp: start.getTime(),
-                                recordId: attendance.id
+                                recordId: recordToUse.id
                             }));
-                        } else if (attendance.check_out_time) {
-                            setIsCheckedIn(false);
+                        } else if (recordToUse.check_out_time) {
+                            setIsCheckedIn(false); // Completed
                         }
                     }
                 }
@@ -694,6 +702,7 @@ export default function ReceptionDashboard() {
                     coach_id: myCoachId,
                     date: todayStr,
                     check_in_time: now.toISOString(),
+                    check_out_time: null, // CRITICAL: Explicitly clear checkout time if re-checking in
                     status: 'present'
                 }, { onConflict: 'coach_id,date' })
                 .select().single();

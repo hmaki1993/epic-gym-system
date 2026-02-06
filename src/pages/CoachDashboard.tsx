@@ -536,23 +536,33 @@ export default function CoachDashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Welcome Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
-                <div className="text-center sm:text-left">
-                    <h1 className="text-3xl sm:text-4xl font-black premium-gradient-text tracking-tighter uppercase leading-none">
-                        {t('dashboard.welcome')}, {fullName || 'COACH'}! 👋
-                    </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
-                        <p className="text-white/40 text-xs sm:text-sm font-bold tracking-[0.2em] uppercase opacity-100 italic">
-                            {format(new Date(), 'EEEE, dd MMMM yyyy')}
-                        </p>
-                        {settings.clock_position === 'dashboard' && (
-                            <>
-                                <div className="hidden sm:block w-px h-6 bg-white/10 mx-2"></div>
-                                <PremiumClock className="scale-100 !px-4 !py-2" />
-                            </>
-                        )}
+            {/* Premium Welcome Header */}
+            <div className="relative group p-8 rounded-[3rem] bg-white/[0.02] border border-white/5 backdrop-blur-md overflow-hidden mb-8 transition-all hover:border-white/10 shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-[100px] rounded-full -mr-32 -mt-32"></div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 animate-in fade-in slide-in-from-left duration-700">
+                    <div>
+                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-2">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
+                        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
+                            <span className="text-white/40 font-medium lowercase italic">{t('dashboard.welcome')},</span>
+                            <span className="premium-gradient-text">{fullName || 'COACH'}! 👋</span>
+                        </h1>
                     </div>
+
+                    {/* Compact Date & Clock Widget */}
+                    {settings.clock_position === 'dashboard' && (
+                        <div className="flex items-center gap-4 p-2 pr-6 bg-black/20 border border-white/5 rounded-full shadow-inner backdrop-blur-xl">
+                            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-accent/20 border border-accent/20 text-accent">
+                                <Calendar className="w-4 h-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">{format(new Date(), 'hh:mm a')}</span>
+                            </div>
+
+                            <div className="h-6 w-px bg-white/10"></div>
+                            <div className="scale-95 origin-left">
+                                <PremiumClock className="!bg-transparent !border-none !shadow-none !p-0" />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

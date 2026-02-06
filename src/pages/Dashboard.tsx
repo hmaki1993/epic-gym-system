@@ -99,28 +99,30 @@ export default function Dashboard() {
         <div className="space-y-10">
 
             {/* Premium Welcome Header */}
-            <div className="relative group">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8 animate-in fade-in slide-in-from-left duration-700">
+            <div className="relative group p-8 rounded-[3rem] bg-white/[0.02] border border-white/5 backdrop-blur-md overflow-hidden mb-10 transition-all hover:border-white/10">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -mr-32 -mt-32"></div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 animate-in fade-in slide-in-from-left duration-700">
                     <div>
-                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">{t('common.today') || 'Today'}</p>
-                        <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                            <span className="text-white/60 font-medium">Welcome Back,</span>
+                        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] mb-2">{t('common.today') || 'Today'}</p>
+                        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
+                            <span className="text-white/40 font-medium lowercase italic">welcome,</span>
                             <span className="premium-gradient-text">{fullName || (role ? t(`roles.${role}`) : 'Admin')}</span>
                         </h1>
                     </div>
 
                     {/* Compact Date & Clock Widget */}
-                    <div className="flex items-center gap-3 p-1.5 pr-4 bg-white/[0.03] border border-white/5 rounded-full shadow-inner backdrop-blur-md">
-                        <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-                            <Calendar className="w-3.5 h-3.5 text-primary" />
-                            <span className="text-xs font-black text-white uppercase tracking-wider">{format(new Date(), 'MMM dd')}</span>
+                    <div className="flex items-center gap-4 p-2 pr-6 bg-black/20 border border-white/5 rounded-full shadow-inner backdrop-blur-xl">
+                        <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-primary">
+                            <Calendar className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{format(new Date(), 'MMM dd, yyyy')}</span>
                         </div>
 
                         {settings.clock_position === 'dashboard' && (
                             <>
-                                <div className="h-4 w-px bg-white/10"></div>
-                                <div className="scale-90 origin-left">
-                                    <PremiumClock />
+                                <div className="h-6 w-px bg-white/10"></div>
+                                <div className="scale-95 origin-left">
+                                    <PremiumClock className="!bg-transparent !border-none !shadow-none !p-0" />
                                 </div>
                             </>
                         )}
@@ -131,34 +133,33 @@ export default function Dashboard() {
             {/* Stats Grid - Balanced & Elite */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((stat, index) => (
-                    <div key={index} className="glass-card p-8 rounded-[2.5rem] border border-white/5 shadow-premium group hover:scale-[1.03] transition-all duration-500 hover:border-white/10 relative overflow-hidden">
-                        {/* Subtle background glow */}
-                        <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color}/5 blur-[60px] rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700`}></div>
+                    <div key={index} className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium group hover:scale-[1.03] transition-all duration-500 hover:border-primary/30 relative overflow-hidden bg-white/[0.02]">
+                        <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color}/10 blur-[60px] rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700 opacity-50`}></div>
 
-                        <div className="flex items-center justify-between mb-8">
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 truncate pr-4">{stat.label}</p>
-                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-white ${stat.color} shadow-xl shadow-black/20 group-hover:rotate-12 transition-all duration-500`}>
+                        <div className="flex items-center justify-between mb-8 relative z-10">
+                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 truncate pr-4">{stat.label}</p>
+                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-white ${stat.color} shadow-2xl shadow-black/40 group-hover:rotate-12 transition-all duration-500 border border-white/10`}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-1">
-                            <h3 className="text-4xl font-black text-white tracking-tighter">
+                        <div className="flex flex-col gap-1 relative z-10">
+                            <h3 className="text-5xl font-black text-white tracking-tighter">
                                 {loading ? (
                                     <div className="h-10 w-24 bg-white/5 animate-pulse rounded-xl"></div>
                                 ) : (
                                     stat.value
                                 )}
                             </h3>
-                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] ${stat.trendColor || 'text-white/40'} mt-2`}>
+                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] ${stat.trendColor || 'text-white/40'} mt-3`}>
                                 {stat.isLive ? (
                                     <span className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-current animate-pulse shadow-[0_0_8px_currentColor]"></span>
+                                        <span className="w-2 h-2 rounded-full bg-current animate-pulse shadow-[0_0_12px_currentColor]"></span>
                                         {stat.trend}
                                     </span>
                                 ) : (
                                     <>
-                                        <ArrowUpRight className="w-3 h-3 opacity-50" />
+                                        <ArrowUpRight className="w-3.5 h-3.5 opacity-50" />
                                         {stat.trend}
                                     </>
                                 )}

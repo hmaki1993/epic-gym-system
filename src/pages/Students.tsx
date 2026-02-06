@@ -431,7 +431,7 @@ export default function Students() {
                                 <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-white relative z-10" />
                             </div>
                             <div>
-                                <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight flex items-center gap-2 md:gap-3">
+                                <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight flex flex-wrap items-center gap-2 md:gap-3">
                                     {t('pt.title')}
                                     <span className="px-2 md:px-3 py-0.5 md:py-1 bg-accent/20 text-accent text-[8px] md:text-xs rounded-full border border-accent/30 font-black uppercase tracking-wider">
                                         {t('common.premium')}
@@ -652,7 +652,7 @@ export default function Students() {
 
             {/* Students Table */}
             <div className="glass-card rounded-[2.5rem] overflow-hidden border border-white/10 shadow-premium">
-                <div className="flex flex-col md:flex-row p-6 md:p-8 border-b border-white/5 gap-6 bg-white/[0.02]">
+                <div className="flex flex-col md:flex-row p-6 md:p-8 border-b border-white/5 gap-6 bg-white/[0.02] items-center">
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <div className="p-3 text-white/50">
                             <Users className="w-6 h-6" />
@@ -667,40 +667,39 @@ export default function Students() {
                                 )}
                             </p>
                         </div>
+                    </div>
 
-                        {/* Search Bar */}
-                        <div className="flex-1 w-full md:max-w-[300px] md:mx-8 relative group">
-                            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                                <Search className="w-4 h-4 text-white/40 group-focus-within:text-primary transition-colors duration-300" />
-                            </div>
-                            <input
-                                type="text"
-                                placeholder={t('common.search')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/[0.03] border border-white/5 rounded-full py-2.5 pr-12 text-sm text-white focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all duration-300 shadow-inner"
-                                style={{ paddingLeft: '50px' }}
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => setSearchTerm('')}
-                                    className="absolute inset-y-0 right-4 flex items-center text-white/20 hover:text-white transition-colors"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
+                    {/* Search Bar */}
+                    <div className="flex-1 w-full md:max-w-[300px] md:mx-8 relative group order-last md:order-none">
+                        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                            <Search className="w-4 h-4 text-white/40 group-focus-within:text-primary transition-colors duration-300" />
                         </div>
-
-                        {selectedStudentIds.length > 0 && (
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-white/[0.03] border border-white/5 rounded-full py-2.5 pr-12 text-sm text-white focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all duration-300 shadow-inner"
+                            style={{ paddingLeft: '50px' }}
+                        />
+                        {searchTerm && (
                             <button
-                                onClick={handleBulkDelete}
-                                className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl border border-rose-500/20 flex items-center gap-2 transition-all animate-in fade-in slide-in-from-left-4"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute inset-y-0 right-4 flex items-center text-white/20 hover:text-white transition-colors"
                             >
-                                <Trash2 className="w-4 h-4" />
-                                <span className="text-xs font-black uppercase tracking-wider">{t('finance.bulkDelete')}</span>
+                                <X className="w-4 h-4" />
                             </button>
                         )}
                     </div>
+
+                    {selectedStudentIds.length > 0 && (
+                        <button
+                            onClick={handleBulkDelete}
+                            className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl border border-rose-500/20 flex items-center gap-2 transition-all animate-in fade-in slide-in-from-left-4"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-xs font-black uppercase tracking-wider">{t('finance.bulkDelete')}</span>
+                        </button>
+                    )}
 
                     <button
                         onClick={() => {
@@ -787,85 +786,97 @@ export default function Students() {
             </div>
 
             {/* Modals */}
-            {showAddModal && (
-                <AddStudentForm
-                    onClose={() => {
-                        setShowAddModal(false);
-                        setEditingStudent(null);
-                    }}
-                    initialData={editingStudent}
-                    onSuccess={() => {
-                        setShowAddModal(false);
-                        setEditingStudent(null);
-                        refetch();
-                    }}
-                />
-            )}
+            {
+                showAddModal && (
+                    <AddStudentForm
+                        onClose={() => {
+                            setShowAddModal(false);
+                            setEditingStudent(null);
+                        }}
+                        initialData={editingStudent}
+                        onSuccess={() => {
+                            setShowAddModal(false);
+                            setEditingStudent(null);
+                            refetch();
+                        }}
+                    />
+                )
+            }
 
-            {(showPTModal || ptToEdit) && (
-                <AddPTSubscriptionForm
-                    editData={ptToEdit}
-                    onClose={() => {
-                        setShowPTModal(false);
-                        setPtToEdit(null);
-                    }}
-                    onSuccess={() => {
-                        setShowPTModal(false);
-                        setPtToEdit(null);
-                        fetchPTSubscriptions();
-                    }}
-                />
-            )}
+            {
+                (showPTModal || ptToEdit) && (
+                    <AddPTSubscriptionForm
+                        editData={ptToEdit}
+                        onClose={() => {
+                            setShowPTModal(false);
+                            setPtToEdit(null);
+                        }}
+                        onSuccess={() => {
+                            setShowPTModal(false);
+                            setPtToEdit(null);
+                            fetchPTSubscriptions();
+                        }}
+                    />
+                )
+            }
 
-            {showPTRenewModal && ptToRenew && (
-                <RenewPTSubscriptionForm
-                    subscription={ptToRenew}
-                    onClose={() => {
-                        setShowPTRenewModal(false);
-                        setPtToRenew(null);
-                    }}
-                    onSuccess={() => {
-                        setShowPTRenewModal(false);
-                        setPtToRenew(null);
-                        fetchPTSubscriptions();
-                    }}
-                />
-            )}
+            {
+                showPTRenewModal && ptToRenew && (
+                    <RenewPTSubscriptionForm
+                        subscription={ptToRenew}
+                        onClose={() => {
+                            setShowPTRenewModal(false);
+                            setPtToRenew(null);
+                        }}
+                        onSuccess={() => {
+                            setShowPTRenewModal(false);
+                            setPtToRenew(null);
+                            fetchPTSubscriptions();
+                        }}
+                    />
+                )
+            }
 
-            {showRenewModal && studentToRenew && (
-                <RenewSubscriptionForm
-                    student={studentToRenew}
-                    onClose={() => {
-                        setShowRenewModal(false);
-                        setStudentToRenew(null);
-                    }}
-                    onSuccess={() => {
-                        setShowRenewModal(false);
-                        setStudentToRenew(null);
-                        refetch();
-                    }}
-                />
-            )}
+            {
+                showRenewModal && studentToRenew && (
+                    <RenewSubscriptionForm
+                        student={studentToRenew}
+                        onClose={() => {
+                            setShowRenewModal(false);
+                            setStudentToRenew(null);
+                        }}
+                        onSuccess={() => {
+                            setShowRenewModal(false);
+                            setStudentToRenew(null);
+                            refetch();
+                        }}
+                    />
+                )
+            }
 
-            {idToDelete && (
-                <ConfirmModal
-                    isOpen={!!idToDelete}
-                    onClose={() => setIdToDelete(null)}
-                    onConfirm={handleDelete}
-                    title={t('students.deleteConfirm')}
-                    message={t('students.deleteWarning')}
-                />
-            )}
+            {
+                idToDelete && (
+                    <ConfirmModal
+                        isOpen={!!idToDelete}
+                        onClose={() => setIdToDelete(null)}
+                        onConfirm={handleDelete}
+                        title={t('students.deleteConfirm')}
+                        message={t('students.deleteWarning')}
+                    />
+                )
+            }
 
-            {ptToDelete && (
-                <ConfirmModal
-                    isOpen={!!ptToDelete}
-                    onClose={() => setPtToDelete(null)}
-                    onConfirm={handleDeletePT}
-                    title="Delete PT Subscription"
-                    message={`Are you sure you want to delete the PT subscription for ${ptToDelete.students?.full_name || ptToDelete.student_name || 'this student'}? This action cannot be undone.`}
-                />
-            )}
+            {
+                ptToDelete && (
+                    <ConfirmModal
+                        isOpen={!!ptToDelete}
+                        onClose={() => setPtToDelete(null)}
+                        onConfirm={handleDeletePT}
+                        title="Delete PT Subscription"
+                        message={`Are you sure you want to delete the PT subscription for ${ptToDelete.students?.full_name || ptToDelete.student_name || 'this student'}? This action cannot be undone.`}
+                    />
+                )
+            }
 
             <ConfirmModal
                 isOpen={showBulkDeleteModal}
@@ -875,6 +886,6 @@ export default function Students() {
                 message={t('common.confirmDeleteSelectedMessage', { count: selectedStudentIds.length })}
                 type="danger"
             />
-        </div>
+        </div >
     );
 }
