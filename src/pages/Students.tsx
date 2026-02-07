@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { debounce } from 'lodash';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, X, Smile, Edit, Trash2, TrendingUp, User as UserIcon, Calendar, RefreshCw, Users } from 'lucide-react';
+import { Plus, Search, X, Smile, Edit, Trash2, TrendingUp, User as UserIcon, Calendar, RefreshCw, Users, FileSpreadsheet } from 'lucide-react';
 import { differenceInDays, format } from 'date-fns';
 import AddStudentForm from '../components/AddStudentForm';
 import AddPTSubscriptionForm from '../components/AddPTSubscriptionForm';
 import RenewSubscriptionForm from '../components/RenewSubscriptionForm';
 import RenewPTSubscriptionForm from '../components/RenewPTSubscriptionForm';
 import ConfirmModal from '../components/ConfirmModal';
+import ImportStudentsModal from '../components/ImportStudentsModal';
 import { useTranslation } from 'react-i18next';
 import { useStudents } from '../hooks/useData';
 import toast from 'react-hot-toast';
@@ -213,6 +214,7 @@ export default function Students() {
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Low-level debounced search to avoid heavy processing on every character
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -702,6 +704,14 @@ export default function Students() {
                     )}
 
                     <button
+                        onClick={() => setShowImportModal(true)}
+                        className="bg-gradient-to-r from-[#622347] to-[#8B3A62] hover:from-[#622347]/90 hover:to-[#8B3A62]/90 text-white px-6 py-3 rounded-full shadow-lg shadow-[#622347]/20 transition-all hover:scale-105 active:scale-95 whitespace-nowrap flex items-center gap-2 font-black uppercase tracking-widest text-xs"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Import CSV
+                    </button>
+
+                    <button
                         onClick={() => {
                             setEditingStudent(null);
                             setShowAddModal(true);
@@ -885,6 +895,12 @@ export default function Students() {
                 title={t('common.deleteSelected')}
                 message={t('common.confirmDeleteSelectedMessage', { count: selectedStudentIds.length })}
                 type="danger"
+            />
+
+            <ImportStudentsModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => refetch()}
             />
         </div >
     );

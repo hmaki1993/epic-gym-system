@@ -48,55 +48,38 @@ export default function Login() {
 
             {/* Background Image with Overlay */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                {/* Background Image */}
+                {/* Background Image - Gymnast */}
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{
-                        backgroundImage: 'url(https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070&auto=format&fit=crop)',
+                        backgroundImage: 'url(/login-bg.jpg)',
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center',
+                        backgroundPosition: 'center 30%',
                     }}
                 >
-                    {/* Dark Overlay for readability */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#0E1D21]/95 via-[#122E34]/90 to-[#0E1D21]/95"></div>
+                    {/* Sophisticated Dark Overlay - Allows custom image to show through beautifully */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#0E1D21]/60 via-[#122E34]/50 to-[#0E1D21]/60"></div>
 
-                    {/* Accent Gradient Overlays - Colorful ribbons effect */}
-                    <div className="absolute top-[10%] right-[10%] w-[60%] h-[60%] bg-[#622347]/20 rounded-full blur-[180px] animate-pulse"></div>
-                    <div className="absolute bottom-[20%] left-[5%] w-[50%] h-[50%] bg-[#122E34]/30 rounded-full blur-[150px]"></div>
-                    <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] bg-[#FF6B35]/10 rounded-full blur-[120px]"></div>
+                    {/* Accent Gradient Overlays - Subtle enhancements */}
+                    <div className="absolute top-[15%] right-[10%] w-[50%] h-[50%] bg-[#622347]/15 rounded-full blur-[200px] animate-pulse"></div>
+                    <div className="absolute bottom-[15%] left-[10%] w-[45%] h-[45%] bg-[#122E34]/35 rounded-full blur-[180px]"></div>
+                    <div className="absolute top-[50%] left-[40%] w-[35%] h-[35%] bg-[#FF6B35]/15 rounded-full blur-[140px]"></div>
                 </div>
 
-                {/* Subtle Texture Overlay */}
-                <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                {/* Subtle Vignette Effect */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(14,29,33,0.4)_100%)]"></div>
             </div>
 
-            <div className="w-full max-w-md relative z-10 scale-90 md:scale-100">
-                {/* Logo Section */}
-                <div className="mb-4 text-center animate-in fade-in slide-in-from-top-8 duration-1000">
-                    <div className="relative inline-block group">
-                        <div className="absolute -inset-6 bg-gradient-to-r from-[#622347]/30 to-[#122E34]/30 rounded-full blur-2xl opacity-40 group-hover:opacity-100 transition duration-1000"></div>
-                        <img
-                            src="/logo.png"
-                            alt="Epic Gym Logo"
-                            className="relative h-28 w-auto mx-auto drop-shadow-2xl transition-transform hover:scale-105 duration-500 brightness-110"
-                        />
-                    </div>
-                </div>
+            <div className="w-full max-w-md relative z-10 scale-90 md:scale-100 translate-y-12">
 
-                {/* Login Card */}
-                <div className="relative p-[1px] rounded-[2.5rem] bg-gradient-to-br from-white/10 via-transparent to-white/5 shadow-2xl animate-in fade-in zoom-in-95 duration-700">
-                    <div className="bg-[#122E34]/30 backdrop-blur-3xl rounded-[2.4rem] p-6 md:p-8 border border-white/5 shadow-inner relative overflow-hidden">
+
+                {/* Login Card - Ghost Interactive with Mobile Optimization */}
+                <div className="relative p-[1px] rounded-[2.5rem] bg-gradient-to-br from-white/10 via-transparent to-white/5 md:from-transparent md:via-transparent md:to-transparent md:hover:from-white/10 md:hover:via-transparent md:hover:to-white/5 focus-within:from-white/10 focus-within:via-transparent focus-within:to-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] md:shadow-none md:hover:shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] focus-within:shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 ease-out group opacity-100 md:opacity-30 md:hover:opacity-100 focus-within:opacity-100 animate-in fade-in zoom-in-95">
+                    <div className="bg-[#122E34]/5 md:bg-transparent md:hover:bg-[#122E34]/5 focus-within:bg-[#122E34]/5 backdrop-blur-[2px] md:backdrop-blur-none md:hover:backdrop-blur-[2px] focus-within:backdrop-blur-[2px] rounded-[2.4rem] p-6 md:p-8 border border-white/5 md:border-transparent md:hover:border-white/5 focus-within:border-white/5 shadow-inner md:shadow-none md:hover:shadow-inner focus-within:shadow-inner relative overflow-hidden transition-all duration-300 ease-out">
                         {/* Internal Decorative Glow */}
                         <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#622347]/10 rounded-full blur-3xl"></div>
 
-                        <div className="mb-6 text-center relative z-10">
-                            <h1 className="text-3xl font-black text-white uppercase tracking-tighter premium-gradient-text-mind">
-                                {t('common.login')}
-                            </h1>
-                            <p className="text-[#677E8A] mt-2 text-[9px] font-black uppercase tracking-[0.4em]">
-                                Welcome to the Legacy
-                            </p>
-                        </div>
+
 
                         {error && (
                             <div className="bg-rose-500/10 text-rose-400 text-[10px] font-black p-3 rounded-xl mb-6 border border-rose-500/20 text-center uppercase tracking-widest animate-in shake duration-500">
