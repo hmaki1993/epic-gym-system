@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
-import { X, Save, UserPlus, ChevronDown } from 'lucide-react';
+import { X, Save, UserPlus, ChevronDown, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface AddCoachFormProps {
@@ -262,6 +262,16 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
                                             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                                         </div>
+                                    )}
+                                    {formData.avatar_url && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, avatar_url: '', image_pos_x: 50, image_pos_y: 50 }))}
+                                            className="absolute inset-0 bg-rose-500/60 opacity-0 group-hover/img:opacity-100 transition-opacity z-20 flex items-center justify-center text-white"
+                                            title="Remove Image"
+                                        >
+                                            <Trash2 className="w-8 h-8 scale-75 group-hover/img:scale-100 transition-transform duration-500" />
+                                        </button>
                                     )}
                                 </div>
 

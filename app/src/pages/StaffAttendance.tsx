@@ -4,7 +4,8 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, subMonths, addMonths } from 'date-fns';
 import { Users, Search, ChevronLeft, Calendar, ChevronRight, X, XCircle, CheckCircle, Clock, LogIn, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useTheme } from '../context/ThemeContext'; // Assuming this provides generic user info if needed
+import { useTheme } from '../context/ThemeContext';
+import ImageLightbox from '../components/ImageLightbox';
 import toast from 'react-hot-toast';
 
 export default function StaffAttendance() {
@@ -19,6 +20,7 @@ export default function StaffAttendance() {
     // History Modal State
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [selectedCoachId, setSelectedCoachId] = useState<string | null>(null);
+    const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
     const fetchCoachesStatus = async () => {
         try {
@@ -260,10 +262,17 @@ export default function StaffAttendance() {
 
                                 {/* Avatar Section */}
                                 <div className="relative mb-4 mt-2">
-                                    <div className={`w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden border-2 shadow-2xl transition-all duration-500
+                                    <div className={`w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden border-2 shadow-2xl transition-all duration-500 cursor-zoom-in active:scale-95
                                         ${coach.status === 'present' ? 'border-emerald-500/50 shadow-emerald-900/50' :
                                             coach.status === 'absent' ? 'border-rose-500/50 shadow-rose-900/50' :
-                                                'border-white/10 bg-white/5'}`}>
+                                                'border-white/10 bg-white/5'}`}
+                                        onClick={(e) => {
+                                            if (coach.avatar_url) {
+                                                e.stopPropagation();
+                                                setEnlargedImage(coach.avatar_url);
+                                            }
+                                        }}
+                                    >
                                         {coach.avatar_url ? (
                                             <img src={coach.avatar_url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                         ) : (
@@ -394,6 +403,10 @@ export default function StaffAttendance() {
                 )
             }
 
+            <ImageLightbox
+                imageUrl={enlargedImage}
+                onClose={() => setEnlargedImage(null)}
+            />
         </div >
     );
 }
