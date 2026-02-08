@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, DollarSign } from 'lucide-react';
 import { useStudents } from '../hooks/useData';
+import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useCurrency } from '../context/CurrencyContext';
@@ -37,6 +38,17 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
                 reason: formData.reason || undefined,
                 refund_date: formData.refund_date
             });
+
+            // Notification: Refund (Admin + Reception)
+            const studentName = students?.find((s: any) => s.id === formData.student_id)?.full_name || 'Student';
+            await supabase.from('notifications').insert({
+                type: 'financial',
+                title: 'Refund Issued',
+                message: `Refund: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} for ${studentName}`,
+                target_role: 'admin_reception',
+                is_read: false
+            });
+
             toast.success('Refund added successfully');
             onSuccess();
             onClose();

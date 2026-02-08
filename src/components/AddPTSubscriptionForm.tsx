@@ -22,7 +22,7 @@ interface Coach {
 }
 
 interface Student {
-    id: number;
+    id: string;
     full_name: string;
 }
 
@@ -122,7 +122,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
             const totalPrice = Number(formData.price);
 
             const payload = {
-                student_id: isGuest ? null : Number(formData.student_id),
+                student_id: isGuest ? null : formData.student_id,
                 student_name: isGuest ? formData.student_name : null,
                 coach_id: formData.coach_id,
                 sessions_total: totalSessions,
@@ -155,11 +155,11 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                         amount: Number(formData.price),
                         payment_date: formData.start_date || format(new Date(), 'yyyy-MM-dd'),
                         payment_method: 'cash',
-                        notes: `PT Subscription - ${isGuest ? formData.student_name : (students.find(s => s.id === parseInt(formData.student_id))?.full_name)} - Coach ${selectedCoach?.full_name}`
+                        notes: `PT Subscription - ${isGuest ? formData.student_name : (students.find(s => s.id === formData.student_id)?.full_name)} - Coach ${selectedCoach?.full_name}`
                     };
 
                     if (!isGuest && formData.student_id) {
-                        paymentData.student_id = parseInt(formData.student_id);
+                        paymentData.student_id = formData.student_id;
                     }
 
                     const { error: paymentError } = await supabase.from('payments').insert(paymentData);
@@ -176,7 +176,7 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                 // New Notification for the assigned Coach
                 try {
                     if (selectedCoach?.profile_id) {
-                        const studentName = isGuest ? formData.student_name : (students.find(s => s.id === parseInt(formData.student_id))?.full_name);
+                        const studentName = isGuest ? formData.student_name : (students.find(s => s.id === formData.student_id)?.full_name);
 
                         await supabase.from('notifications').insert({
                             type: 'pt_subscription',

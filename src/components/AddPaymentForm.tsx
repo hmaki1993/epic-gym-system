@@ -72,14 +72,14 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
 
             if (error) throw error;
 
-            // Create notification for admin
+            // Create notification for admin + receiver
             if (selectedStudent || formData.is_guest) {
                 const payerName = formData.is_guest ? formData.guest_name : (selectedStudent?.full_name || 'Student');
                 await supabase.from('notifications').insert({
                     type: 'payment',
                     title: 'Payment Received',
                     message: `Payment: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} from ${payerName}`,
-                    user_id: null, // null means all admins
+                    target_role: 'admin_reception',
                     is_read: false
                 });
             }

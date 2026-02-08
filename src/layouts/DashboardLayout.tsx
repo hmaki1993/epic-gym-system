@@ -292,6 +292,10 @@ export default function DashboardLayout() {
                 return true;
             }
 
+            if (target === 'admin_head_reception' && (normalizedRole === 'admin' || normalizedRole === 'head_coach' || normalizedRole === 'reception' || normalizedRole === 'receptionist')) {
+                return true;
+            }
+
             console.log('🔔 Notification Filter: target_role mismatch', { target, normalizedRole });
             return false;
         }

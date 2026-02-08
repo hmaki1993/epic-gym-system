@@ -624,6 +624,21 @@ export default function ReceptionDashboard() {
             }
 
             toast.success(newStatus === 'present' ? 'Marked as Present' : newStatus === 'completed' ? 'Session Completed' : 'Marked as Absent');
+
+            // Notification: Student Attendance (Admin + Head Coach + Reception)
+            if (newStatus === 'present' || newStatus === 'completed') {
+                const studentName = todaysClasses.find(s => s.id === studentId)?.full_name || 'Student';
+                const action = newStatus === 'present' ? 'Checked In' : 'Checked Out';
+
+                await supabase.from('notifications').insert({
+                    type: 'attendance',
+                    title: `Student ${action}`,
+                    message: `${studentName} has ${action.toLowerCase()}.`,
+                    target_role: 'admin_head_reception',
+                    is_read: false
+                });
+            }
+
             fetchRecentCheckIns();
             fetchTodaysClasses();
         } catch (error) {
@@ -680,6 +695,20 @@ export default function ReceptionDashboard() {
                 toast.success('Marked as Absent');
             }
 
+            // Notification: Staff Attendance (Admin + Head Coach + Reception)
+            if (newStatus === 'present' || newStatus === 'absent') {
+                const coachName = coachesList.find(c => c.id === coachId)?.full_name || 'Staff Member';
+                const action = newStatus === 'present' ? 'Checked In' : 'Marked Absent';
+
+                await supabase.from('notifications').insert({
+                    type: 'attendance',
+                    title: `Staff ${action}`,
+                    message: `${coachName} has been ${action.toLowerCase()}.`,
+                    target_role: 'admin_head_reception',
+                    is_read: false
+                });
+            }
+
             fetchCoachesStatus();
         } catch (error) {
             console.error('Staff status error:', error);
@@ -727,6 +756,15 @@ export default function ReceptionDashboard() {
             }));
 
             toast.success('You are Checked In!');
+
+            // Notification: Self Check-In (Admin + Head Coach + Reception)
+            await supabase.from('notifications').insert({
+                type: 'attendance',
+                title: 'Staff Checked In',
+                message: `A staff member has checked in.`, // Ideally we'd have the name, but myCoachId is just ID.
+                target_role: 'admin_head_reception',
+                is_read: false
+            });
 
             // Re-fetch after a short delay to ensure DB propagation
             setTimeout(() => {
@@ -782,6 +820,15 @@ export default function ReceptionDashboard() {
             }));
 
             toast.success('You are Checked Out!');
+
+            // Notification: Self Check-Out (Admin + Head Coach + Reception)
+            await supabase.from('notifications').insert({
+                type: 'attendance',
+                title: 'Staff Checked Out',
+                message: `A staff member has checked out.`,
+                target_role: 'admin_head_reception',
+                is_read: false
+            });
             setTimeout(() => {
                 fetchCoachesStatus();
             }, 1000);

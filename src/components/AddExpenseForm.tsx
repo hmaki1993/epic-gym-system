@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Receipt } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useCurrency } from '../context/CurrencyContext';
@@ -43,6 +44,16 @@ export default function AddExpenseForm({ onClose, onSuccess, onAdd }: AddExpense
                 category: formData.category,
                 expense_date: formData.expense_date
             });
+
+            // Notification: Expense (Admin + Reception)
+            await supabase.from('notifications').insert({
+                type: 'financial',
+                title: 'Expense Recorded',
+                message: `Expense: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} - ${formData.description}`,
+                target_role: 'admin_reception',
+                is_read: false
+            });
+
             toast.success('Expense added successfully');
             onSuccess();
             onClose();
