@@ -15,7 +15,7 @@ const Schedule = lazy(() => import('./pages/Schedule'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Calculator = lazy(() => import('./pages/Calculator'));
 const Login = lazy(() => import('./pages/Login'));
-const HealyLogin = lazy(() => import('./pages/HealyLogin'));
+
 const Register = lazy(() => import('./pages/Register'));
 const PublicRegistration = lazy(() => import('./pages/PublicRegistration'));
 const AdminCameras = lazy(() => import('./pages/AdminCameras'));
@@ -94,7 +94,7 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/login/healy" element={<HealyLogin />} />
+
               <Route path="/register" element={<Register />} />
               <Route path="/registration" element={<PublicRegistration />} />
 
