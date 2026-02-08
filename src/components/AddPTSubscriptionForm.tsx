@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Calendar, DollarSign, TrendingUp } from 'lucide-react';
+import { X, User, Calendar, DollarSign, TrendingUp, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
@@ -208,41 +208,40 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
-            <div className="glass-card p-4 sm:p-6 md:p-10 rounded-none sm:rounded-2xl md:rounded-[3rem] border-x-0 sm:border border-white/10 shadow-premium w-full sm:max-w-xl md:max-w-2xl sm:w-full h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto overflow-x-hidden relative animate-in zoom-in-95 duration-300">
-                {/* Gradient Background Effect */}
-                <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-accent/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a0a0f]/80 backdrop-blur-md">
+            <div className="w-full max-w-2xl max-h-[90vh] bg-[#0a0a0f]/95 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] shadow-2xl shadow-black/50 flex flex-col relative overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+                {/* Decorative gradients */}
+                <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                <div className="absolute bottom-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8 relative z-10">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="p-3 sm:p-4 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/20">
-                            <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none sm:leading-tight">
+                <div className="p-8 border-b border-white/[0.03] flex items-center justify-between relative z-10">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary/40 animate-pulse"></div>
+                            <h2 className="text-xl font-black text-white uppercase tracking-[0.2em]">
                                 {t('pt.addSubscription') || 'PT Subscription'}
                             </h2>
-                            <p className="text-[10px] sm:text-xs font-bold text-white/40 uppercase tracking-[0.15em] sm:tracking-[0.2em] mt-1">
-                                Professional Training
-                            </p>
                         </div>
+                        <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] ml-5">
+                            {editData ? 'Update Training Lifecycle' : 'Register New Professional Training'}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 sm:p-3 hover:bg-white/5 rounded-2xl transition-all text-white/40 hover:text-white"
+                        className="group relative p-2 overflow-hidden rounded-full transition-all duration-500"
                     >
-                        <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors"></div>
+                        <X className="w-5 h-5 text-white/30 group-hover:text-white group-hover:rotate-90 transition-all duration-500 relative z-10" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 md:space-y-8 relative z-10">
+                <form onSubmit={handleSubmit} className="p-10 space-y-10 overflow-y-auto flex-1 custom-scrollbar relative z-10">
                     {/* Student Selection */}
-                    <div className="group">
-                        <div className="flex items-center justify-between pointer-events-none mb-2 sm:mb-3 px-0 sm:px-4">
-                            <label className="text-[10px] font-medium text-white/30 uppercase tracking-widest sm:tracking-[0.3em]">
-                                {t('common.student') || 'Student'}
+                    <div className="space-y-3 group/field">
+                        <div className="flex items-center justify-between ml-1">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 group-focus-within/field:text-primary transition-colors">
+                                {t('common.student') || 'Gymnast'}
                             </label>
                             <button
                                 type="button"
@@ -250,9 +249,9 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                     setIsGuest(!isGuest);
                                     setFormData(prev => ({ ...prev, student_id: '', student_name: '', student_phone: '' }));
                                 }}
-                                className="pointer-events-auto text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20"
+                                className="text-[9px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors"
                             >
-                                {isGuest ? 'Select Existing' : 'Add External?'}
+                                {isGuest ? 'Browse Members' : 'Register External'}
                             </button>
                         </div>
 
@@ -262,126 +261,139 @@ export default function AddPTSubscriptionForm({ onClose, onSuccess, editData }: 
                                 value={formData.student_name}
                                 onChange={(e) => setFormData({ ...formData, student_name: e.target.value })}
                                 placeholder=""
-                                className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-base sm:text-lg"
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm tracking-wide"
                                 required
                             />
                         ) : (
-                            <select
-                                value={formData.student_id}
-                                onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                                className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.student_id ? 'text-white font-bold text-base sm:text-lg' : 'text-white/20 font-medium text-sm'
-                                    }`}
-                                required
-                            >
-                                <option value="" disabled hidden></option>
-                                {students.map(student => (
-                                    <option key={student.id} value={student.id} className="text-white text-base font-medium">
-                                        {student.full_name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="relative">
+                                <select
+                                    value={formData.student_id}
+                                    onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none text-sm tracking-wide cursor-pointer"
+                                    required
+                                >
+                                    <option value="" disabled className="bg-[#0a0a0f]">Select Athlete</option>
+                                    {students.map(student => (
+                                        <option key={student.id} value={student.id} className="bg-[#0a0a0f]">
+                                            {student.full_name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none group-focus-within/field:text-primary transition-colors" />
+                            </div>
                         )}
                     </div>
 
-                    {/* Personal Phone */}
-                    <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                            <User className="w-3 h-3" />
-                            {t('common.phone') || 'Personal Phone'}
-                        </label>
-                        <input
-                            type="tel"
-                            value={formData.student_phone}
-                            onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
-                            className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-base sm:text-lg"
-                        />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                        {/* Personal Phone */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">
+                                {t('common.phone') || 'Contact Line'}
+                            </label>
+                            <input
+                                type="tel"
+                                placeholder=""
+                                value={formData.student_phone}
+                                onChange={(e) => setFormData({ ...formData, student_phone: e.target.value })}
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
+                            />
+                        </div>
 
-                    {/* Coach Selection */}
-                    <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                            <User className="w-3 h-3" />
-                            {t('common.coach') || 'Coach'}
-                        </label>
-                        <select
-                            value={formData.coach_id}
-                            onChange={(e) => setFormData({ ...formData, coach_id: e.target.value })}
-                            className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 appearance-none cursor-pointer ${formData.coach_id ? 'text-white font-bold text-base sm:text-lg' : 'text-white/20 font-medium text-sm'
-                                }`}
-                            required
-                        >
-                            <option value="" disabled hidden></option>
-                            {coaches.map(coach => (
-                                <option key={coach.id} value={coach.id} className="text-white text-base font-medium">
-                                    {coach.full_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                        {/* Coach Selection */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">
+                                {t('common.coach') || 'Lead Specialist'}
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={formData.coach_id}
+                                    onChange={(e) => setFormData({ ...formData, coach_id: e.target.value })}
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none text-sm tracking-wide cursor-pointer"
+                                    required
+                                >
+                                    <option value="" disabled className="bg-[#0a0a0f]">Assigned Coach</option>
+                                    {coaches.map(coach => (
+                                        <option key={coach.id} value={coach.id} className="bg-[#0a0a0f]">
+                                            {coach.full_name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none group-focus-within/field:text-primary transition-colors" />
+                            </div>
+                        </div>
 
-                    {/* Sessions Count */}
-                    <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors">
-                            {t('pt.sessionCount') || 'Number of Sessions'}
-                        </label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={formData.sessions_total}
-                            onChange={(e) => setFormData({ ...formData, sessions_total: e.target.value })}
-                            className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-base sm:text-lg"
-                            required
-                        />
-                    </div>
-
-                    {/* Date Range - Only Start Date Visible */}
-                    <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                            <Calendar className="w-3 h-3" />
-                            {t('common.startDate') || 'Start Date'}
-                        </label>
-                        <input
-                            type="date"
-                            value={formData.start_date}
-                            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                            className="w-full px-2 sm:px-4 py-2 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-bold text-sm sm:text-base"
-                            required
-                        />
-                    </div>
-
-                    {/* Price Input & Display */}
-                    <div className="group">
-                        <label className="text-[10px] font-medium text-white/30 uppercase tracking-normal sm:tracking-[0.3em] mb-3 ml-0 sm:ml-4 block group-focus-within:text-primary transition-colors flex items-center gap-2">
-                            <DollarSign className="w-3 h-3" />
-                            {t('common.price') || 'Price'}
-                        </label>
-                        <div className="relative">
+                        {/* Sessions Count */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">
+                                {t('pt.sessionCount') || 'Training Volume'}
+                            </label>
                             <input
                                 type="number"
-                                min="0"
-                                value={formData.price}
-                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                className="w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-[2rem] border border-white/10 bg-white/5 focus:bg-white/10 focus:border-primary/50 text-white placeholder-white/20 outline-none transition-all focus:ring-2 sm:focus:ring-8 focus:ring-primary/5 font-black text-xl sm:text-2xl premium-gradient-text"
+                                min="1"
+                                placeholder=""
+                                value={formData.sessions_total}
+                                onChange={(e) => setFormData({ ...formData, sessions_total: e.target.value })}
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
                                 required
                             />
-                            <div className="absolute right-8 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black uppercase tracking-widest pointer-events-none">
-                                {currency.code}
+                        </div>
+
+                        {/* Date Range */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">
+                                {t('common.startDate') || 'Activation Date'}
+                            </label>
+                            <input
+                                type="date"
+                                value={formData.start_date}
+                                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white [color-scheme:dark] text-sm"
+                                required
+                            />
+                        </div>
+
+                        {/* Price Input & Display */}
+                        <div className="space-y-3 group/field md:col-span-2">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">
+                                {t('common.price') || 'Investment'}
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder=""
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    className="w-full px-5 py-6 bg-white/[0.02] border border-white/5 rounded-[2rem] focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-3xl font-black tracking-tight"
+                                    required
+                                />
+                                <div className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em] pointer-events-none">
+                                    {currency.code}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 pt-6">
-
+                    <div className="flex items-center justify-end gap-6 pt-10 border-t border-white/[0.03] mt-10">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-all duration-500"
+                        >
+                            {t('common.cancel', 'Discard')}
+                        </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white px-6 py-3 rounded-[2rem] shadow-premium shadow-primary/20 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-sm disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+                            className="px-12 py-4 bg-primary text-white text-[9px] font-black uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-500 flex items-center justify-center gap-4 relative overflow-hidden group/btn disabled:opacity-50"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                            <span className="relative z-10">
-                                {loading ? t('common.saving') : t('common.save')}
-                            </span>
+                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500"></div>
+                            {loading ? (
+                                <span className="animate-pulse">Processing...</span>
+                            ) : (
+                                <span className="relative z-10">{editData ? 'Update Cycle' : 'Confirm Subscription'}</span>
+                            )}
                         </button>
                     </div>
                 </form>

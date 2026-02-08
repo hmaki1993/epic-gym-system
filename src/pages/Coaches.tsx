@@ -44,6 +44,24 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
     const isDone = (coach as any).attendance_status === 'done';
     const coachRole = coach.role?.toLowerCase().trim();
 
+    // LIVE TIMER LOGIC
+    const [liveSeconds, setLiveSeconds] = useState((coach as any).daily_total_seconds || 0);
+
+    useEffect(() => {
+        // Sync with props whenever page data refreshes
+        setLiveSeconds((coach as any).daily_total_seconds || 0);
+    }, [(coach as any).daily_total_seconds]);
+
+    useEffect(() => {
+        if (!isWorking) return;
+
+        const interval = setInterval(() => {
+            setLiveSeconds((prev: number) => prev + 1);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isWorking]);
+
     return (
         <div className={`glass-card rounded-[1.5rem] md:rounded-[2rem] border transition-all duration-700 relative overflow-hidden group 
             ${isPremium
@@ -110,6 +128,19 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
                                 {t(`roles.${coach.role}`)}
                             </p>
                         )}
+
+                        {/* Compact TImer for Reception/Staff */}
+                        {isCompact && isWorking && (
+                            <div className="flex items-center gap-2 pt-1 animate-in fade-in slide-in-from-left-2 duration-500">
+                                <div className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                </div>
+                                <span className="text-[9px] font-black font-mono text-emerald-400 tracking-wider">
+                                    {Math.floor(liveSeconds / 3600)}:{Math.floor((liveSeconds % 3600) / 60).toString().padStart(2, '0')}:{(liveSeconds % 60).toString().padStart(2, '0')}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     {!isCompact && (
@@ -137,7 +168,8 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
                                     <div className="bg-white/5 p-2 rounded-xl border border-white/5 group-hover:bg-white/10 transition-colors text-center md:text-left">
                                         <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mb-0.5">{t('coaches.worked')}</p>
                                         <p className="text-xs font-black text-white font-mono tracking-tight">
-                                            {Math.floor((coach as any).daily_total_seconds / 3600)}h {Math.floor(((coach as any).daily_total_seconds % 3600) / 60)}m
+                                            {Math.floor(liveSeconds / 3600)}h {Math.floor((liveSeconds % 3600) / 60)}m
+                                            {isWorking && <span className="ml-1 text-[8px] text-emerald-400 animate-pulse">{liveSeconds % 60}s</span>}
                                         </p>
                                     </div>
                                 )}
@@ -219,20 +251,27 @@ export default function Coaches() {
 
     // Filter coaches based on current user role and search query
     const coaches = (coachesData || []).filter(coach => {
-        // Role-based filtering
+        const cRole = coach.role || (coach as any).profiles?.role;
+        const normalizedRole = cRole?.toLowerCase().trim();
+
+        // 1. Hide Admin completely from the grid (per user request)
+        if (normalizedRole === 'admin') {
+            return false;
+        }
+
+        // 2. Role-based view filtering (Head Coach cannot see support staff)
         if (role === 'head_coach') {
-            const cRole = coach.role || (coach as any).profiles?.role;
-            const normalizedRole = cRole?.toLowerCase().trim();
-            if (normalizedRole === 'reception' || normalizedRole === 'receptionist' || normalizedRole === 'cleaner') {
+            if (['reception', 'receptionist', 'cleaner'].includes(normalizedRole || '')) {
                 return false;
             }
         }
 
-        // Search filtering
+        // 3. Search filtering
         if (searchQuery.trim()) {
             const searchLower = searchQuery.toLowerCase();
             return coach.full_name?.toLowerCase().includes(searchLower) ||
-                coach.role?.toLowerCase().includes(searchLower);
+                normalizedRole?.includes(searchLower) ||
+                (coach.specialty && coach.specialty.toLowerCase().includes(searchLower));
         }
 
         return true;
@@ -295,25 +334,14 @@ export default function Coaches() {
         console.log('🛡️ Protection: Starting deletion for coach:', { coachId: coachToDelete, profileId });
 
         try {
-            // 1. Attempt to delete Auth User via Edge Function (The Master Key)
-            if (profileId) {
-                console.log('🛡️ Protection: Invoking Auth cleanup for:', profileId);
-                const { error: funcError } = await supabase.functions.invoke('staff-management', {
-                    method: 'DELETE',
-                    body: { userId: profileId }
-                });
-
-                if (funcError) {
-                    console.warn('🛡️ Protection: Edge Function sync warning:', funcError);
-                }
-            }
-
-            // 2. Delete from Database (coaches table)
+            // 1. Delete from Database (coaches table)
             console.log('🛡️ Protection: Deleting coach record:', coachToDelete);
             const { error: coachDeleteError } = await supabase.from('coaches').delete().eq('id', coachToDelete);
             if (coachDeleteError) throw coachDeleteError;
 
-            // 3. 🛡️ CRITICAL: Delete from profiles table to trigger the Security Lock
+            // 2. Delete from profiles table
+            // Note: We cannot delete the Auth User from the client side without an Edge Function.
+            // By deleting the profile, we effectively lock the user out (as most RLS policies depend on profile).
             if (profileId) {
                 console.log('🛡️ Protection: Deleting profile record to lock out user:', profileId);
                 const { error: profileDeleteError } = await supabase.from('profiles').delete().eq('id', profileId);

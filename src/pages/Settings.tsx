@@ -34,7 +34,8 @@ import {
     Lock as LockIcon,
     Key as KeyIcon,
     Search,
-    Edit2
+    Edit2,
+    Upload
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSubscriptionPlans, useAddPlan, useDeletePlan, useUpdatePlan } from '../hooks/useData';
@@ -107,6 +108,7 @@ export default function Settings() {
     const [loading, setLoading] = useState(false);
     const [profileLoading, setProfileLoading] = useState(false);
     const [passwordLoading, setPasswordLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const [userData, setUserData] = useState({
         full_name: '',
@@ -264,6 +266,38 @@ export default function Settings() {
             toast.error(error.message || 'Error updating password');
         } finally {
             setPasswordLoading(false);
+        }
+    };
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            setUploading(true);
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `logo_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('logos')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            const { data } = supabase.storage
+                .from('logos')
+                .getPublicUrl(filePath);
+
+            setDraftSettings(prev => ({ ...prev, logo_url: data.publicUrl }));
+            toast.success('Logo uploaded successfully');
+        } catch (error: any) {
+            console.error('Error uploading logo:', error);
+            toast.error('Error uploading logo');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -613,12 +647,29 @@ export default function Settings() {
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-2">Logo URL</label>
-                                            <input
-                                                type="text"
-                                                value={draftSettings.logo_url || ''}
-                                                onChange={e => setDraftSettings({ ...draftSettings, logo_url: e.target.value })}
-                                                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white outline-none focus:border-primary/50 transition-all font-bold text-sm"
-                                            />
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={draftSettings.logo_url || ''}
+                                                    onChange={e => setDraftSettings({ ...draftSettings, logo_url: e.target.value })}
+                                                    className="flex-1 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white outline-none focus:border-primary/50 transition-all font-bold text-sm"
+                                                    placeholder="https://..."
+                                                />
+                                                <label className="cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 flex items-center justify-center transition-all group">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleLogoUpload}
+                                                        disabled={uploading}
+                                                        className="hidden"
+                                                    />
+                                                    {uploading ? (
+                                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                                    ) : (
+                                                        <Upload className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                                                    )}
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
                                     <button

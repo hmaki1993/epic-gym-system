@@ -40,12 +40,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
     });
     const [uploading, setUploading] = useState(false);
 
-    // Common Input Styles to match Settings.tsx theme system
-    const inputStyle = {
-        backgroundColor: '#FFFFFF',
-        color: '#1F2937',
-        borderColor: 'rgba(128, 128, 128, 0.3)'
-    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
@@ -85,104 +79,53 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
         try {
             let profileId = initialData?.profile_id || null;
 
-            // Handle Account Creation/Update via Edge Function
-            // Run function if:
-            // 1. It's a new coach
-            // 2. Email is changing
-            // 3. Password is being set
-            const isNewCoach = !initialData;
-            const isEmailChanging = formData.email !== initialData?.email;
-            const isPasswordChanging = !!formData.password;
-
-            if (isNewCoach || isEmailChanging || isPasswordChanging || !profileId) {
-                const { data: functionData, error: functionError } = await supabase.functions.invoke('staff-management', {
-                    body: {
-                        userId: profileId,
-                        email: formData.email,
-                        password: formData.password || (!profileId ? Math.random().toString(36).slice(-8) : undefined),
-                        fullName: formData.full_name,
-                        role: formData.role
-                    }
-                });
-
-                if (functionError) {
-                    let customErrorMessage = null;
-
-                    if ((functionError as any).context?.response) {
-                        try {
-                            const response = (functionError as any).context.response;
-                            const responseText = await response.text();
-
-                            try {
-                                const errorBody = JSON.parse(responseText);
-                                if (errorBody.error) customErrorMessage = errorBody.error;
-                                else if (errorBody.message) customErrorMessage = errorBody.message;
-                            } catch (parseError: any) {
-                                if (responseText && responseText.length < 100) {
-                                    customErrorMessage = responseText;
-                                }
-                            }
-                        } catch (resError) {
-                            // Ignore
+            // 1. AUTOMATIC ACCOUNT CREATION
+            if (!initialData && formData.email && formData.password) {
+                try {
+                    const { data: newUserId, error: createError } = await supabase.rpc('create_new_user', {
+                        email: formData.email.toLowerCase().trim(),
+                        password: formData.password,
+                        user_metadata: {
+                            full_name: formData.full_name,
+                            role: formData.role
                         }
+                    });
+
+                    if (createError) {
+                        console.error('Account creation failed:', createError);
+                        throw new Error('Failed to create login account: ' + createError.message);
                     }
 
-                    if (customErrorMessage) {
-                        throw new Error(customErrorMessage);
-                    } else {
-                        // Hard fallback if we know it failed but couldn't parse why
-                        const response = (functionError as any).context?.response;
-                        let detail = "";
-                        if (response) {
-                            detail = ` (Status: ${response.status})`;
-                        }
-                        throw new Error(`Server Error${detail}. Please check console or try different email.`);
+                    if (newUserId) {
+                        profileId = newUserId;
                     }
+                } catch (err: any) {
+                    toast.error(err.message);
+                    setLoading(false);
+                    return; // Stop if we can't create the login
                 }
+            }
 
-                // Robust ID extraction from function response
-                if (functionData?.user_id) profileId = functionData.user_id;
-                else if (functionData?.id) profileId = functionData.id;
-                else if (functionData?.user?.id) profileId = functionData.user.id;
+            // CRITICAL: Ensure we have a profileId.
+            // If editing, we use existing. If new, we MUST have one from the RPC above.
+            if (!profileId) {
+                toast.error('Could not determine Login ID. Please ensure the email is unique.');
+                setLoading(false);
+                return;
+            }
 
-                // 🛡️ POLLING FAILSAFE: If no profileId, wait and poll for it (DB sync can take a moment)
-                if (!profileId) {
-                    console.log('Profile ID not returned by function. Polling database...');
-                    for (let i = 0; i < 10; i++) { // 5 seconds max
-                        await new Promise(resolve => setTimeout(resolve, 500));
+            // 2. Ensure Profile exists (Shadow Profile or Real Profile)
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .upsert({
+                    id: profileId,
+                    email: formData.email,
+                    full_name: formData.full_name,
+                    role: formData.role
+                }, { onConflict: 'id' });
 
-                        // Try Email search first
-                        const { data: byEmail } = await supabase
-                            .from('profiles')
-                            .select('id')
-                            .eq('email', formData.email.toLowerCase().trim())
-                            .maybeSingle();
-
-                        if (byEmail?.id) {
-                            profileId = byEmail.id;
-                            break;
-                        }
-
-                        // Fallback: Name search (Search for most recent profile with this name)
-                        const { data: byName } = await supabase
-                            .from('profiles')
-                            .select('id')
-                            .eq('full_name', formData.full_name.trim())
-                            .order('created_at', { ascending: false })
-                            .limit(1)
-                            .maybeSingle();
-
-                        if (byName?.id) {
-                            profileId = byName.id;
-                            console.log('⚠️ Polled by Name instead of Email:', profileId);
-                            break;
-                        }
-                    }
-                }
-
-                if (!profileId) {
-                    throw new Error('Sync Timeout: The account was created in Auth but didn\'t appear in the database. Please Refresh the page - the coach might already be there. (Error: PROFILE_NOT_FOUND)');
-                }
+            if (profileError) {
+                console.warn('Could not create/update profile:', profileError);
             }
 
             const coachData: any = {
@@ -234,10 +177,11 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
             }
 
             if (error) throw error;
-            toast.success(initialData ? t('common.saveSuccess') : 'Coach added successfully');
+            toast.success(initialData ? t('common.saveSuccess') : 'Coach added successfully (Login active)');
             onSuccess();
             onClose();
         } catch (error: any) {
+            console.error('Submit Error:', error);
             toast.error(error.message || 'Error saving coach');
         } finally {
             setLoading(false);
@@ -245,33 +189,43 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
     };
 
     return (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
-            <div
-                className="glass-card rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20 animate-in zoom-in-95 duration-300"
-            >
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a0a0f]/80 backdrop-blur-md">
+            <div className="w-full max-w-lg max-h-[90vh] bg-[#0a0a0f]/95 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] shadow-2xl shadow-black/50 flex flex-col relative overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+                {/* Decorative gradients */}
+                <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                <div className="absolute bottom-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
+
                 {/* Header */}
-                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-white/5">
-                    <div>
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                            <div className="p-2 bg-primary/20 rounded-xl text-primary">
-                                <UserPlus className="w-6 h-6" />
-                            </div>
-                            {initialData ? 'Edit Coach' : 'Add New Coach'}
-                        </h2>
+                <div className="p-8 border-b border-white/[0.03] flex items-center justify-between relative z-10">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary/40 animate-pulse"></div>
+                            <h2 className="text-xl font-black text-white uppercase tracking-[0.2em]">
+                                {initialData ? 'Edit Specialist' : 'Add New Coach'}
+                            </h2>
+                        </div>
+                        <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] ml-5">
+                            {initialData ? 'Update Staff Credentials' : 'Register New Academy Faculty'}
+                        </p>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
-                        <X className="w-6 h-6" />
+                    <button
+                        onClick={onClose}
+                        className="group relative p-2 overflow-hidden rounded-full transition-all duration-500"
+                    >
+                        <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors"></div>
+                        <X className="w-5 h-5 text-white/30 group-hover:text-white group-hover:rotate-90 transition-all duration-500 relative z-10" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-                    <div className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Full Name</label>
+                <form onSubmit={handleSubmit} className="p-10 space-y-10 overflow-y-auto flex-1 custom-scrollbar relative z-10">
+                    <div className="space-y-10">
+                        {/* Full Name */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Full Name</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm tracking-wide"
                                 value={formData.full_name}
                                 onChange={(e) => {
                                     const newName = e.target.value;
@@ -279,20 +233,21 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                     setFormData(prev => ({
                                         ...prev,
                                         full_name: newName,
-                                        email: prev.email === '' || prev.email.includes(`${prev.full_name.toLowerCase().replace(/\s+/g, '')}@epic.com`)
-                                            ? (emailName ? `${emailName}@epic.com` : '')
+                                        email: prev.email === '' || prev.email.includes(`${prev.full_name.toLowerCase().replace(/\s+/g, '')}@healy.com`) || prev.email.includes(`${prev.full_name.toLowerCase().replace(/\s+/g, '')}@epic.com`)
+                                            ? (emailName ? `${emailName}@healy.com` : '')
                                             : prev.email
                                     }));
                                 }}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Profile Image</label>
 
-                            {/* Preview Area */}
-                            <div className="flex gap-4 items-center">
-                                <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/10 flex-shrink-0 bg-white/5 group/img shadow-inner">
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 opacity-0 group-hover/img:opacity-100 transition-opacity"></div>
+                        {/* Profile Image & Controls */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Profile Image</label>
+
+                            <div className="flex gap-6 items-center">
+                                <div className="relative w-24 h-24 rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02] flex-shrink-0 group/img shadow-2xl">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-accent/10 opacity-0 group-hover/img:opacity-100 transition-opacity"></div>
                                     {formData.avatar_url ? (
                                         <img
                                             src={formData.avatar_url}
@@ -301,173 +256,177 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                             alt="Preview"
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-white/20 font-black">?</div>
+                                        <div className="w-full h-full flex items-center justify-center text-white/10 font-black text-2xl">?</div>
+                                    )}
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
                                     )}
                                 </div>
 
-                                <label className="flex-1">
-                                    <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/60 hover:bg-white/10 hover:text-white cursor-pointer transition-all text-center">
-                                        {uploading ? 'Uploading...' : 'Browse Image'}
-                                    </div>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileUpload}
-                                        className="hidden"
-                                        disabled={uploading}
-                                    />
-                                </label>
-                            </div>
-
-                            {/* Position Controls */}
-                            {formData.avatar_url && (
-                                <div className="grid grid-cols-2 gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 mt-3 shadow-inner">
-                                    <div className="space-y-2">
-                                        <label className="text-[8px] font-black uppercase tracking-widest text-white/30">Horizontal (X)</label>
+                                <div className="flex-1 space-y-4">
+                                    <label className="block w-full">
+                                        <div className="px-6 py-3 bg-white/[0.02] border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-white/40 hover:bg-white/[0.05] hover:text-white hover:border-white/10 cursor-pointer transition-all text-center">
+                                            {uploading ? 'Processing Image...' : 'Deploy New Asset'}
+                                        </div>
                                         <input
-                                            type="range"
-                                            min="0"
-                                            max="100"
-                                            value={formData.image_pos_x}
-                                            onChange={(e) => setFormData((prev: any) => ({ ...prev, image_pos_x: parseInt(e.target.value) }))}
-                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileUpload}
+                                            className="hidden"
+                                            disabled={uploading}
                                         />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[8px] font-black uppercase tracking-widest text-white/30">Vertical (Y)</label>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="100"
-                                            value={formData.image_pos_y}
-                                            onChange={(e) => setFormData((prev: any) => ({ ...prev, image_pos_y: parseInt(e.target.value) }))}
-                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                    </label>
 
-
-                    {!['reception', 'cleaner'].includes(formData.role) && (
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Specialty</label>
-                            <div className="relative group/specialty">
-                                <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl opacity-0 group-hover/specialty:opacity-20 transition-opacity blur"></div>
-                                <select
-                                    required={!['reception', 'cleaner'].includes(formData.role)}
-                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12 relative z-10"
-                                    value={formData.specialty}
-                                    onChange={e => setFormData({ ...formData, specialty: e.target.value })}
-                                >
-                                    <option value="" disabled>Select Specialty</option>
-                                    <option value="Artistic Gymnastics (Boys)">Artistic Gymnastics (Boys)</option>
-                                    <option value="Artistic Gymnastics (Girls)">Artistic Gymnastics (Girls)</option>
-                                    <option value="Artistic Gymnastics (Mixed)">Artistic Gymnastics (Boys & Girls)</option>
-                                    <option value="Rhythmic Gymnastics">Rhythmic Gymnastics</option>
-                                </select>
-                                <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/specialty:opacity-100 transition-opacity z-20">
-                                    <ChevronDown className="w-4 h-4 text-white" />
+                                    {formData.avatar_url && (
+                                        <div className="grid grid-cols-2 gap-4 p-4 bg-white/[0.01] border border-white/[0.03] rounded-2xl">
+                                            <div className="space-y-1">
+                                                <label className="text-[8px] font-black uppercase tracking-widest text-white/10">Axis X</label>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={formData.image_pos_x}
+                                                    onChange={(e) => setFormData((prev: any) => ({ ...prev, image_pos_x: parseInt(e.target.value) }))}
+                                                    className="w-full h-px bg-white/10 appearance-none cursor-pointer accent-primary"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[8px] font-black uppercase tracking-widest text-white/10">Axis Y</label>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={formData.image_pos_y}
+                                                    onChange={(e) => setFormData((prev: any) => ({ ...prev, image_pos_y: parseInt(e.target.value) }))}
+                                                    className="w-full h-px bg-white/10 appearance-none cursor-pointer accent-primary"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 block">Account Email</label>
-                            <input
-                                required
-                                type="email"
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center justify-between">
-                                <span>{initialData ? 'Update Password' : 'Default Password'}</span>
-                                {initialData && <span className="text-[8px] opacity-40 lowercase font-medium tracking-normal">(optional)</span>}
-                            </label>
-                            <input
-                                required={!initialData}
-                                type="password"
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
-                                value={formData.password}
-                                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">System Access Role</label>
-                        <div className="relative group/role">
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-accent/50 rounded-2xl opacity-0 group-hover/role:opacity-20 transition-opacity blur"></div>
-                            <select
-                                required
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white font-black uppercase tracking-[0.2em] text-center appearance-none cursor-pointer relative z-10"
-                                value={formData.role}
-                                onChange={e => setFormData({ ...formData, role: e.target.value })}
-                            >
-                                <option value="coach">{t('roles.coach')}</option>
-                                <option value="head_coach">{t('roles.head_coach')}</option>
-                                <option value="admin">{t('roles.admin')}</option>
-                                <option value="reception">{t('roles.reception')}</option>
-                                <option value="cleaner">{t('roles.cleaner')}</option>
-                            </select>
-                            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/role:opacity-100 transition-opacity z-20">
-                                <ChevronDown className="w-4 h-4 text-white" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Specialty & Role */}
                         {!['reception', 'cleaner'].includes(formData.role) && (
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">PT Rate (per session)</label>
-                                <input
-                                    required={!['reception', 'cleaner'].includes(formData.role)}
-                                    type="number"
-                                    className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
-                                    value={formData.pt_rate}
-                                    onChange={e => setFormData({ ...formData, pt_rate: e.target.value })}
-                                />
+                            <div className="space-y-3 group/field">
+                                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Specialization</label>
+                                <div className="relative">
+                                    <select
+                                        required={!['reception', 'cleaner'].includes(formData.role)}
+                                        className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none cursor-pointer pr-12 text-sm tracking-wide"
+                                        value={formData.specialty}
+                                        onChange={e => setFormData({ ...formData, specialty: e.target.value })}
+                                    >
+                                        <option value="" disabled className="bg-[#0a0a0f]">Select Discipline</option>
+                                        <option value="Artistic Gymnastics (Boys)" className="bg-[#0a0a0f]">Artistic Gymnastics (Boys)</option>
+                                        <option value="Artistic Gymnastics (Girls)" className="bg-[#0a0a0f]">Artistic Gymnastics (Girls)</option>
+                                        <option value="Artistic Gymnastics (Mixed)" className="bg-[#0a0a0f]">Artistic Gymnastics (Mixed)</option>
+                                        <option value="Rhythmic Gymnastics" className="bg-[#0a0a0f]">Rhythmic Gymnastics</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none group-focus-within/field:text-primary transition-colors" />
+                                </div>
                             </div>
                         )}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Monthly Salary</label>
-                            <input
-                                required
-                                type="number"
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
-                                value={formData.salary}
-                                onChange={e => setFormData({ ...formData, salary: e.target.value })}
-                            />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            {/* Account Email */}
+                            <div className="space-y-3 group/field">
+                                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Digital Identity</label>
+                                <input
+                                    required
+                                    type="email"
+                                    placeholder=""
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+
+                            {/* Password */}
+                            <div className="space-y-3 group/field">
+                                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">
+                                    {initialData ? 'Reset Credentials' : 'Secure Access Key'}
+                                </label>
+                                <input
+                                    required={!initialData}
+                                    type="password"
+                                    placeholder=""
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                />
+                            </div>
+
+                            {/* Role Selection */}
+                            <div className="space-y-3 group/field md:col-span-2">
+                                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">System Privilege Level</label>
+                                <div className="relative">
+                                    <select
+                                        required
+                                        className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none cursor-pointer pr-12 text-sm tracking-[0.1em] font-black uppercase text-center"
+                                        value={formData.role}
+                                        onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                    >
+                                        <option value="coach" className="bg-[#0a0a0f]">{t('roles.coach')}</option>
+                                        <option value="head_coach" className="bg-[#0a0a0f]">{t('roles.head_coach')}</option>
+                                        <option value="admin" className="bg-[#0a0a0f]">{t('roles.admin')}</option>
+                                        <option value="reception" className="bg-[#0a0a0f]">{t('roles.reception')}</option>
+                                        <option value="cleaner" className="bg-[#0a0a0f]">{t('roles.cleaner')}</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none group-focus-within/field:text-primary transition-colors" />
+                                </div>
+                            </div>
+
+                            {/* Compensation & Rates */}
+                            {!['reception', 'cleaner'].includes(formData.role) && (
+                                <div className="space-y-3 group/field">
+                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">PT Yield Rate</label>
+                                    <input
+                                        required={!['reception', 'cleaner'].includes(formData.role)}
+                                        type="number"
+                                        placeholder=""
+                                        className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white text-sm font-bold"
+                                        value={formData.pt_rate}
+                                        onChange={e => setFormData({ ...formData, pt_rate: e.target.value })}
+                                    />
+                                </div>
+                            )}
+                            <div className="space-y-3 group/field">
+                                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Monthly Retainer</label>
+                                <input
+                                    required
+                                    type="number"
+                                    placeholder=""
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white text-sm font-bold"
+                                    value={formData.salary}
+                                    onChange={e => setFormData({ ...formData, salary: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-8 border-t border-white/5 mt-8">
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-end gap-6 pt-10 border-t border-white/[0.03] mt-10">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-2xl"
+                            className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-all duration-500"
                         >
-                            Cancel
+                            {t('common.cancel', 'Discard')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-10 py-4 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+                            className="px-12 py-4 bg-primary text-white text-[9px] font-black uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-500 flex items-center justify-center gap-4 relative overflow-hidden group/btn disabled:opacity-50"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500"></div>
                             {loading ? (
-                                <span className="animate-pulse">Saving...</span>
+                                <span className="animate-pulse">Processing...</span>
                             ) : (
-                                <>
-                                    <Save className="w-4 h-4 relative z-10" />
-                                    <span className="relative z-10">{initialData ? 'Update Coach' : 'Save Coach'}</span>
-                                </>
+                                <span className="relative z-10">{initialData ? 'Update Faculty' : 'Confirm Registration'}</span>
                             )}
                         </button>
                     </div>

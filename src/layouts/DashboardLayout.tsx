@@ -43,6 +43,7 @@ export default function DashboardLayout() {
     const [userStatus, setUserStatus] = useState<'online' | 'busy'>('online');
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
     const isRtl = i18n.language === 'ar' || document.dir === 'rtl';
 
@@ -107,21 +108,26 @@ export default function DashboardLayout() {
                     table: 'notifications'
                 },
                 async (payload) => {
+                    console.log('🔔 Notification Realtime Payload:', payload);
                     const newNote = payload.new as any;
 
                     const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return;
+                    if (!user) {
+                        console.warn('🔔 Notification Realtime: No user found');
+                        return;
+                    }
 
                     // Only add if it's for this user OR global
+                    // Note: target_role filtering happens in the render filter
                     if (!newNote.user_id || newNote.user_id === user.id) {
-                        // Check against ref to prevent processing same ID twice
-                        if (processedIds.current.has(newNote.id)) return;
+                        if (processedIds.current.has(newNote.id)) {
+                            console.log('🔔 Notification: Already processed', newNote.id);
+                            return;
+                        }
 
-                        // Add to processed set immediately
                         processedIds.current.add(newNote.id);
+                        console.log('🔔 Notification: Adding to state and toasting', newNote);
 
-                        // Trigger toast for new notification if it's unread
-                        // DO THIS OUTSIDE the state updater to avoid StrictMode double-invocation
                         if (!newNote.is_read) {
                             toast.success(newNote.title, {
                                 icon: '🔔',
@@ -130,11 +136,11 @@ export default function DashboardLayout() {
                         }
 
                         setNotifications(prev => {
-                            // Double check state just in case (though ref should catch it)
                             if (prev.some(n => n.id === newNote.id)) return prev;
-                            const newList = [newNote, ...prev];
-                            return newList;
+                            return [newNote, ...prev];
                         });
+                    } else {
+                        console.log('🔔 Notification: Ignore (Targeted to another user)', newNote.user_id);
                     }
                 }
             )
@@ -204,6 +210,7 @@ export default function DashboardLayout() {
         const handleClickOutside = () => {
             setNotificationsOpen(false);
             setProfileOpen(false);
+            // Don't close logo modal on outside click here, the modal backdrop will handle it
         };
         window.addEventListener('click', handleClickOutside);
         return () => window.removeEventListener('click', handleClickOutside);
@@ -246,7 +253,7 @@ export default function DashboardLayout() {
         { to: '/admin/cameras', icon: Video, label: t('common.cameras'), roles: ['admin'] },
     ];
 
-    const normalizedRole = role?.toLowerCase().trim();
+    const normalizedRole = role?.toLowerCase().trim().replace(/\s+/g, '_');
 
     const navItems = allNavItems.filter(item => {
         if (!normalizedRole) return false; // Show nothing while loading to avoid flickering
@@ -255,18 +262,29 @@ export default function DashboardLayout() {
 
     // Filter notifications based on role and user_id
     const filteredNotifications = notifications.filter(note => {
-        if (!normalizedRole) return false;
+        if (!normalizedRole) {
+            console.log('🔔 Notification Filter: No role loaded yet');
+            return false;
+        }
 
         // 1. User-specific override: Only the specific user sees these
         if (note.user_id) {
-            return note.user_id === userId;
+            const isMatch = note.user_id === userId;
+            if (!isMatch) console.log('🔔 Notification Filter: user_id mismatch', { noteUser: note.user_id, currentUserId: userId });
+            return isMatch;
         }
 
-        // 2. Target Role Filtering: If a role is specified, it MUST match
+        // 2. Target Role Filtering
         if (note.target_role) {
             if (normalizedRole === 'admin') return true; // Admin sees all role-targeted notes
 
             const target = note.target_role.toLowerCase().trim();
+
+            // Handle consolidated roles (reception / receptionist)
+            if (target === 'reception' && (normalizedRole === 'reception' || normalizedRole === 'receptionist')) {
+                return true;
+            }
+
             if (target === normalizedRole) return true;
 
             // Special case for shared roles
@@ -274,6 +292,7 @@ export default function DashboardLayout() {
                 return true;
             }
 
+            console.log('🔔 Notification Filter: target_role mismatch', { target, normalizedRole });
             return false;
         }
 
@@ -286,8 +305,6 @@ export default function DashboardLayout() {
         }
 
         if (normalizedRole === 'coach') {
-            // Regular coaches usually only get targeted notifications, 
-            // but we can allow general student/schedule updates if needed.
             return note.type === 'student' || note.type === 'schedule';
         }
 
@@ -296,7 +313,7 @@ export default function DashboardLayout() {
             return allowedTypes.includes(note.type);
         }
 
-        return false;
+        return true; // Fallback for general types
     });
 
     const unreadCount = filteredNotifications.filter(n => !n.is_read).length;
@@ -366,36 +383,42 @@ export default function DashboardLayout() {
                 <div className="h-full glass-card flex flex-col m-4 rounded-[2.5rem] overflow-hidden border border-surface-border shadow-premium">
                     {/* Sidebar Header - Academy Branding */}
                     <div className="p-6 pb-2 text-center">
-                        <div className="relative group inline-block mb-3">
-                            <div className="absolute -inset-2 bg-gradient-to-r from-primary/40 to-accent/40 rounded-full blur-md opacity-0 group-hover:opacity-100 transition duration-700"></div>
+                        <button
+                            onClick={() => {
+                                console.log('Logo clicked');
+                                setIsLogoModalOpen(true);
+                            }}
+                            className="relative group inline-block focus:outline-none z-10"
+                        >
+                            <div className="absolute -inset-2 bg-gradient-to-r from-primary/40 to-accent/40 rounded-full blur-md opacity-0 group-hover:opacity-100 transition duration-700 pointer-events-none"></div>
                             <img
                                 src={settings.logo_url || "/logo.png"}
                                 alt="Logo"
-                                className="relative h-14 w-auto object-contain transition-all hover:scale-110 duration-500 mx-auto"
+                                className="relative z-10 h-28 w-28 object-cover rounded-full shadow-2xl transition-all hover:scale-105 duration-500 mx-auto cursor-pointer mix-blend-multiply"
                             />
-                        </div>
-
-                        <div className="space-y-1">
-                            <h2 className="text-[13px] font-black tracking-[0.25em] uppercase text-white leading-tight">
-                                {settings.academy_name}
-                            </h2>
-                            <div className="flex flex-col items-center gap-1 opacity-40">
-                                {settings.gym_address && (
-                                    <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest">
-                                        <Building2 className="w-2.5 h-2.5" />
-                                        {settings.gym_address}
-                                    </p>
-                                )}
-                                {settings.gym_phone && (
-                                    <p dir="ltr" className="text-[9px] font-black flex items-center gap-1 tracking-widest">
-                                        {settings.gym_phone}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="mt-4 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto"></div>
+                        </button>
                     </div>
+
+                    <div className="space-y-1 text-center">
+                        <h2 className="text-[13px] font-black tracking-[0.25em] uppercase text-white leading-tight">
+                            {settings.academy_name}
+                        </h2>
+                        <div className="flex flex-col items-center gap-1 opacity-40">
+                            {settings.gym_address && (
+                                <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest justify-center">
+                                    <Building2 className="w-2.5 h-2.5" />
+                                    {settings.gym_address}
+                                </p>
+                            )}
+                            {settings.gym_phone && (
+                                <p dir="ltr" className="text-[9px] font-black flex items-center gap-1 tracking-widest justify-center">
+                                    {settings.gym_phone}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="mt-4 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto"></div>
 
                     {/* User Profile Card - Premium Glassmorphism */}
                     <div className="px-5 mt-2 mb-4">
@@ -703,7 +726,30 @@ export default function DashboardLayout() {
                     <Outlet context={{ role, fullName, userId }} />
 
                 </main>
-            </div >
-        </div >
+            </div>
+
+            {/* Logo Lightbox Modal */}
+            {isLogoModalOpen && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300"
+                    onClick={() => setIsLogoModalOpen(false)}
+                >
+                    <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center">
+                        <img
+                            src={settings.logo_url || "/logo.png"}
+                            alt="Academy Logo"
+                            className="max-w-full max-h-[85vh] object-contain rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <button
+                            onClick={() => setIsLogoModalOpen(false)}
+                            className="absolute -top-12 right-0 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-all backdrop-blur-sm"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

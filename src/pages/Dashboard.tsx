@@ -113,8 +113,8 @@ export default function Dashboard() {
 
                     {/* Compact Date & Clock Widget */}
                     <div className="flex items-center gap-4 p-2 pr-6 bg-black/20 border border-white/5 rounded-full shadow-inner backdrop-blur-xl">
-                        <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/5 text-primary">
-                            <Calendar className="w-4 h-4" />
+                        <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-primary shadow-lg">
+                            <Calendar className="w-4 h-4 drop-shadow-[0_0_8px_currentColor]" strokeWidth={1.5} />
                             <span className="text-[10px] font-black uppercase tracking-widest">{format(new Date(), 'MMM dd, yyyy')}</span>
                         </div>
 
@@ -133,33 +133,36 @@ export default function Dashboard() {
             {/* Stats Grid - Balanced & Elite */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((stat, index) => (
-                    <div key={index} className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium group hover:scale-[1.03] transition-all duration-500 hover:border-primary/30 relative overflow-hidden bg-white/[0.02]">
+                    <div key={index} className="glass-card p-7 rounded-[2.5rem] border border-white/10 shadow-premium group hover:scale-[1.03] transition-all duration-500 hover:border-primary/30 relative overflow-hidden bg-white/[0.02]">
                         <div className={`absolute top-0 right-0 w-32 h-32 ${stat.color}/10 blur-[60px] rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700 opacity-50`}></div>
 
-                        <div className="flex items-center justify-between mb-8 relative z-10">
-                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 truncate pr-4">{stat.label}</p>
-                            <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-white ${stat.color} shadow-2xl shadow-black/40 group-hover:rotate-12 transition-all duration-500 border border-white/10`}>
-                                <stat.icon className="w-5 h-5" />
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 pr-2">{stat.label}</p>
+                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 backdrop-blur-xl transition-all duration-500 border border-white/10 flex-shrink-0 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-white/10 group-hover:border-white/20">
+                                <stat.icon
+                                    className={`w-4 h-4 ${stat.color.replace('bg-', 'text-')} drop-shadow-[0_0_12px_currentColor]`}
+                                    strokeWidth={1.5}
+                                />
                             </div>
                         </div>
 
                         <div className="flex flex-col gap-1 relative z-10">
-                            <h3 className="text-5xl font-black text-white tracking-tighter">
+                            <h3 className="text-4xl font-black text-white tracking-tighter">
                                 {loading ? (
                                     <div className="h-10 w-24 bg-white/5 animate-pulse rounded-xl"></div>
                                 ) : (
                                     stat.value
                                 )}
                             </h3>
-                            <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] ${stat.trendColor || 'text-white/40'} mt-3`}>
+                            <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.1em] ${stat.trendColor || 'text-white/40'} mt-2`}>
                                 {stat.isLive ? (
                                     <span className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-current animate-pulse shadow-[0_0_12px_currentColor]"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shadow-[0_0_8px_currentColor]"></span>
                                         {stat.trend}
                                     </span>
                                 ) : (
                                     <>
-                                        <ArrowUpRight className="w-3.5 h-3.5 opacity-50" />
+                                        <ArrowUpRight className="w-3 h-3 opacity-50" />
                                         {stat.trend}
                                     </>
                                 )}
@@ -172,7 +175,9 @@ export default function Dashboard() {
             {/* Groups Section */}
             <div className="glass-card p-12 rounded-[3.5rem] border border-white/10 shadow-premium">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-8 flex items-center gap-4">
-                    <div className="p-3 bg-accent/20 rounded-2xl text-accent"><Users className="w-6 h-6" /></div>
+                    <div className="p-3 bg-white/5 backdrop-blur-md rounded-2xl text-accent border border-white/10 shadow-lg">
+                        <Users className="w-6 h-6 drop-shadow-[0_0_8px_currentColor]" strokeWidth={1.5} />
+                    </div>
                     {t('dashboard.trainingGroups', 'Training Groups')}
                 </h2>
                 <GroupsList showAll={true} />

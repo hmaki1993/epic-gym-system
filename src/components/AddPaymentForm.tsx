@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 interface Student {
-    id: number;
+    id: string;
     full_name: string;
 }
 
@@ -52,18 +52,21 @@ export default function AddPaymentForm({ onClose, onSuccess }: AddPaymentFormPro
 
         try {
             // Get student name for notification
-            const selectedStudent = !formData.is_guest ? students.find(s => s.id === parseInt(formData.student_id)) : null;
+            const selectedStudent = !formData.is_guest ? students.find(s => s.id === formData.student_id) : null;
             const finalNotes = formData.is_guest
                 ? `Guest - ${formData.guest_name}${formData.notes ? ' - ' + formData.notes : ''}`
                 : formData.notes;
 
+            const { data: { user } } = await supabase.auth.getUser();
+
             const { error } = await supabase.from('payments').insert([
                 {
-                    student_id: formData.is_guest ? null : parseInt(formData.student_id),
+                    student_id: formData.is_guest ? null : formData.student_id,
                     amount: parseFloat(formData.amount),
                     payment_method: formData.payment_method,
                     payment_date: formData.date,
-                    notes: finalNotes
+                    notes: finalNotes,
+                    created_by: user?.id
                 }
             ]);
 

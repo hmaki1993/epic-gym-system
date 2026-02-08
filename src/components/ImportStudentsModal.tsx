@@ -58,7 +58,18 @@ export default function ImportStudentsModal({ isOpen, onClose, onSuccess }: Impo
             header: true,
             skipEmptyLines: true,
             complete: (results) => {
-                const validated = results.data.map((row, index) => validateRow(row, index));
+                // Filter out completely empty rows (all fields are empty or whitespace)
+                const nonEmptyRows = results.data.filter(row => {
+                    return Object.values(row).some(value => value && value.trim() !== '');
+                });
+
+                if (nonEmptyRows.length === 0) {
+                    toast.error('CSV file is empty or contains no valid data');
+                    setFile(null);
+                    return;
+                }
+
+                const validated = nonEmptyRows.map((row, index) => validateRow(row, index));
                 setParsedData(validated);
                 setPreview(true);
             },
@@ -174,7 +185,7 @@ export default function ImportStudentsModal({ isOpen, onClose, onSuccess }: Impo
                         .from('students')
                         .insert({
                             full_name: student.full_name,
-                            phone: student.phone,
+                            contact_number: student.phone,
                             date_of_birth: student.date_of_birth || null,
                             gender: student.gender || null,
                             coach_id: coachId,

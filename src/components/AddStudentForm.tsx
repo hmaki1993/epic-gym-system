@@ -105,12 +105,6 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
         return age;
     };
 
-    // Theme-aware styles
-    const inputStyle = {
-        backgroundColor: '#FFFFFF',
-        color: '#1F2937',
-        borderColor: 'rgba(128, 128, 128, 0.3)'
-    };
 
     const calculateExpiry = (start: string, planId: string) => {
         if (!start || !plans || plans.length === 0) return format(addMonths(new Date(), 1), 'yyyy-MM-dd');
@@ -310,152 +304,174 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
     };
 
     return (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-300">
-            <div
-                className="glass-card rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] border border-white/20"
-            >
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a0a0f]/80 backdrop-blur-md">
+            <div className="w-full max-w-4xl max-h-[90vh] bg-[#0a0a0f]/95 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] shadow-2xl shadow-black/50 flex flex-col relative overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+                {/* Decorative gradients */}
+                <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                <div className="absolute bottom-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
+
                 {/* Header */}
-                <div className="px-8 py-6 flex items-center justify-between border-b border-white/5 bg-white/5">
-                    <div>
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                            <div className="p-2 bg-primary/20 rounded-xl text-primary">
-                                <UserPlus className="w-6 h-6" />
-                            </div>
-                            {initialData ? 'Edit Gymnast' : t('dashboard.addStudent', 'Add New Gymnast')}
-                        </h2>
+                <div className="p-8 border-b border-white/[0.03] flex items-center justify-between relative z-10">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary/40 animate-pulse"></div>
+                            <h2 className="text-xl font-black text-white uppercase tracking-[0.2em]">
+                                {initialData ? 'Edit Gymnast' : t('dashboard.addStudent', 'Add New Gymnast')}
+                            </h2>
+                        </div>
+                        <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] ml-5">{initialData ? 'Update registration details' : 'Register a new athlete'}</p>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white">
-                        <X className="w-6 h-6" />
+                    <button
+                        onClick={onClose}
+                        className="group relative p-2 overflow-hidden rounded-full transition-all duration-500"
+                    >
+                        <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors"></div>
+                        <X className="w-5 h-5 text-white/30 group-hover:text-white group-hover:rotate-90 transition-all duration-500 relative z-10" />
                     </button>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.fullName', 'Full Name')}</label>
+                <form onSubmit={handleSubmit} className="p-10 space-y-10 overflow-y-auto flex-1 custom-scrollbar relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                        {/* Name Field */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">{t('common.fullName', 'Full Name')}</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:ring-0 focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm tracking-wide"
                                 value={formData.full_name}
                                 onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                             />
                         </div>
-                        <div className="space-y-2">
+
+                        {/* Birth Date */}
+                        <div className="space-y-3 group/field">
                             <div className="flex items-center justify-between ml-1">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{t('students.birthDate', 'Birth Date')}</label>
+                                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 group-focus-within/field:text-primary transition-colors">{t('students.birthDate', 'Birth Date')}</label>
                                 {formData.birth_date && (
-                                    <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-primary/20 text-primary rounded-md">
-                                        {calculateAge(formData.birth_date)} {i18n.language === 'ar' ? 'سنة' : 'Years'}
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">
+                                        {calculateAge(formData.birth_date)} {i18n.language === 'ar' ? 'سنة' : 'Years Old'}
                                     </span>
                                 )}
                             </div>
                             <input
                                 required
                                 type="date"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white [color-scheme:dark] text-sm"
                                 value={formData.birth_date}
                                 onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Gender</label>
-                            <div className="flex bg-white/5 rounded-2xl p-1.5 border border-white/10">
+                        {/* Gender Toggle */}
+                        <div className="space-y-3">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Gender Identity</label>
+                            <div className="flex bg-white/[0.02] rounded-2xl p-1.5 border border-white/5 relative">
                                 {['male', 'female'].map(g => (
                                     <button key={g} type="button" onClick={() => setFormData({ ...formData, gender: g })}
-                                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${formData.gender === g ? (g === 'male' ? 'bg-blue-600' : 'bg-pink-600') + ' text-white shadow-lg' : 'text-white/40 hover:text-white'}`}>
+                                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative z-10 ${formData.gender === g ? 'text-white' : 'text-white/20 hover:text-white/40'}`}>
                                         {g}
                                     </button>
                                 ))}
+                                <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl transition-all duration-500 ease-out shadow-lg ${formData.gender === 'male' ? 'left-1.5 bg-blue-600/20 border border-blue-500/30' : 'left-[calc(50%+3px)] bg-pink-600/20 border border-pink-500/30'}`}></div>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Training Type</label>
+                        {/* Training Type */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Specialization</label>
                             <div className="relative">
                                 <select
                                     value={formData.training_type}
                                     onChange={e => setFormData({ ...formData, training_type: e.target.value })}
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none"
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none text-sm tracking-wide cursor-pointer"
                                     required
                                 >
-                                    <option value="">Select Sport</option>
-                                    <option value="Artistic Gymnastics">Artistic Gymnastics</option>
-                                    <option value="Rhythmic Gymnastics">Rhythmic Gymnastics</option>
-                                    <option value="Parkour">Parkour</option>
-                                    <option value="Fitness">Fitness</option>
+                                    <option value="" disabled className="bg-[#0a0a0f]">Select Sport</option>
+                                    <option value="Artistic Gymnastics" className="bg-[#0a0a0f]">Artistic Gymnastics</option>
+                                    <option value="Rhythmic Gymnastics" className="bg-[#0a0a0f]">Rhythmic Gymnastics</option>
+                                    <option value="Parkour" className="bg-[#0a0a0f]">Parkour</option>
+                                    <option value="Fitness" className="bg-[#0a0a0f]">Fitness</option>
                                 </select>
-                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none" />
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none group-focus-within/field:text-primary transition-colors" />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Father's Name</label>
+                        {/* Father Details */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Primary Guardian</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                placeholder=""
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
                                 value={formData.father_name}
                                 onChange={e => setFormData({ ...formData, father_name: e.target.value })}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.fatherPhone', "Father's Phone")}</label>
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">{t('common.fatherPhone', "Guardian Contact")}</label>
                             <input
                                 required
                                 type="tel"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                placeholder=""
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
                                 value={formData.contact_number}
                                 onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Mother's Name</label>
+                        {/* Secondary Guardian */}
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Secondary Guardian</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20"
+                                placeholder=""
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
                                 value={formData.mother_name}
                                 onChange={e => setFormData({ ...formData, mother_name: e.target.value })}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.motherPhone', "Mother's Phone")}</label>
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Secondary Contact</label>
                             <input
                                 type="tel"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                placeholder=""
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm"
                                 value={formData.parent_contact}
                                 onChange={e => setFormData({ ...formData, parent_contact: e.target.value })}
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Email</label>
+                        {/* Contact Info */}
+                        <div className="space-y-3 group/field text-sm">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Email Address</label>
                             <input
                                 type="email"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                placeholder=""
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">Address</label>
+                        <div className="space-y-3 group/field text-sm">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Physical Address</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
+                                placeholder=""
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10"
                                 value={formData.address}
                                 onChange={e => setFormData({ ...formData, address: e.target.value })}
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-4 border-t border-white/5 pt-8">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">
-                            {t('students.trainingDays', 'Training Days')}
+                    <div className="space-y-6 pt-10 border-t border-white/[0.03]">
+                        <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">
+                            {t('students.trainingDays', 'Attendance Cycle')}
                         </label>
-                        <div className="flex flex-col gap-4">
-                            <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-col gap-6">
+                            <div className="flex flex-wrap gap-2">
                                 {daysOfWeek.map(day => {
                                     const isActive = formData.training_days.includes(day);
                                     return (
@@ -463,9 +479,9 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                                             key={day}
                                             type="button"
                                             onClick={() => toggleDay(day)}
-                                            className={`flex-1 min-w-[70px] py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${isActive
-                                                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 scale-105'
-                                                : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:border-white/20'
+                                            className={`px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${isActive
+                                                ? 'bg-primary/20 border-primary/40 text-primary shadow-lg shadow-primary/5'
+                                                : 'bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05] hover:border-white/10'
                                                 }`}
                                         >
                                             {t(`students.days.${day}`)}
@@ -475,35 +491,35 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                             </div>
 
                             {/* Time Inputs for Active Days */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 {formData.training_schedule.map((schedule: any) => (
                                     <div
                                         key={schedule.day}
-                                        className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-3 animate-in zoom-in-95 duration-300"
+                                        className="p-5 bg-white/[0.02] border border-white/5 rounded-[2rem] flex flex-col gap-4 animate-in zoom-in-95 duration-500"
                                     >
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black uppercase text-primary tracking-widest">
+                                            <span className="text-[9px] font-black uppercase text-primary tracking-[0.3em]">
                                                 {t(`students.days.${schedule.day}`)}
                                             </span>
-                                            <div className="h-px flex-1 bg-white/10 mx-4"></div>
+                                            <div className="h-px flex-1 bg-white/[0.03] mx-4"></div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[8px] font-black uppercase text-white/20 ml-1">{t('students.startTime')}</label>
+                                            <div className="space-y-2 group/time">
+                                                <label className="text-[8px] font-black uppercase text-white/20 ml-1 group-focus-within/time:text-primary transition-colors">{t('students.startTime')}</label>
                                                 <input
                                                     type="time"
                                                     value={schedule.start}
                                                     onChange={(e) => updateTime(schedule.day, 'start', e.target.value)}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-primary transition-colors outline-none"
+                                                    className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2 text-[10px] text-white focus:border-primary/40 focus:bg-white/[0.05] transition-all outline-none [color-scheme:dark]"
                                                 />
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[8px] font-black uppercase text-white/20 ml-1">{t('students.endTime')}</label>
+                                            <div className="space-y-2 group/time">
+                                                <label className="text-[8px] font-black uppercase text-white/20 ml-1 group-focus-within/time:text-primary transition-colors">{t('students.endTime')}</label>
                                                 <input
                                                     type="time"
                                                     value={schedule.end}
                                                     onChange={(e) => updateTime(schedule.day, 'end', e.target.value)}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-primary transition-colors outline-none"
+                                                    className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2 text-[10px] text-white focus:border-primary/40 focus:bg-white/[0.05] transition-all outline-none [color-scheme:dark]"
                                                 />
                                             </div>
                                         </div>
@@ -513,123 +529,111 @@ export default function AddStudentForm({ onClose, onSuccess, initialData }: AddS
                         </div>
                     </div>
 
-                    <div className="border-t border-white/5 pt-8">
-                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6 flex items-center gap-3">
-                            <div className="p-1.5 bg-primary/20 rounded-lg">
-                                <Upload className="w-3.5 h-3.5" />
-                            </div>
-                            Subscription Details
-                        </h3>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
+                    <div className="space-y-8 pt-10 border-t border-white/[0.03]">
+                        <div className="flex items-center gap-3 ml-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse"></div>
+                            <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20">
+                                Subscription Architecture
+                            </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-3 group/field">
                                 <div className="flex items-center justify-between ml-1">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Type</label>
+                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 group-focus-within/field:text-primary transition-colors">Plan Type</label>
                                     {plans.find(p => p.id === formData.subscription_type)?.price > 0 && (
-                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(var(--primary-rgb),0.8)]"></div>
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-wider">
+                                        <div className="px-3 py-1 bg-primary/5 border border-primary/20 rounded-full">
+                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">
                                                 {plans.find(p => p.id === formData.subscription_type)?.price} {currency.code}
                                             </span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="relative group/subtype">
+                                <div className="relative">
                                     <select
-                                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12 focus:bg-white/10"
+                                        className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none cursor-pointer pr-12 focus:bg-white/[0.04] text-sm tracking-wide"
                                         value={formData.subscription_type}
                                         onChange={e => setFormData({ ...formData, subscription_type: e.target.value })}
                                     >
                                         {plans.map(plan => (
-                                            <option key={plan.id} value={plan.id}>
-                                                {plan.name}
-                                            </option>
+                                            <option key={plan.id} value={plan.id} className="bg-[#0a0a0f]">{plan.name}</option>
                                         ))}
                                     </select>
-                                    <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/subtype:opacity-100 transition-opacity">
-                                        <ChevronDown className="w-4 h-4 text-white" />
-                                    </div>
+                                    <ChevronDown className="absolute inset-y-0 right-5 my-auto w-4 h-4 text-white/10 pointer-events-none group-focus-within/field:text-primary transition-colors" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-3 group/field">
+                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Activation</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white [color-scheme:dark] text-sm"
+                                        value={formData.subscription_start}
+                                        onChange={e => setFormData({ ...formData, subscription_start: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-3 group/field">
+                                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Deactivation</label>
+                                    <input
+                                        type="date"
+                                        className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white [color-scheme:dark] text-sm"
+                                        value={formData.subscription_expiry}
+                                        onChange={e => setFormData({ ...formData, subscription_expiry: e.target.value })}
+                                    />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Start Date & Expiry Date */}
-                        <div className="grid grid-cols-2 gap-6 mt-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center gap-2 h-5">
-                                    Start Date
-                                </label>
-                                <input
-                                    type="date"
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
-                                    value={formData.subscription_start}
-                                    onChange={e => setFormData({ ...formData, subscription_start: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1 flex items-center gap-2 h-5">
-                                    Expiry Date
-                                    <span className="px-2 py-0.5 bg-accent/10 text-accent text-[8px] rounded-full border border-accent/20 leading-none">Editable</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white"
-                                    value={formData.subscription_expiry}
-                                    onChange={e => setFormData({ ...formData, subscription_expiry: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2 mt-6">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('students.assignedCoach')}</label>
-                            <div className="relative group/coach">
+                        <div className="space-y-3 group/field">
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Assigned Specialist</label>
+                            <div className="relative">
                                 <select
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white appearance-none cursor-pointer pr-12 focus:bg-white/10"
+                                    className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white appearance-none cursor-pointer pr-12 focus:bg-white/[0.04] text-sm tracking-wide"
                                     value={formData.coach_id}
                                     onChange={e => setFormData({ ...formData, coach_id: e.target.value })}
                                 >
-                                    <option value="">{t('students.selectCoach')}</option>
+                                    <option value="" className="bg-[#0a0a0f]">{t('students.selectCoach')}</option>
                                     {coaches?.filter(c => c.role !== 'reception' && c.role !== 'cleaner').map(coach => (
-                                        <option key={coach.id} value={coach.id}>
+                                        <option key={coach.id} value={coach.id} className="bg-[#0a0a0f]">
                                             {coach.full_name} ({t(`roles.${coach.role}`)})
                                         </option>
                                     ))}
                                 </select>
-                                <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none opacity-40 group-hover/coach:opacity-100 transition-opacity">
-                                    <ChevronDown className="w-4 h-4 text-white" />
-                                </div>
+                                <ChevronDown className="absolute inset-y-0 right-5 my-auto w-4 h-4 text-white/10 pointer-events-none group-focus-within/field:text-primary transition-colors" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-1">{t('common.notes', 'Notes')}</label>
+                    <div className="space-y-3 group/field">
+                        <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Additional Insights</label>
                         <textarea
-                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary/20 focus:border-primary outline-none transition-all text-white placeholder:text-white/20 min-h-[100px]"
+                            placeholder="Performance notes, medical flags, or personal requests..."
+                            className="w-full px-5 py-4 bg-white/[0.02] border border-white/5 rounded-[2rem] focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-sm min-h-[120px] resize-none"
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
                         ></textarea>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-8 border-t border-white/5 mt-8">
+                    <div className="flex justify-end gap-6 pt-10 border-t border-white/[0.03] mt-10">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-2xl"
+                            className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-all duration-500"
                         >
-                            {t('common.cancel', 'Cancel')}
+                            {t('common.cancel', 'Discard')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-10 py-4 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+                            className="px-12 py-4 bg-primary text-white text-[9px] font-black uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-500 flex items-center justify-center gap-4 relative overflow-hidden group/btn disabled:opacity-50"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500"></div>
                             {loading ? (
-                                <span className="animate-pulse">Saving...</span>
+                                <span className="animate-pulse">Processing...</span>
                             ) : (
                                 <>
-                                    <Save className="w-4 h-4 relative z-10" />
-                                    <span className="relative z-10">{t('common.save', 'Save Student')}</span>
+                                    <span className="relative z-10">{initialData ? 'Update Profile' : 'Confirm Registration'}</span>
                                 </>
                             )}
                         </button>
