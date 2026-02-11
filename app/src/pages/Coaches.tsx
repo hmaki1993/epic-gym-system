@@ -23,6 +23,7 @@ interface Coach {
     image_pos_x?: number;
     image_pos_y?: number;
     role?: string;
+    phone?: string;
     profiles?: { role: string };
     admin_only_info?: boolean; // Type hint
 }
@@ -45,6 +46,7 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
     const isWorking = (coach as any).attendance_status === 'working';
     const isDone = (coach as any).attendance_status === 'done';
     const coachRole = coach.role?.toLowerCase().trim();
+    const isHeadCoach = coachRole === 'head_coach' || coachRole === 'admin';
 
     // LIVE TIMER LOGIC
     const [liveSeconds, setLiveSeconds] = useState((coach as any).daily_total_seconds || 0);
@@ -66,8 +68,8 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
 
     return (
         <div className={`glass-card rounded-[1.5rem] md:rounded-[2rem] border transition-all duration-700 relative overflow-hidden group 
-            ${isPremium
-                ? 'p-5 border-primary/20 bg-primary/5 hover:border-primary/50 shadow-[0_10px_40px_rgba(var(--primary-rgb),0.1)]'
+            ${isPremium || isHeadCoach
+                ? 'p-8 border-primary/30 bg-primary/5 hover:border-primary/50 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.2)]'
                 : isCompact
                     ? 'p-3 border-white/5 bg-white/[0.01] hover:border-white/10'
                     : 'p-4 border-white/10 bg-white/[0.02] hover:border-white/30 shadow-premium'
@@ -85,15 +87,15 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
             <div className={`flex flex-col items-center text-center w-full transition-all duration-500 ${isCompact ? 'space-y-3' : 'space-y-4'}`}>
                 {/* Avatar Section */}
                 <div className="relative shrink-0">
-                    <div className={`absolute -inset-3 bg-gradient-to-tr rounded-[2.5rem] blur-[15px] opacity-10 group-hover:opacity-40 transition-all duration-700 
-                        ${isPremium ? 'from-primary via-accent to-primary' : 'from-white/20 via-white/5 to-white/20'}`}></div>
+                    <div className={`absolute -inset-4 bg-gradient-to-tr rounded-[2.5rem] blur-[20px] opacity-10 ${isHeadCoach ? 'opacity-30 blur-[30px]' : 'group-hover:opacity-40'} transition-all duration-700 
+                        ${isPremium || isHeadCoach ? 'from-primary via-accent to-primary' : 'from-white/20 via-white/5 to-white/20'}`}></div>
                     {coach.avatar_url ? (
                         <div className="relative">
                             <img
                                 src={coach.avatar_url}
                                 alt={coach.full_name}
-                                className={`relative rounded-[1.5rem] md:rounded-[1.8rem] object-cover border-2 border-white/10 shadow-xl transition-all duration-700 group-hover:scale-105 group-hover:border-primary/30 cursor-zoom-in active:scale-95
-                                    ${isCompact ? 'w-14 h-14' : isPremium ? 'w-24 h-24' : 'w-20 h-20'}`}
+                                className={`relative rounded-[1.5rem] md:rounded-[1.8rem] object-cover border-2 transition-all duration-700 group-hover:scale-105 active:scale-95
+                                    ${isCompact ? 'w-14 h-14 border-white/10' : isPremium || isHeadCoach ? 'w-32 h-32 border-primary/30 shadow-2xl shadow-primary/20' : 'w-20 h-20 border-white/10 shadow-xl'} cursor-zoom-in`}
                                 style={{ objectPosition: `${coach.image_pos_x ?? 50}% ${coach.image_pos_y ?? 50}%` }}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -101,13 +103,13 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
                                 }}
                             />
                             {isWorking && (
-                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-black rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+                                <div className={`${isHeadCoach ? 'w-6 h-6' : 'w-5 h-5'} absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-black rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]`}></div>
                             )}
                         </div>
                     ) : (
                         <div className={`relative flex items-center justify-center bg-white/5 rounded-[1.5rem] md:rounded-[1.8rem] border-2 border-white/10 text-white/20 shadow-inner group-hover:text-primary group-hover:border-primary/30 transition-all 
-                            ${isCompact ? 'w-14 h-14' : isPremium ? 'w-24 h-24' : 'w-20 h-20'}`}>
-                            <Medal className={isCompact ? 'w-6 h-6' : 'w-10 h-10'} />
+                            ${isCompact ? 'w-14 h-14' : isPremium || isHeadCoach ? 'w-32 h-32' : 'w-20 h-20'}`}>
+                            <Medal className={isCompact ? 'w-6 h-6' : isPremium || isHeadCoach ? 'w-12 h-12' : 'w-10 h-10'} />
                         </div>
                     )}
                 </div>
@@ -117,7 +119,7 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
                     <div className="space-y-0.5">
                         <div className="flex flex-col items-center gap-0.5">
                             <h3 className={`font-black text-white leading-tight group-hover:text-primary transition-colors tracking-tight
-                                ${isPremium ? 'text-lg md:text-xl' : isCompact ? 'text-sm md:text-base' : 'text-base md:text-lg'}`}>
+                                ${isPremium || isHeadCoach ? 'text-2xl md:text-3xl pb-1' : isCompact ? 'text-sm md:text-base' : 'text-base md:text-lg'}`}>
                                 {coach.full_name}
                             </h3>
                             {isPremium && (
@@ -129,7 +131,7 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
                         {coach.role && (
                             <p className="font-black uppercase tracking-[0.2em] text-[8px] md:text-[9px]" style={{
                                 color: isCompact ? 'rgba(255, 255, 255, 0.3)' : 'var(--color-brand-label)',
-                                opacity: isCompact ? 1 : 0.6
+                                opacity: isCompact || isHeadCoach ? 1 : 0.6
                             }}>
                                 {t(`roles.${coach.role}`)}
                             </p>
@@ -237,10 +239,10 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
             </div>
 
             {/* Premium Corner Accent */}
-            {isPremium && (
-                <div className="absolute top-0 right-0 w-20 h-20 overflow-hidden pointer-events-none">
-                    <div className="absolute top-[12px] right-[-30px] w-[100px] h-6 bg-primary/20 border-y border-primary/30 rotate-45 flex items-center justify-center backdrop-blur-md">
-                        <span className="text-[7px] font-black text-primary uppercase tracking-[0.4em] pl-3">LEADER</span>
+            {(isPremium || isHeadCoach) && (
+                <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden pointer-events-none">
+                    <div className="absolute top-[16px] right-[-34px] w-[120px] h-7 bg-primary border-y-2 border-white/20 rotate-45 flex items-center justify-center shadow-lg">
+                        <span className="text-[8px] font-black text-white uppercase tracking-[0.4em] pl-4">{isHeadCoach ? 'LEADER' : 'VIP'}</span>
                     </div>
                 </div>
             )}
@@ -434,7 +436,7 @@ export default function Coaches() {
                                     <h2 className="text-xs font-black text-primary uppercase tracking-[0.5em]">{t('roles.head_coach')}</h2>
                                     <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-10">
                                     {coaches
                                         .filter(c => ['head_coach', 'admin'].includes(c.role?.toLowerCase() || ''))
                                         .map(coach => (
