@@ -41,13 +41,10 @@ export default function PremiumClock({ className = "" }: PremiumClockProps) {
                 </div>
             </div>
 
-            {/* Slim Separator */}
-            <div className="h-4 w-px bg-white/10"></div>
-
             {/* Refined Label Stack */}
-            <div className="flex flex-col -gap-1 translate-y-[1px]">
-                <span className="text-[7px] font-black uppercase tracking-widest opacity-40 leading-none">{format(time, 'EEE')}</span>
-                <span className="text-[8px] font-black uppercase tracking-tight text-primary/80 leading-none">{format(time, 'a')}</span>
+            <div className="flex flex-col items-start gap-1">
+                <span className="text-[7px] font-black text-white/30 uppercase tracking-[0.3em] leading-none mb-0.5">{format(time, 'eee')}</span>
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{amPm}</span>
             </div>
         </div>
     );

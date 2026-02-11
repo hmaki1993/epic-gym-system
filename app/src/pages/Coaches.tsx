@@ -68,48 +68,49 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
 
     return (
         <div className={`glass-card rounded-[1.5rem] md:rounded-[2rem] border transition-all duration-700 relative overflow-hidden group 
-            ${isPremium || isHeadCoach
-                ? 'p-8 border-primary/30 bg-primary/5 hover:border-primary/50 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.2)]'
+            ${isHeadCoach
+                ? 'p-8 border-primary/30 bg-primary/5 hover:border-primary/50 shadow-[0_0_40px_rgba(var(--color-primary-rgb),0.3)]'
                 : isCompact
                     ? 'p-3 border-white/5 bg-white/[0.01] hover:border-white/10'
                     : 'p-4 border-white/10 bg-white/[0.02] hover:border-white/30 shadow-premium'
             } hover:scale-[1.02] hover:-translate-y-1`}>
-
-            {/* Background Effects & Shimmer */}
-            <div className={`absolute -top-32 -right-32 w-48 h-48 rounded-full blur-[80px] transition-colors duration-700 
-                ${isPremium ? 'bg-primary/20 group-hover:bg-primary/30' : 'bg-white/5 group-hover:bg-white/10'}`}></div>
-
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-10 pointer-events-none transition-opacity duration-1000">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
-            </div>
+            {/* Premium Glow Effect for Head Coach */}
+            {isHeadCoach && (
+                <div className="absolute -top-32 -right-32 w-80 h-80 bg-primary/10 rounded-full blur-[120px] group-hover:bg-primary/20 transition-all duration-700"></div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-[1.5rem] md:rounded-[2rem] pointer-events-none"></div>
 
 
             <div className={`flex flex-col items-center text-center w-full transition-all duration-500 ${isCompact ? 'space-y-3' : 'space-y-4'}`}>
                 {/* Avatar Section */}
-                <div className="relative shrink-0">
-                    <div className={`absolute -inset-4 bg-gradient-to-tr rounded-[2.5rem] blur-[20px] opacity-10 ${isHeadCoach ? 'opacity-30 blur-[30px]' : 'group-hover:opacity-40'} transition-all duration-700 
-                        ${isPremium || isHeadCoach ? 'from-primary via-accent to-primary' : 'from-white/20 via-white/5 to-white/20'}`}></div>
+                <div className="relative shrink-0 group/avatar">
+                    {/* Gold Ribbon for Head Coach */}
+                    {isHeadCoach && (
+                        <div className="absolute -top-2 -left-2 z-30 bg-gradient-to-r from-amber-400 to-primary text-black text-[9px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-500/20 uppercase tracking-[0.2em] transform -rotate-12 border border-amber-200/50">
+                            LEADER
+                        </div>
+                    )}
+
+                    <div className={`absolute -inset-4 bg-gradient-to-tr rounded-full blur-2xl opacity-10 ${isHeadCoach ? 'opacity-30 blur-[40px]' : 'group-hover/avatar:opacity-40'} transition-all duration-500 
+                        ${isHeadCoach ? 'from-primary via-accent to-primary' : 'from-white/20 via-white/5 to-white/20'}`}></div>
+
                     {coach.avatar_url ? (
-                        <div className="relative">
+                        <div className={`relative ${isHeadCoach ? 'w-32 h-32' : 'w-20 h-20'} p-[1px] bg-gradient-to-tr from-primary/40 to-transparent rounded-[1.5rem] overflow-hidden shadow-2xl group-hover/avatar:scale-105 transition-all duration-500 cursor-zoom-in`}
+                            onClick={(e) => { e.stopPropagation(); onEnlargeImage(coach.avatar_url!); }}>
                             <img
                                 src={coach.avatar_url}
                                 alt={coach.full_name}
-                                className={`relative rounded-[1.5rem] md:rounded-[1.8rem] object-cover border-2 transition-all duration-700 group-hover:scale-105 active:scale-95
-                                    ${isCompact ? 'w-14 h-14 border-white/10' : isPremium || isHeadCoach ? 'w-32 h-32 border-primary/30 shadow-2xl shadow-primary/20' : 'w-20 h-20 border-white/10 shadow-xl'} cursor-zoom-in`}
+                                className="w-full h-full rounded-[1.4rem] object-cover"
                                 style={{ objectPosition: `${coach.image_pos_x ?? 50}% ${coach.image_pos_y ?? 50}%` }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEnlargeImage(coach.avatar_url!);
-                                }}
                             />
                             {isWorking && (
-                                <div className={`${isHeadCoach ? 'w-6 h-6' : 'w-5 h-5'} absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-black rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]`}></div>
+                                <div className={`absolute -bottom-1 -right-1 ${isHeadCoach ? 'w-6 h-6' : 'w-5 h-5'} bg-emerald-500 border-2 border-[#0a0c10] rounded-full animate-pulse z-40 shadow-[0_0_15px_rgba(16,185,129,0.5)]`}></div>
                             )}
                         </div>
                     ) : (
-                        <div className={`relative flex items-center justify-center bg-white/5 rounded-[1.5rem] md:rounded-[1.8rem] border-2 border-white/10 text-white/20 shadow-inner group-hover:text-primary group-hover:border-primary/30 transition-all 
-                            ${isCompact ? 'w-14 h-14' : isPremium || isHeadCoach ? 'w-32 h-32' : 'w-20 h-20'}`}>
-                            <Medal className={isCompact ? 'w-6 h-6' : isPremium || isHeadCoach ? 'w-12 h-12' : 'w-10 h-10'} />
+                        <div className={`relative flex items-center justify-center bg-white/5 rounded-[1.5rem] md:rounded-[1.8rem] border-2 border-white/10 text-white/20 shadow-inner group-hover/avatar:text-primary group-hover/avatar:border-primary/30 transition-all 
+                            ${isCompact ? 'w-14 h-14' : isHeadCoach ? 'w-32 h-32' : 'w-20 h-20'}`}>
+                            <Medal className={isCompact ? 'w-6 h-6' : isHeadCoach ? 'w-12 h-12' : 'w-10 h-10'} />
                         </div>
                     )}
                 </div>
@@ -118,14 +119,14 @@ const CoachCard = memo(({ coach, role, t, currency, onEdit, onDelete, onAttendan
                 <div className={`w-full ${isCompact ? 'space-y-1' : 'space-y-3'}`}>
                     <div className="space-y-0.5">
                         <div className="flex flex-col items-center gap-0.5">
-                            <h3 className={`font-black text-white leading-tight group-hover:text-primary transition-colors tracking-tight
-                                ${isPremium || isHeadCoach ? 'text-2xl md:text-3xl pb-1' : isCompact ? 'text-sm md:text-base' : 'text-base md:text-lg'}`}>
+                            <h3 className={`font-black text-white leading-tight group-hover:text-primary transition-colors tracking-tighter
+                                ${isHeadCoach ? 'text-3xl pb-2' : isCompact ? 'text-sm md:text-base' : 'text-base md:text-lg'}`}>
                                 {coach.full_name}
                             </h3>
-                            {isPremium && (
-                                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[7px] font-black uppercase tracking-[0.3em] border border-primary/30 mt-1">
-                                    EXECUTIVE STAFF
-                                </span>
+                            {isHeadCoach && (
+                                <p className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.3em] border border-primary/20 mt-1 mb-2">
+                                    ELITE LEADERSHIP
+                                </p>
                             )}
                         </div>
                         {coach.role && (
