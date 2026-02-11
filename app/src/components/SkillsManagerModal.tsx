@@ -274,7 +274,6 @@ export default function SkillsManagerModal({ isOpen, onClose }: SkillsManagerMod
                     message={isBulkDelete
                         ? "Are you sure you want to delete these skills? Note: Past assessment records will NOT be deleted, but these skills won't appear in new tests."
                         : "Are you sure you want to delete this skill? Past assessment records will NOT be deleted."}
-                    confirmText="Yes, Delete"
                     type="danger"
                 />
             </div>
