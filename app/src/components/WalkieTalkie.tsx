@@ -75,7 +75,7 @@ export default function WalkieTalkie({ className = '', role, userId }: Props) {
 
         // Prevent synthetic mouse events on touch devices
         if (e.type === 'touchstart') {
-            // e.preventDefault(); 
+            e.preventDefault();
         }
 
         mouseDownTime.current = Date.now();
@@ -219,10 +219,15 @@ export default function WalkieTalkie({ className = '', role, userId }: Props) {
                     onMouseLeave={handlePressEnd}
                     onTouchStart={handlePressStart}
                     onTouchEnd={(e) => {
+                        e.preventDefault(); // Prevent ghost clicks
                         handlePressEnd(e);
                         handleToggle(e as any); // Check for toggle-stop on mobile
                     }}
-                    onClick={handleToggle}
+                    onClick={(e) => {
+                        // If it's a mobile click triggered after touch, ignore it
+                        if ((Date.now() - mouseDownTime.current) < 50) return;
+                        handleToggle(e);
+                    }}
                     className={`relative w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 border-2 ${isRecording
                         ? 'bg-red-500/20 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-110'
                         : 'bg-primary/5 border-primary/20 hover:border-primary/50 text-primary'
