@@ -26,6 +26,7 @@ import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
 import PremiumClock from '../components/PremiumClock';
+import WalkieTalkie from '../components/WalkieTalkie';
 
 export default function DashboardLayout() {
     const { t, i18n } = useTranslation();
@@ -352,7 +353,7 @@ export default function DashboardLayout() {
 
             if (error) throw error;
             console.log('✅ Successfully cleared notifications from DB. Count:', count);
-            toast.success(t('common.notificationsCleared') || 'Notifications cleared');
+            toast.success(t('common.notificationsCleared'));
         } catch (error: any) {
             console.error('Error clearing notifications:', error);
             setNotifications(oldNotifications);
@@ -559,6 +560,9 @@ export default function DashboardLayout() {
 
                             {/* Unified Control Separator */}
                             <div className="hidden md:block h-8 w-px bg-surface-border mx-2"></div>
+
+                            {/* Walkie Talkie (Hoki Toki) */}
+                            {userId && <WalkieTalkie role={normalizedRole || 'coach'} userId={userId} />}
 
                             {/* Notifications Center */}
                             <div className="relative">

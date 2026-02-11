@@ -249,12 +249,28 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                 <div className="relative w-24 h-24 rounded-3xl overflow-hidden border border-white/10 bg-white/[0.02] flex-shrink-0 group/img shadow-2xl">
                                     <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-accent/10 opacity-0 group-hover/img:opacity-100 transition-opacity"></div>
                                     {formData.avatar_url ? (
-                                        <img
-                                            src={formData.avatar_url}
-                                            className="w-full h-full object-cover relative z-10"
-                                            style={{ objectPosition: `${formData.image_pos_x}% ${formData.image_pos_y}%` }}
-                                            alt="Preview"
-                                        />
+                                        <div className="relative w-full h-full group/preview">
+                                            <img
+                                                src={formData.avatar_url}
+                                                className="w-full h-full object-cover relative z-10 transition-all duration-300 group-hover/preview:scale-105"
+                                                style={{ objectPosition: `${formData.image_pos_x}% ${formData.image_pos_y}%` }}
+                                                alt="Preview"
+                                            />
+                                            {/* Remove Image Overlay */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({
+                                                    ...prev,
+                                                    avatar_url: '',
+                                                    image_pos_x: 50,
+                                                    image_pos_y: 50
+                                                }))}
+                                                className="absolute top-2 right-2 z-20 p-2 bg-rose-500/90 text-white rounded-xl opacity-0 group-hover/preview:opacity-100 transition-all duration-300 hover:bg-rose-600 shadow-lg active:scale-95"
+                                                title="Remove Image"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-white/10 font-black text-2xl">?</div>
                                     )}
@@ -262,16 +278,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
                                             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                                         </div>
-                                    )}
-                                    {formData.avatar_url && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, avatar_url: '', image_pos_x: 50, image_pos_y: 50 }))}
-                                            className="absolute inset-0 bg-rose-500/60 opacity-0 group-hover/img:opacity-100 transition-opacity z-20 flex items-center justify-center text-white"
-                                            title="Remove Image"
-                                        >
-                                            <Trash2 className="w-8 h-8 scale-75 group-hover/img:scale-100 transition-transform duration-500" />
-                                        </button>
                                     )}
                                 </div>
 
@@ -445,4 +451,3 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
         </div>
     );
 }
-

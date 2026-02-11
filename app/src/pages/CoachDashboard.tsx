@@ -13,6 +13,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useCurrency } from '../context/CurrencyContext';
 import PremiumClock from '../components/PremiumClock';
 import { useTheme } from '../context/ThemeContext';
+import BatchAssessmentModal from '../components/BatchAssessmentModal';
 
 export default function CoachDashboard() {
     const { t, i18n } = useTranslation();
@@ -35,6 +36,7 @@ export default function CoachDashboard() {
     const [showClearModal, setShowClearModal] = useState(false);
     const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
     const [showGroupForm, setShowGroupForm] = useState(false);
+    const [showBatchTest, setShowBatchTest] = useState(false);
     const [editingGroup, setEditingGroup] = useState<any>(null);
 
     // No longer need interval here as PremiumClock handles it
@@ -714,10 +716,19 @@ export default function CoachDashboard() {
 
             {/* My Groups Section */}
             <div className="glass-card p-8 rounded-[2.5rem] border border-white/10 shadow-premium">
-                <h2 className="text-xl font-black text-white uppercase tracking-tight mb-4 flex items-center gap-3">
-                    <div className="p-2.5 bg-accent/20 rounded-xl text-accent"><User className="w-5 h-5" /></div>
-                    {t('dashboard.myGroups', 'My Groups')}
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                        <div className="p-2.5 bg-accent/20 rounded-xl text-accent"><User className="w-5 h-5" /></div>
+                        {t('dashboard.myGroups', 'My Groups')}
+                    </h2>
+                    <button
+                        onClick={() => setShowBatchTest(true)}
+                        className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                    >
+                        <CheckCircle className="w-4 h-4" />
+                        New Batch Test
+                    </button>
+                </div>
                 <GroupsList
                     coachId={coachId || undefined}
                     onEdit={(role === 'admin' || role === 'head_coach') ? (group) => {
@@ -738,6 +749,15 @@ export default function CoachDashboard() {
                     }}
                 />
             )}
+
+            <BatchAssessmentModal
+                isOpen={showBatchTest}
+                onClose={() => setShowBatchTest(false)}
+                onSuccess={() => {
+                    toast.success('Batch test saved successfully');
+                }}
+                currentCoachId={coachId}
+            />
 
             {/* My PT Students Section & Live Floor */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
