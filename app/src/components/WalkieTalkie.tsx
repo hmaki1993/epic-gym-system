@@ -62,11 +62,15 @@ export default function WalkieTalkie({ className = '', role, userId }: Props) {
     };
 
     const stopRecording = () => {
+        setIsRecording(false); // Force state reset immediately for UI responsiveness
         if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
-            mediaRecorder.current.stop();
-            mediaRecorder.current.stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
-            setIsRecording(false);
-            playBeep('end');
+            try {
+                mediaRecorder.current.stop();
+                mediaRecorder.current.stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+                playBeep('end');
+            } catch (err) {
+                console.error('Error stopping recorder:', err);
+            }
         }
     };
 
