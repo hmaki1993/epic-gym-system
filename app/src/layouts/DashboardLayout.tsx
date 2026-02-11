@@ -20,7 +20,8 @@ import {
     MessageSquare,
     Globe,
     UserPlus,
-    ExternalLink
+    ExternalLink,
+    ClipboardCheck
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -248,6 +249,7 @@ export default function DashboardLayout() {
         { to: '/students', icon: Users, label: t('common.students'), roles: ['admin', 'head_coach', 'reception'] },
         { to: '/coaches', icon: UserCircle, label: t('common.coaches'), roles: ['admin', 'head_coach'] },
         { to: '/schedule', icon: Calendar, label: t('common.schedule'), roles: ['admin', 'head_coach', 'reception'] },
+        { to: '/evaluations', icon: ClipboardCheck, label: t('evaluations.title', 'Evaluations'), roles: ['admin', 'head_coach', 'coach'] },
         { to: '/finance', icon: Wallet, label: t('common.finance'), roles: ['admin'] },
         { to: '/my-work', icon: UserCircle, label: t('dashboard.myWork', 'My Work'), roles: ['head_coach'] },
         { to: '/settings', icon: Settings, label: t('common.settings'), roles: ['admin', 'head_coach', 'coach', 'reception'] },
