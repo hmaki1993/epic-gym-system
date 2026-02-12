@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
     ClipboardCheck,
     History,
@@ -27,6 +28,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 export default function Evaluations() {
     const { t } = useTranslation();
     const { userProfile } = useTheme();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'live' | 'history' | 'reports'>('live');
     const [stats, setStats] = useState({
         totalThisMonth: 0,
@@ -51,12 +53,28 @@ export default function Evaluations() {
     const [showBulkConfirm, setShowBulkConfirm] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
+    // Role-based access control
+    useEffect(() => {
+        const normalizedRole = userProfile?.role?.toLowerCase().trim();
+        if (normalizedRole && normalizedRole !== 'admin' && normalizedRole !== 'head_coach') {
+            toast.error(t('common.accessDenied', 'Access Denied'));
+            navigate('/');
+        }
+    }, [userProfile, navigate, t]);
+
     useEffect(() => {
         fetchStats();
         if (activeTab === 'history') fetchHistory();
         if (activeTab === 'reports') fetchReportingData();
         if (userProfile?.id) fetchCurrentCoachId();
     }, [activeTab, userProfile]);
+
+    // Cleanup selection when switching tabs
+    useEffect(() => {
+        setSelectedBatchKeys([]);
+        setIsSelectMode(false);
+        setShowBulkConfirm(false);
+    }, [activeTab]);
 
     const fetchCurrentCoachId = async () => {
         if (!userProfile?.id) return;
@@ -99,7 +117,7 @@ export default function Evaluations() {
             .from('skill_assessments')
             .select(`
                 *,
-                students(full_name, photo_url),
+                students(full_name),
                 coaches:coach_id(full_name)
             `)
             .order('created_at', { ascending: false });
@@ -210,8 +228,7 @@ export default function Evaluations() {
             // 1. Fetch Students
             const { data: studentsData } = await supabase
                 .from('students')
-                .select('id, full_name, photo_url, training_groups(name)')
-                .eq('is_active', true)
+                .select('id, full_name, contact_number, parent_contact, training_groups(name)')
                 .order('full_name');
 
             if (!studentsData) return;

@@ -240,20 +240,28 @@ export default function StaffAttendance() {
                         <div className="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                         {filteredCoaches.map((coach) => (
                             <div key={coach.id}
                                 onClick={() => {
                                     setSelectedCoachId(coach.id);
                                     setShowHistoryModal(true);
                                 }}
-                                className={`group relative flex flex-col items-center p-5 rounded-xl border transition-all duration-500 hover:scale-[1.02] cursor-pointer overflow-hidden
+                                className={`group relative flex flex-col items-center p-3 rounded-xl border transition-all duration-500 hover:scale-[1.02] cursor-pointer overflow-hidden
                                     ${coach.status === 'present'
                                         ? 'bg-gradient-to-b from-[#102a20] to-[#0a1612] border-emerald-500/30 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]'
                                         : coach.status === 'absent'
                                             ? 'bg-gradient-to-b from-[#2a1010] to-[#160a0a] border-rose-500/30 shadow-[0_0_30px_-10px_rgba(244,63,94,0.3)]'
                                             : 'glass-card border-white/10 hover:border-white/20'}`}
                             >
+                                {/* HEAD COACH Label - Consistent with Coaches page */}
+                                {(coach.role?.toLowerCase() === 'head_coach' || coach.role?.toLowerCase() === 'admin') && (
+                                    <div className="absolute -top-1 -right-1 z-50 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10 shadow-lg">
+                                        <span className="text-[8px] font-black text-white uppercase tracking-[0.1em]">
+                                            {t('roles.head_coach')}
+                                        </span>
+                                    </div>
+                                )}
                                 {/* Background Glow Effect */}
                                 <div className={`absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b opacity-20 transition-opacity duration-500
                                     ${coach.status === 'present' ? 'from-emerald-500 to-transparent' :
@@ -261,8 +269,8 @@ export default function StaffAttendance() {
                                             'from-white to-transparent opacity-5'}`} />
 
                                 {/* Avatar Section */}
-                                <div className="relative mb-4 mt-2">
-                                    <div className={`w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden border-2 shadow-2xl transition-all duration-500 cursor-zoom-in active:scale-95
+                                <div className="relative mb-2 mt-1">
+                                    <div className={`w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden border-2 shadow-2xl transition-all duration-500 cursor-zoom-in active:scale-95
                                         ${coach.status === 'present' ? 'border-emerald-500/50 shadow-emerald-900/50' :
                                             coach.status === 'absent' ? 'border-rose-500/50 shadow-rose-900/50' :
                                                 'border-white/10 bg-white/5'}`}
@@ -276,61 +284,54 @@ export default function StaffAttendance() {
                                         {coach.avatar_url ? (
                                             <img src={coach.avatar_url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                         ) : (
-                                            <span className="font-black text-white/50 text-4xl">{coach.full_name[0]}</span>
+                                            <span className="font-black text-white/50 text-2xl">{coach.full_name[0]}</span>
                                         )}
                                     </div>
 
                                     {/* Status Dot */}
-                                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-[3px] border-[#0E1D21] flex items-center justify-center shadow-lg
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-[2.5px] border-[#0E1D21] flex items-center justify-center shadow-lg
                                         ${coach.status === 'present' ? 'bg-emerald-500' :
                                             coach.status === 'absent' ? 'bg-rose-500' : 'bg-surface-light'}`}
                                     >
-                                        {coach.status === 'present' && <CheckCircle className="w-3 h-3 text-emerald-950" strokeWidth={3} />}
-                                        {coach.status === 'absent' && <XCircle className="w-3 h-3 text-rose-950" strokeWidth={3} />}
+                                        {coach.status === 'present' && <CheckCircle className="w-2.5 h-2.5 text-emerald-950" strokeWidth={3} />}
+                                        {coach.status === 'absent' && <XCircle className="w-2.5 h-2.5 text-rose-950" strokeWidth={3} />}
                                     </div>
                                 </div>
 
-                                {/* Name & Role */}
-                                <div className="text-center w-full mb-6 relative z-10">
-                                    <h3 className="text-lg font-black text-white tracking-tight mb-2 truncate px-2">
+                                {/* Name */}
+                                <div className="text-center w-full mb-3 relative z-10">
+                                    <h3 className="text-sm font-black text-white tracking-tight truncate px-1">
                                         {coach.full_name}
                                     </h3>
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-sm
-                                        ${coach.status === 'present' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                            coach.status === 'absent' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
-                                                'bg-white/5 border-white/10 text-white/40'}`}>
-                                        {coach.role || 'Staff'}
-                                    </span>
                                 </div>
 
-                                {/* Stats Grid */}
-                                <div className="grid grid-cols-3 gap-2 w-full mb-6 relative z-10 px-1">
-                                    <div className="flex flex-col items-center justify-center p-1 rounded-xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors h-[50px]">
-                                        <Clock className={`w-3 h-3 mb-0.5 ${coach.status === 'present' ? 'text-emerald-400 animate-pulse' : 'text-white/40'}`} />
-                                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider mb-0.5 whitespace-nowrap">Time</span>
-                                        {coach.status === 'present' && coach.checkInTime ? (
-                                            <LiveTimer startTime={coach.checkInTime} initialMinutes={coach.totalMinutes} />
-                                        ) : (
-                                            <span className="text-[10px] font-black text-white whitespace-nowrap">
-                                                {coach.totalMinutes > 0
-                                                    ? `${Math.floor(coach.totalMinutes / 60)}h ${coach.totalMinutes % 60}m`
-                                                    : '--'}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col items-center justify-center p-1.5 rounded-xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors h-[50px]">
+                                {/* Stats Grid - Icon Only */}
+                                <div className="grid grid-cols-3 gap-1.5 w-full mb-3 relative z-10">
+                                    {coach.role?.toLowerCase().trim() !== 'cleaner' && (
+                                        <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
+                                            <Clock className={`w-3 h-3 mb-1 ${coach.status === 'present' ? 'text-emerald-400 animate-pulse' : 'text-white/40'}`} />
+                                            {coach.status === 'present' && coach.checkInTime ? (
+                                                <LiveTimer startTime={coach.checkInTime} initialMinutes={coach.totalMinutes} />
+                                            ) : (
+                                                <span className="text-[9px] font-black text-white whitespace-nowrap">
+                                                    {coach.totalMinutes > 0
+                                                        ? `${Math.floor(coach.totalMinutes / 60)}h ${coach.totalMinutes % 60}m`
+                                                        : '--'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
                                         <LogIn className="w-3 h-3 text-emerald-400/70 mb-1" />
-                                        <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider mb-0.5 whitespace-nowrap">In</span>
-                                        <span className="text-[11px] font-black text-white whitespace-nowrap">
+                                        <span className="text-[9px] font-black text-white whitespace-nowrap">
                                             {coach.checkInTime
                                                 ? format(new Date(coach.checkInTime), 'HH:mm')
                                                 : '--'}
                                         </span>
                                     </div>
-                                    <div className="flex flex-col items-center justify-center p-1.5 rounded-xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors h-[50px]">
+                                    <div className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors">
                                         <LogOut className="w-3 h-3 text-rose-400/70 mb-1" />
-                                        <span className="text-[9px] text-white/40 font-bold uppercase tracking-wider mb-0.5 whitespace-nowrap">Out</span>
-                                        <span className="text-[11px] font-black text-white whitespace-nowrap">
+                                        <span className="text-[9px] font-black text-white whitespace-nowrap">
                                             {coach.checkOutTime
                                                 ? format(new Date(coach.checkOutTime), 'HH:mm')
                                                 : '--'}
@@ -343,42 +344,42 @@ export default function StaffAttendance() {
                                     const isCleaner = coach.role?.toLowerCase().trim() === 'cleaner';
                                     if (isCleaner) {
                                         return (
-                                            <div className="w-full flex items-center justify-center gap-3 relative z-10 px-1" onClick={(e) => e.stopPropagation()}>
+                                            <div className="w-full flex items-center justify-center gap-2 relative z-10" onClick={(e) => e.stopPropagation()}>
                                                 {coach.status !== 'present' && (
                                                     <button
                                                         onClick={() => handleMarkPresent(coach.id)}
-                                                        className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 transition-all flex items-center justify-center group/btn shadow-lg"
+                                                        className="w-8 h-8 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 transition-all flex items-center justify-center group/btn shadow-lg"
                                                         title="Mark Present"
                                                     >
-                                                        <CheckCircle className="w-5 h-5 group-hover/btn:scale-110 transition-transform flex-shrink-0" />
+                                                        <CheckCircle className="w-4 h-4 group-hover/btn:scale-110 transition-transform flex-shrink-0" />
                                                     </button>
                                                 )}
                                                 {coach.status !== 'absent' && (
                                                     <button
                                                         onClick={() => handleMarkAbsent(coach.id)}
-                                                        className="w-10 h-10 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 transition-all flex items-center justify-center group/btn shadow-lg"
+                                                        className="w-8 h-8 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 transition-all flex items-center justify-center group/btn shadow-lg"
                                                         title="Mark Absent"
                                                     >
-                                                        <XCircle className="w-5 h-5 group-hover/btn:scale-110 transition-transform flex-shrink-0" />
+                                                        <XCircle className="w-4 h-4 group-hover/btn:scale-110 transition-transform flex-shrink-0" />
                                                     </button>
                                                 )}
                                             </div>
                                         );
                                     } else {
                                         return coach.status !== 'absent' ? (
-                                            <div className="w-full flex items-center justify-center relative z-10 px-1" onClick={(e) => e.stopPropagation()}>
+                                            <div className="w-full flex items-center justify-center relative z-10" onClick={(e) => e.stopPropagation()}>
                                                 <button
                                                     onClick={() => handleMarkAbsent(coach.id)}
-                                                    className="w-10 h-10 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 transition-all flex items-center justify-center group/btn shadow-lg"
+                                                    className="w-8 h-8 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 transition-all flex items-center justify-center group/btn shadow-lg"
                                                     title="Mark Absent"
                                                 >
-                                                    <XCircle className="w-5 h-5 group-hover/btn:scale-110 transition-transform flex-shrink-0" />
+                                                    <XCircle className="w-4 h-4 group-hover/btn:scale-110 transition-transform flex-shrink-0" />
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="w-full flex items-center justify-center relative z-10 px-1">
-                                                <div className="w-10 h-10 rounded-full bg-white/5 border border-white/5 flex items-center justify-center opacity-50 cursor-not-allowed shadow-inner" title="Marked Absent">
-                                                    <XCircle className="w-5 h-5 text-white/40" />
+                                            <div className="w-full flex items-center justify-center relative z-10">
+                                                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center opacity-50 cursor-not-allowed shadow-inner" title="Marked Absent">
+                                                    <XCircle className="w-4 h-4 text-white/40" />
                                                 </div>
                                             </div>
                                         );
@@ -440,7 +441,7 @@ function LiveTimer({ startTime, initialMinutes = 0 }: { startTime: string; initi
     const s = totalSeconds % 60;
 
     return (
-        <span className="text-[9.5px] font-black text-emerald-400 whitespace-nowrap leading-none">
+        <span className="text-[8.5px] font-black text-emerald-400 whitespace-nowrap leading-none">
             {h > 0 ? `${h}h ` : ''}{m}m {s}s
         </span>
     );

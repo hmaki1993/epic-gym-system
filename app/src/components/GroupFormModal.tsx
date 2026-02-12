@@ -221,9 +221,6 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                             <h2 className="text-xl font-black text-white tracking-widest uppercase mb-1 drop-shadow-lg leading-tight">
                                 {initialData ? t('common.editGroup') : t('common.createGroup')}
                             </h2>
-                            <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">
-                                {initialData ? 'Update Group Details' : 'Initialize New Training Group'}
-                            </p>
                         </div>
                         <button
                             onClick={onClose}
@@ -335,7 +332,7 @@ export default function GroupFormModal({ initialData, onClose, onSuccess }: Grou
                                     type="text"
                                     value={studentSearch}
                                     onChange={e => setStudentSearch(e.target.value)}
-                                    placeholder="Search students..."
+                                    placeholder=""
                                     className="w-full bg-white/[0.02] border border-white/5 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-primary/40 text-xs font-bold placeholder:text-white/20 transition-all"
                                 />
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within/search:text-primary transition-colors" />

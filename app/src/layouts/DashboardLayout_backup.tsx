@@ -13,11 +13,14 @@ import {
     Menu,
     X,
     LogOut,
+    Wrench,
     Building2,
     Bell,
     ChevronDown,
+    MessageSquare,
     Globe,
     UserPlus,
+    ExternalLink,
     ClipboardCheck
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -34,9 +37,10 @@ export default function DashboardLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Derived states from unified userProfile
-    const userId = userProfile?.id || null;
+    const userId = userProfile?.id || null; // Wait, I didn't add id to userProfile in ThemeContext. I should.
     const role = userProfile?.role || null;
     const fullName = userProfile?.full_name || null;
+    const userEmail = userProfile?.email || null; // I should add email too.
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [userStatus, setUserStatus] = useState<'online' | 'busy'>('online');
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -59,6 +63,8 @@ export default function DashboardLayout() {
         target_role?: string;
     }[]>([]);
 
+    // Track processed IDs to prevent duplicate toasts/state updates
+    // This persists across renders and isn't affected by fresh closures or StrictMode double-invokes
     const processedIds = useRef(new Set<string>());
 
     useEffect(() => {
@@ -67,6 +73,7 @@ export default function DashboardLayout() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
+            // Get role from profile to filter target_role
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
@@ -85,6 +92,7 @@ export default function DashboardLayout() {
             const { data } = await query;
             if (data) {
                 setNotifications(data);
+                // Mark initial loaded IDs as processed so we don't toast them if a race condition happens
                 data.forEach((n: any) => processedIds.current.add(n.id));
             }
         };
@@ -111,6 +119,8 @@ export default function DashboardLayout() {
                         return;
                     }
 
+                    // Only add if it's for this user OR global
+                    // Note: target_role filtering happens in the render filter
                     if (!newNote.user_id || newNote.user_id === user.id) {
                         if (processedIds.current.has(newNote.id)) {
                             console.log('🔔 Notification: Already processed', newNote.id);
@@ -161,6 +171,7 @@ export default function DashboardLayout() {
         if (userProfile?.avatar_url) {
             setAvatarUrl(userProfile.avatar_url);
         } else if (userId) {
+            // If avatar is missing in profile, try fetching from coaches table (linked by profile_id)
             const fetchCoachAvatar = async () => {
                 const { data: coachData } = await supabase
                     .from('coaches')
@@ -185,10 +196,11 @@ export default function DashboardLayout() {
         };
 
         // Debugging: Monitor Role
-        console.log('🛡️ DashboardLayout: Render check', { role, userId, fullName });
+        console.log('🛡️ DashboardLayout: Render check', { role, userId, userEmail, fullName });
 
         if (role) console.log('Current User Role:', role);
 
+        // Also refresh user profile on event
         window.addEventListener('gymProfileUpdated', handleProfileUpdate);
         return () => {
             window.removeEventListener('gymProfileUpdated', handleProfileUpdate);
@@ -200,11 +212,13 @@ export default function DashboardLayout() {
         const handleClickOutside = () => {
             setNotificationsOpen(false);
             setProfileOpen(false);
+            // Don't close logo modal on outside click here, the modal backdrop will handle it
         };
         window.addEventListener('click', handleClickOutside);
         return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
+    // Prevent background scrolling when mobile sidebar is open
     useEffect(() => {
         if (sidebarOpen) {
             document.body.style.overflow = 'hidden';
@@ -235,8 +249,8 @@ export default function DashboardLayout() {
         { to: '/students', icon: Users, label: t('common.students'), roles: ['admin', 'head_coach', 'reception'] },
         { to: '/coaches', icon: UserCircle, label: t('common.coaches'), roles: ['admin', 'head_coach'] },
         { to: '/schedule', icon: Calendar, label: t('common.schedule'), roles: ['admin', 'head_coach', 'reception'] },
+        { to: '/evaluations', icon: ClipboardCheck, label: t('evaluations.title', 'Evaluations'), roles: ['admin', 'head_coach', 'coach'] },
         { to: '/finance', icon: Wallet, label: t('common.finance'), roles: ['admin'] },
-        { to: '/evaluations', icon: ClipboardCheck, label: t('common.evaluations', 'Evaluations'), roles: ['admin', 'head_coach'] },
         { to: '/my-work', icon: UserCircle, label: t('dashboard.myWork', 'My Work'), roles: ['head_coach'] },
         { to: '/settings', icon: Settings, label: t('common.settings'), roles: ['admin', 'head_coach', 'coach', 'reception'] },
         { to: '/admin/cameras', icon: Video, label: t('common.cameras'), roles: ['admin'] },
@@ -245,70 +259,103 @@ export default function DashboardLayout() {
     const normalizedRole = role?.toLowerCase().trim().replace(/\s+/g, '_');
 
     const navItems = allNavItems.filter(item => {
-        if (!normalizedRole) return false;
+        if (!normalizedRole) return false; // Show nothing while loading to avoid flickering
         return item.roles.includes(normalizedRole);
     });
 
+    // Filter notifications based on role and user_id
     const filteredNotifications = notifications.filter(note => {
         if (!normalizedRole) {
             console.log('🔔 Notification Filter: No role loaded yet');
             return false;
         }
 
+        // 1. User-specific override: Only the specific user sees these
         if (note.user_id) {
             const isMatch = note.user_id === userId;
             if (!isMatch) console.log('🔔 Notification Filter: user_id mismatch', { noteUser: note.user_id, currentUserId: userId });
             return isMatch;
         }
 
+        // 2. Target Role Filtering
         if (note.target_role) {
-            if (normalizedRole === 'admin') return true;
+            if (normalizedRole === 'admin') return true; // Admin sees all role-targeted notes
+
             const target = note.target_role.toLowerCase().trim();
-            if (target === 'reception' && (normalizedRole === 'reception' || normalizedRole === 'receptionist')) return true;
+
+            // Handle consolidated roles (reception / receptionist)
+            if (target === 'reception' && (normalizedRole === 'reception' || normalizedRole === 'receptionist')) {
+                return true;
+            }
+
             if (target === normalizedRole) return true;
-            if (target === 'admin_reception' && (normalizedRole === 'admin' || normalizedRole === 'reception' || normalizedRole === 'receptionist')) return true;
-            if (target === 'admin_head_reception' && (normalizedRole === 'admin' || normalizedRole === 'head_coach' || normalizedRole === 'reception' || normalizedRole === 'receptionist')) return true;
+
+            // Special case for shared roles
+            if (target === 'admin_reception' && (normalizedRole === 'admin' || normalizedRole === 'reception' || normalizedRole === 'receptionist')) {
+                return true;
+            }
+
+            if (target === 'admin_head_reception' && (normalizedRole === 'admin' || normalizedRole === 'head_coach' || normalizedRole === 'reception' || normalizedRole === 'receptionist')) {
+                return true;
+            }
+
             console.log('🔔 Notification Filter: target_role mismatch', { target, normalizedRole });
             return false;
         }
 
-        if (normalizedRole === 'admin') return true;
+        // 3. Global Notification Type Filtering (for notes without a target_role)
+        if (normalizedRole === 'admin') return true; // Admin sees all global notes
+
         if (normalizedRole === 'head_coach') {
             const allowedTypes: string[] = ['coach', 'check_in', 'check_out', 'attendance_absence', 'pt_subscription', 'student'];
             return allowedTypes.includes(note.type);
         }
+
         if (normalizedRole === 'coach') {
-            const allowedTypes: string[] = ['student', 'schedule', 'pt_subscription', 'check_in', 'check_out', 'attendance_absence'];
-            return allowedTypes.includes(note.type);
+            return note.type === 'student' || note.type === 'schedule';
         }
+
         if (normalizedRole === 'reception' || normalizedRole === 'receptionist') {
             const allowedTypes: string[] = ['payment', 'student', 'check_in', 'check_out', 'attendance_absence', 'pt_subscription'];
             return allowedTypes.includes(note.type);
         }
-        return true;
+
+        return true; // Fallback for general types
     });
 
     const unreadCount = filteredNotifications.filter(n => !n.is_read).length;
 
     const handleClearAllNotifications = async () => {
         if (!filteredNotifications.length) return;
+
         const oldNotifications = [...notifications];
+
+        // Optimistic update: Clear the current view entirely
         const idsToClear = filteredNotifications.map(n => n.id);
         setNotifications(prev => prev.filter(n => !idsToClear.includes(n.id)));
 
         try {
             console.log('🗑️ Clearing all relevant notifications for role:', normalizedRole);
+
             let query = supabase.from('notifications').delete();
+
+            // Use the explicit list of IDs we want to clear.
+            // This guarantees we delete exactly what the user sees, instead of guessing types/roles.
             query = query.in('id', idsToClear);
 
+            // Safety check: ensure we only delete things targeted to us or global
+            // This prevents role filters from accidentally deleting other roles' private notes
+            // UPDATE: For 'Clear All', if the user sees it (in idsToClear), they should be able to delete it.
+            // Especially for Admin who sees everything.
             if (normalizedRole !== 'admin') {
                 query = query.or(`user_id.eq.${userId},user_id.is.null,target_role.eq.${normalizedRole}`);
             }
 
             const { error, count } = await query;
+
             if (error) throw error;
             console.log('✅ Successfully cleared notifications from DB. Count:', count);
-            toast.success(t('common.notificationsCleared') || 'Notifications cleared');
+            toast.success(t('common.notificationsCleared'));
         } catch (error: any) {
             console.error('Error clearing notifications:', error);
             setNotifications(oldNotifications);
@@ -319,7 +366,10 @@ export default function DashboardLayout() {
     const handleMarkAsRead = async (id: string) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
         try {
-            await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+            await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', id);
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
@@ -327,6 +377,7 @@ export default function DashboardLayout() {
 
     return (
         <div className="min-h-screen flex bg-background font-cairo">
+            {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-200"
@@ -334,8 +385,10 @@ export default function DashboardLayout() {
                 />
             )}
 
+            {/* Sidebar */}
             <aside className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 transition-transform duration-300 transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : isRtl ? 'translate-x-[110%]' : '-translate-x-full'}`}>
                 <div className="h-full glass-card flex flex-col m-4 rounded-[2.5rem] overflow-hidden border border-surface-border shadow-premium">
+                    {/* Sidebar Header - Academy Branding */}
                     <div className="p-6 pb-2 text-center">
                         <button
                             onClick={() => {
@@ -374,8 +427,10 @@ export default function DashboardLayout() {
 
                     <div className="mt-4 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto"></div>
 
+                    {/* User Profile Card - Premium Glassmorphism */}
                     <div className="px-5 mt-2 mb-4">
                         <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/10 shadow-2xl backdrop-blur-md relative overflow-hidden group/profile">
+                            {/* Decorative Glow */}
                             <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 blur-2xl rounded-full -mr-8 -mt-8 group-hover/profile:bg-primary/20 transition-all duration-700"></div>
 
                             <div className="flex items-center gap-4 relative z-10">
@@ -398,14 +453,13 @@ export default function DashboardLayout() {
                                     <h3 className="font-extrabold text-white tracking-tight text-xs truncate">
                                         {fullName || t('common.adminRole')}
                                     </h3>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-[9px] text-primary font-black uppercase tracking-wider">{t(`roles.${role}`)}</span>
-                                    </div>
+                                    {/* Role label removed */}
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    {/* Navigation */}
                     <nav className="flex-1 px-4 mt-2 mb-2 space-y-1 overflow-y-auto custom-scrollbar">
                         <div className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em] px-4 mb-2">Main Menu</div>
                         {navItems.map((item) => {
@@ -431,6 +485,7 @@ export default function DashboardLayout() {
                         })}
                     </nav>
 
+                    {/* Sidebar Footer - Actions Tray */}
                     <div className="p-4 mx-2 mb-4 rounded-3xl bg-black/20 border border-white/5 flex items-center gap-2">
                         <button
                             onClick={() => {
@@ -458,7 +513,9 @@ export default function DashboardLayout() {
                 </div>
             </aside>
 
+            {/* Main Content Area */}
             <div className={`flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-500 ${isRtl ? 'lg:mr-72' : 'lg:ml-72'}`}>
+                {/* Header - Elite Reborn */}
                 <header className="relative h-16 flex items-center justify-between px-6 bg-background/50 backdrop-blur-3xl sticky top-0 z-30 w-full border-b border-surface-border">
                     <div className="flex items-center gap-4">
                         <button
@@ -470,6 +527,7 @@ export default function DashboardLayout() {
                     </div>
 
                     <div className="flex items-center gap-6">
+                        {/* Quick Action Hub */}
                         <div className="flex items-center gap-3 md:p-2 md:bg-text-base/5 md:border md:border-surface-border md:rounded-[2rem] md:shadow-inner md:backdrop-blur-md">
                             {settings.clock_position === 'header' && (
                                 <div className="hidden md:flex items-center gap-3">
@@ -490,18 +548,23 @@ export default function DashboardLayout() {
                                     className="relative group/reg flex items-center justify-center w-11 h-11 rounded-full bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-500/40 transition-all duration-500 shadow-lg shadow-emerald-500/5 hover:bg-emerald-500/10 active:scale-95"
                                     title={t('common.registrationPage')}
                                 >
+                                    {/* Premium Glow effect */}
                                     <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-xl opacity-0 group-hover/reg:opacity-100 transition-opacity duration-700"></div>
 
                                     <UserPlus className="w-5 h-5 text-emerald-400 group-hover/reg:scale-110 transition-transform duration-500 relative z-10" />
 
+                                    {/* Elite Status Dot */}
                                     <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0E1D21] shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse z-20"></span>
                                 </a>
                             )}
 
+                            {/* Unified Control Separator */}
                             <div className="hidden md:block h-8 w-px bg-surface-border mx-2"></div>
 
-                            {userId && <WalkieTalkie role={normalizedRole || 'coach'} userId={userId || ''} />}
+                            {/* Walkie Talkie (Hoki Toki) */}
+                            {userId && <WalkieTalkie role={normalizedRole || 'coach'} userId={userId} />}
 
+                            {/* Notifications Center */}
                             <div className="relative">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setNotificationsOpen(!notificationsOpen); setProfileOpen(false); }}
@@ -584,6 +647,7 @@ export default function DashboardLayout() {
                             </div>
                         </div>
 
+                        {/* Status & Profile Hub */}
                         <div className="relative">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen); setNotificationsOpen(false); }}
@@ -596,7 +660,7 @@ export default function DashboardLayout() {
 
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <span className={`w-1.5 h-1.5 rounded-full ${userStatus === 'online' ? 'bg-emerald-400' : 'bg-orange-400'} animate-pulse shadow-[0_0_8px_currentColor]`}></span>
-                                        <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{role || 'Admin'}</span>
+                                        {/* Role text removed for cleaner UI */}
                                     </div>
                                 </div>
 
@@ -665,11 +729,14 @@ export default function DashboardLayout() {
                     </div>
                 </header>
 
+                {/* Page Content */}
                 <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
                     <Outlet context={{ role, fullName, userId }} />
+
                 </main>
             </div>
 
+            {/* Logo Lightbox Modal */}
             {isLogoModalOpen && (
                 <div
                     className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300"

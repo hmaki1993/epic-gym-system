@@ -146,16 +146,31 @@ ${evaluations.behavior || 'Great attitude and focus!'}
             `.trim();
 
             // Prioritize the specific "WhatsApp for Reports" field (parent_contact)
-            const phoneNumber = student.parent_contact || student.contact_number;
+            let phoneNumber = student.parent_contact;
 
-            if (!phoneNumber) {
-                toast.error('No WhatsApp number found (Check "WhatsApp for Reports" field)');
+            // Fallback to primary contact if parent contact is empty
+            if (!phoneNumber || phoneNumber.trim() === '') {
+                phoneNumber = student.contact_number;
+            }
+
+            // Clean phone number (remove all non-numeric characters)
+            const cleanNumber = phoneNumber ? phoneNumber.replace(/[^0-9]/g, '') : '';
+
+            console.log('📱 Sending Report - Raw:', phoneNumber, 'Clean:', cleanNumber);
+
+            if (!cleanNumber || cleanNumber.length < 8) {
+                toast.error('No valid WhatsApp number found (Check "WhatsApp for Reports" field)');
                 return;
             }
 
-            // Clean phone number (remove spaces, etc, ensure international format if needed)
+            // Ensure country code (default to Kuwait 965 if missing and length is 8)
+            let finalNumber = cleanNumber;
+            if (finalNumber.length === 8) {
+                finalNumber = '965' + finalNumber;
+            }
+
             const codedMsg = encodeURIComponent(message);
-            const waUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}?text=${codedMsg}`;
+            const waUrl = `https://wa.me/${finalNumber}?text=${codedMsg}`;
 
             // Open WhatsApp
             window.open(waUrl, '_blank');
@@ -225,7 +240,7 @@ ${evaluations.behavior || 'Great attitude and focus!'}
                                     type="month"
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-sm font-black text-white/80 focus:border-primary/30 outline-none transition-all cursor-pointer hover:bg-white/[0.05]"
+                                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-4 text-sm font-black text-white/80 focus:border-primary/30 outline-none transition-all cursor-pointer hover:bg-white/[0.05] text-center"
                                 />
                             </div>
                         </div>
@@ -343,7 +358,6 @@ ${evaluations.behavior || 'Great attitude and focus!'}
                             <textarea
                                 value={evaluations.technical}
                                 onChange={(e) => setEvaluations({ ...evaluations, technical: e.target.value })}
-                                placeholder="Describe skill progress and training quality..."
                                 className="w-full h-32 bg-white/[0.03] border border-white/5 rounded-3xl p-6 text-sm font-medium text-white/80 focus:border-emerald-500/30 outline-none transition-all resize-none placeholder:text-white/5 hover:bg-white/[0.05]"
                             />
                         </div>
@@ -354,7 +368,6 @@ ${evaluations.behavior || 'Great attitude and focus!'}
                             <textarea
                                 value={evaluations.behavior}
                                 onChange={(e) => setEvaluations({ ...evaluations, behavior: e.target.value })}
-                                placeholder="Note attitude, focus, and team effort..."
                                 className="w-full h-24 bg-white/[0.03] border border-white/5 rounded-3xl p-6 text-sm font-medium text-white/80 focus:border-blue-500/30 outline-none transition-all resize-none placeholder:text-white/5 hover:bg-white/[0.05]"
                             />
                         </div>

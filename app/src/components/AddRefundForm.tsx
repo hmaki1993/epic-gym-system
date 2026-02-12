@@ -39,15 +39,7 @@ export default function AddRefundForm({ onClose, onSuccess, onAdd }: AddRefundFo
                 refund_date: formData.refund_date
             });
 
-            // Notification: Refund (Admin + Reception)
-            const studentName = students?.find((s: any) => s.id === formData.student_id)?.full_name || 'Student';
-            await supabase.from('notifications').insert({
-                type: 'financial',
-                title: 'Refund Issued',
-                message: `Refund: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} for ${studentName}`,
-                target_role: 'admin_reception',
-                is_read: false
-            });
+            // Trigger will handle notification for 'Refund Issued'
 
             toast.success('Refund added successfully');
             onSuccess();

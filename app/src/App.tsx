@@ -42,7 +42,8 @@ const PageLoader = () => (
 
 import { initializeTheme } from './utils/theme';
 import { CurrencyProvider } from './context/CurrencyContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { WalkieTalkieProvider } from './context/WalkieTalkieContext';
 
 import BackButtonHandler from './components/BackButtonHandler';
 
@@ -57,86 +58,93 @@ function App() {
     }
   }, [i18n, i18n?.language]);
 
-
-
   return (
     <CurrencyProvider>
       <ThemeProvider>
-        <BrowserRouter>
-          <BackButtonHandler />
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 4000,
-              className: 'premium-toast',
-              style: {
-                background: 'rgba(5, 5, 5, 0.85)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                color: '#fff',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
-                borderRadius: '24px',
-                padding: '16px 24px',
-                fontSize: '14px',
-                fontWeight: '600',
-                letterSpacing: '0.01em',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
+        <WalkieTalkieWrapper>
+          <BrowserRouter>
+            <BackButtonHandler />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 4000,
+                className: 'premium-toast-vibrant',
+                style: {
+                  color: '#fff',
+                  padding: '12px 24px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  letterSpacing: '0.02em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  minWidth: 'fit-content',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
                 },
-              },
-            }}
-          />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
 
-              <Route path="/register" element={<Register />} />
-              <Route path="/registration" element={<PublicRegistration />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/registration" element={<PublicRegistration />} />
 
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<DashboardLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="students" element={<Students />} />
-                  <Route path="students/:id" element={<StudentDetails />} />
-                  <Route path="coaches" element={<Coaches />} />
-                  <Route path="coaches/:id" element={<CoachDetails />} />
-                  <Route path="finance" element={<Finance />} />
-                  <Route path="calculator" element={<Calculator />} />
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<DashboardLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="students" element={<Students />} />
+                    <Route path="students/:id" element={<StudentDetails />} />
+                    <Route path="coaches" element={<Coaches />} />
+                    <Route path="coaches/:id" element={<CoachDetails />} />
+                    <Route path="finance" element={<Finance />} />
+                    <Route path="calculator" element={<Calculator />} />
 
-                  <Route path="schedule" element={<Schedule />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="my-work" element={<PersonalDashboard />} />
-                  <Route path="admin/cameras" element={<AdminCameras />} />
+                    <Route path="schedule" element={<Schedule />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="my-work" element={<PersonalDashboard />} />
+                    <Route path="admin/cameras" element={<AdminCameras />} />
 
-                  {/* Attendance Pages */}
-                  <Route path="attendance/students" element={<StudentAttendance />} />
-                  <Route path="attendance/staff" element={<StaffAttendance />} />
-                  <Route path="attendance/pt" element={<PTAttendance />} />
-                  <Route path="evaluations" element={<Evaluations />} />
+                    {/* Attendance Pages */}
+                    <Route path="attendance/students" element={<StudentAttendance />} />
+                    <Route path="attendance/staff" element={<StaffAttendance />} />
+                    <Route path="attendance/pt" element={<PTAttendance />} />
+                    <Route path="evaluations" element={<Evaluations />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </WalkieTalkieWrapper>
       </ThemeProvider>
     </CurrencyProvider>
   )
+}
+
+function WalkieTalkieWrapper({ children }: { children: React.ReactNode }) {
+  const { userProfile } = useTheme();
+  return (
+    <WalkieTalkieProvider
+      userId={userProfile?.id || null}
+      role={userProfile?.role || null}
+    >
+      {children}
+    </WalkieTalkieProvider>
+  );
 }
 
 export default App;

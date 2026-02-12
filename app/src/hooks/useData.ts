@@ -161,7 +161,7 @@ export function useSubscriptionPlans() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('subscription_plans')
-                .select('id, name, duration_months, price, created_at')
+                .select('id, name, duration_months, price, sessions_per_week, created_at')
                 .order('duration_months', { ascending: true });
             if (error) {
                 console.error('Error fetching subscription plans:', error);
@@ -175,7 +175,7 @@ export function useSubscriptionPlans() {
 
 export function useAddPlan() {
     return useMutation({
-        mutationFn: async (plan: { name: string, duration_months: number, price: number }) => {
+        mutationFn: async (plan: { name: string, duration_months: number, price: number, sessions_per_week: number }) => {
             const { data, error } = await supabase
                 .from('subscription_plans')
                 .insert([plan])
@@ -201,13 +201,14 @@ export function useDeletePlan() {
 
 export function useUpdatePlan() {
     return useMutation({
-        mutationFn: async (plan: { id: string, name: string, duration_months: number, price: number }) => {
+        mutationFn: async (plan: { id: string, name: string, duration_months: number, price: number, sessions_per_week: number }) => {
             const { data, error } = await supabase
                 .from('subscription_plans')
                 .update({
                     name: plan.name,
                     duration_months: plan.duration_months,
-                    price: plan.price
+                    price: plan.price,
+                    sessions_per_week: plan.sessions_per_week
                 })
                 .eq('id', plan.id)
                 .select()
@@ -392,17 +393,7 @@ export function useAddRefund() {
                 .single();
             if (error) throw error;
 
-            // Create notification for admin
-            if (studentData) {
-                await supabase.from('notifications').insert({
-                    type: 'payment',
-                    title: 'Refund Issued',
-                    message: `Refund: ${refund.amount.toFixed(2)} to ${studentData.full_name}`,
-                    user_id: null,
-                    is_read: false
-                });
-            }
-
+            // Notification will be handled by DB Trigger on_refund_created
             return data;
         },
     });
@@ -447,15 +438,7 @@ export function useAddExpense() {
                 .single();
             if (error) throw error;
 
-            // Create notification for admin
-            await supabase.from('notifications').insert({
-                type: 'payment',
-                title: 'Expense Recorded',
-                message: `Expense: ${expense.amount.toFixed(2)} - ${expense.description}`,
-                user_id: null,
-                is_read: false
-            });
-
+            // Notification will be handled by DB Trigger on_expense_created
             return data;
         },
     });

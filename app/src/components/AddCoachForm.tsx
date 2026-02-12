@@ -35,8 +35,8 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
         password: '',
         role: initialData?.role || 'coach',
         specialty: initialData?.specialty || '',
-        pt_rate: initialData?.pt_rate?.toString() || '',
-        salary: initialData?.salary?.toString() || '',
+        pt_rate: initialData?.pt_rate?.toString() || '0',
+        salary: initialData?.salary?.toString() || '0',
         avatar_url: initialData?.avatar_url || '',
         image_pos_x: initialData?.image_pos_x ?? 50,
         image_pos_y: initialData?.image_pos_y ?? 50
@@ -212,9 +212,6 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                             <h2 className="text-xl font-black text-white tracking-widest uppercase mb-1 drop-shadow-lg leading-tight">
                                 {initialData ? 'Edit Staff Member' : 'New Staff Member'}
                             </h2>
-                            <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">
-                                {initialData ? 'Update Staff Credentials' : 'Register Staff Member'}
-                            </p>
                         </div>
                         <button
                             onClick={onClose}
@@ -226,7 +223,14 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                 </div>
 
                 {/* Scrollable Form Body */}
-                <form onSubmit={handleSubmit} className="relative z-10 px-8 py-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                <form onSubmit={handleSubmit} className="relative z-10 px-8 py-6 overflow-y-auto custom-scrollbar flex-1 space-y-6" autoComplete="off">
+                    {/* Fake fields to catch browser autofill */}
+                    <div className="sr-only" aria-hidden="true">
+                        <input type="text" name="fake-username" tabIndex={-1} autoComplete="off" />
+                        <input type="email" name="fake-email" tabIndex={-1} autoComplete="off" />
+                        <input type="password" name="fake-password" tabIndex={-1} autoComplete="off" />
+                    </div>
+
 
                     {/* Full Name */}
                     <div className="space-y-2 group/field">
@@ -236,17 +240,8 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                             type="text"
                             className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-xs tracking-wide font-bold"
                             value={formData.full_name}
-                            onChange={(e) => {
-                                const newName = e.target.value;
-                                const emailName = newName.toLowerCase().replace(/\s+/g, '');
-                                setFormData(prev => ({
-                                    ...prev,
-                                    full_name: newName,
-                                    email: prev.email === '' || prev.email.includes(`${prev.full_name.toLowerCase().replace(/\s+/g, '')}@epic.com`)
-                                        ? (emailName ? `${emailName}@epic.com` : '')
-                                        : prev.email
-                                }));
-                            }}
+                            onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                            autoComplete="off"
                         />
                     </div>
 
@@ -332,31 +327,36 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                         </div>
                     )}
 
-                    {/* Email & Phone Grid */}
+                    {/* Email & Password Grid */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2 group/field">
                             <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Email Address</label>
                             <input
                                 required
-                                type="email"
+                                type="text"
+                                autoComplete="off"
+                                name="new-staff-email"
                                 className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-[10px] font-bold"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2 group/field">
-                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Phone Number</label>
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Password</label>
                             <input
-                                required
-                                type="tel"
-                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-[10px] font-bold"
-                                value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                required={!initialData}
+                                type="password"
+                                autoComplete="new-password"
+                                name="new-staff-password"
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-xs font-bold"
+                                value={formData.password}
+                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                placeholder={initialData ? "••••••" : ""}
                             />
                         </div>
                     </div>
 
-                    {/* Role & Password Grid */}
+                    {/* Role & Phone Grid */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2 group/field">
                             <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Role</label>
@@ -378,14 +378,14 @@ export default function AddCoachForm({ onClose, onSuccess, initialData }: AddCoa
                         </div>
 
                         <div className="space-y-2 group/field">
-                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Password</label>
+                            <label className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 ml-1 group-focus-within/field:text-primary transition-colors">Phone Number</label>
                             <input
-                                required={!initialData}
-                                type="password"
-                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-xs font-bold"
-                                value={formData.password}
-                                onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                placeholder={initialData ? "••••••" : ""}
+                                required
+                                type="tel"
+                                autoComplete="off"
+                                className="w-full px-5 py-3 bg-white/[0.02] border border-white/5 rounded-2xl focus:border-primary/40 outline-none transition-all text-white placeholder:text-white/10 text-[10px] font-bold"
+                                value={formData.phone}
+                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
                             />
                         </div>
                     </div>

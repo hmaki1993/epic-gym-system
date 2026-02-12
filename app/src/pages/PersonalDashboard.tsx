@@ -11,13 +11,14 @@ import { useTheme } from '../context/ThemeContext';
 import GroupsList from '../components/GroupsList';
 import ConfirmModal from '../components/ConfirmModal';
 import GroupFormModal from '../components/GroupFormModal';
+import GroupFormModal from '../components/GroupFormModal';
 
 export default function PersonalDashboard() {
     const { t } = useTranslation();
     const { currency } = useCurrency();
     const { role } = useOutletContext<{ role: string }>();
 
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'coach') {
         return <Navigate to="/" replace />;
     }
     const [coachId, setCoachId] = useState<string | null>(null);

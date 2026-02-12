@@ -45,14 +45,7 @@ export default function AddExpenseForm({ onClose, onSuccess, onAdd }: AddExpense
                 expense_date: formData.expense_date
             });
 
-            // Notification: Expense (Admin + Reception)
-            await supabase.from('notifications').insert({
-                type: 'financial',
-                title: 'Expense Recorded',
-                message: `Expense: ${parseFloat(formData.amount).toFixed(2)} ${currency.code} - ${formData.description}`,
-                target_role: 'admin_reception',
-                is_read: false
-            });
+            // Trigger will handle notification for 'Expense Recorded'
 
             toast.success('Expense added successfully');
             onSuccess();

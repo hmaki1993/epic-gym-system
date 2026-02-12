@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Calendar, CheckCircle, XCircle, User, Plus, Users, Wallet } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, XCircle, User, Plus, Users, Wallet, ClipboardCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -14,6 +14,7 @@ import PremiumClock from '../components/PremiumClock';
 import { useTheme } from '../context/ThemeContext';
 import ConfirmModal from '../components/ConfirmModal';
 import { RotateCcw, Trash2, TrendingUp, ChevronRight, Globe } from 'lucide-react';
+import BatchAssessmentModal from '../components/BatchAssessmentModal';
 
 export default function HeadCoachDashboard() {
     const { t, i18n } = useTranslation();
@@ -30,6 +31,9 @@ export default function HeadCoachDashboard() {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [coachId, setCoachId] = useState<string | null>(null);
     const [savedSessions, setSavedSessions] = useState<any[]>([]);
+    const [pendingAssignments, setPendingAssignments] = useState<any[]>([]);
+    const [showBatchTest, setShowBatchTest] = useState(false);
+    const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
 
     // Modals
     const [showGroupModal, setShowGroupModal] = useState(false);
@@ -120,6 +124,9 @@ export default function HeadCoachDashboard() {
                                 setDailyTotalSeconds(0);
                             }
                         }
+
+                        // Fetch Assignments
+                        fetchAssignments(coachData.id);
                     }
                 }
             } catch (err) {
@@ -129,6 +136,25 @@ export default function HeadCoachDashboard() {
 
         initializeDashboard();
     }, []);
+
+    useEffect(() => {
+        if (!coachId) return;
+
+        const assessmentsChannel = supabase.channel(`assessments_changes_${coachId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'skill_assessments',
+                filter: `coach_id=eq.${coachId}`
+            }, () => {
+                fetchAssignments(coachId);
+            })
+            .subscribe();
+
+        return () => {
+            assessmentsChannel.unsubscribe();
+        };
+    }, [coachId]);
 
     const handleCheckIn = async () => {
         if (!coachId) return toast.error(t('common.error'));
@@ -193,6 +219,54 @@ export default function HeadCoachDashboard() {
         }
     };
 
+    const fetchAssignments = async (cid: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('skill_assessments')
+                .select(`
+                    id,
+                    title,
+                    date,
+                    coach_id,
+                    skills,
+                    students(id, full_name, coaches(full_name))
+                `)
+                .eq('coach_id', cid)
+                .eq('evaluation_status', 'assigned')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (data) {
+                const grouped = data.reduce((acc: any, curr: any) => {
+                    const key = `${curr.title}-${curr.date}`;
+                    if (!acc[key]) {
+                        acc[key] = {
+                            key,
+                            title: curr.title,
+                            date: curr.date,
+                            assessorId: curr.coach_id,
+                            skills: curr.skills,
+                            students: []
+                        };
+                    }
+                    acc[key].students.push({
+                        id: curr.students?.id,
+                        assessment_id: curr.id,
+                        full_name: curr.students?.full_name,
+                        coach_name: (curr.students?.coaches as any)?.[0]?.full_name || (curr.students?.coaches as any)?.full_name || '',
+                        status: 'present'
+                    });
+                    return acc;
+                }, {});
+
+                setPendingAssignments(Object.values(grouped));
+            }
+        } catch (err) {
+            console.error('Error fetching assignments:', err);
+        }
+    };
+
 
 
 
@@ -215,10 +289,13 @@ export default function HeadCoachDashboard() {
                             <span className="premium-gradient-text">{fullName || t('roles.head_coach')}</span>
                         </h1>
                     </div>
+
                     {/* Compact Date & Clock Widget */}
-                    {settings.clock_position === 'dashboard' && (
-                        <PremiumClock className="!bg-white/[0.03] !border-white/10 !rounded-full !shadow-lg backdrop-blur-xl" />
-                    )}
+                    <div className="flex items-center gap-4">
+                        {settings.clock_position === 'dashboard' && (
+                            <PremiumClock className="!bg-white/[0.03] !border-white/10 !rounded-full !shadow-lg backdrop-blur-xl" />
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -285,10 +362,19 @@ export default function HeadCoachDashboard() {
                             <span className="text-[10px] font-black text-white uppercase tracking-widest text-center">Add Student</span>
                         </button>
                         <button
-                            onClick={() => setShowGroupModal(true)}
+                            onClick={() => navigate('/evaluations')}
                             className="p-8 rounded-[2rem] bg-primary/5 hover:bg-primary/20 border border-primary/10 hover:border-primary/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
                         >
                             <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary group-hover/action:scale-110 transition-transform shadow-lg shadow-primary/20">
+                                <ClipboardCheck className="w-6 h-6" />
+                            </div>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest text-center">Evaluation Hub</span>
+                        </button>
+                        <button
+                            onClick={() => setShowGroupModal(true)}
+                            className="p-8 rounded-[2rem] bg-indigo-500/5 hover:bg-indigo-500/20 border border-indigo-500/10 hover:border-indigo-500/40 transition-all flex flex-col items-center justify-center gap-4 group/action"
+                        >
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover/action:scale-110 transition-transform shadow-lg shadow-indigo-500/20">
                                 <Users className="w-6 h-6" />
                             </div>
                             <span className="text-[10px] font-black text-white uppercase tracking-widest text-center">Create Group</span>
@@ -296,6 +382,54 @@ export default function HeadCoachDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Pending Assignments Section */}
+            {pendingAssignments.length > 0 && (
+                <div className="glass-card p-10 rounded-[2.5rem] border border-amber-500/20 shadow-[0_20px_50px_rgba(245,158,11,0.1)] relative overflow-hidden group bg-amber-500/[0.02]">
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <div>
+                            <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                                <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-500 border border-amber-500/20"><Calendar className="w-6 h-6" /></div>
+                                Pending Assessments
+                            </h2>
+                            <p className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.4em] mt-2">Assigned to you</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+                        {pendingAssignments.map((assignment) => (
+                            <div
+                                key={assignment.key}
+                                onClick={() => {
+                                    setSelectedAssignment(assignment);
+                                    setShowBatchTest(true);
+                                }}
+                                className="p-7 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-amber-500/40 transition-all cursor-pointer group/assignment shadow-xl"
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-black text-white uppercase tracking-tight text-lg truncate">{assignment.title}</h3>
+                                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover/assignment:scale-110 transition-transform">
+                                        <ChevronRight className="w-5 h-5" />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-5 text-white/40 mb-6">
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                        <Users className="w-4 h-4" />
+                                        {assignment.students.length} Students
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                        <TrendingUp className="w-4 h-4" />
+                                        {assignment.skills.length} Skills
+                                    </div>
+                                </div>
+                                <button className="w-full py-4 rounded-xl bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 group-hover/assignment:translate-y-[-2px] transition-all">
+                                    Grade Now
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Live Floor View (Admin Mode) */}
             <div className="rounded-[3rem] overflow-hidden border border-white/5 shadow-premium">
@@ -339,6 +473,23 @@ export default function HeadCoachDashboard() {
                     />
                 )
             }
+
+            {showBatchTest && (
+                <BatchAssessmentModal
+                    isOpen={showBatchTest}
+                    onClose={() => {
+                        setShowBatchTest(false);
+                        setSelectedAssignment(null);
+                    }}
+                    onSuccess={() => {
+                        setShowBatchTest(false);
+                        setSelectedAssignment(null);
+                        if (coachId) fetchAssignments(coachId);
+                    }}
+                    currentCoachId={coachId}
+                    initialAssignment={selectedAssignment}
+                />
+            )}
         </div >
     );
 }

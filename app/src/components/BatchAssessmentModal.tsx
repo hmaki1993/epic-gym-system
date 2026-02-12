@@ -114,11 +114,9 @@ export default function BatchAssessmentModal({ isOpen, onClose, onSuccess, curre
             .select(`
 id,
     full_name,
-    photo_url,
     training_groups(name),
     coaches(full_name)
         `)
-            .eq('is_active', true)
             .order('full_name');
         if (data) setAllStudents(data);
     };
@@ -131,23 +129,29 @@ id,
     const handleGroupSelect = async (groupId: string) => {
         setIsMixedMode(false);
         setSelectedGroupId(groupId);
+        console.log('🔍 Fetching students for group:', groupId);
+
         // Fetch students in this group
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('students')
-            .select('id, full_name, photo_url, coaches(full_name)')
-            .eq('training_group_id', groupId)
-            .eq('is_active', true);
+            .select('id, full_name, coaches(full_name)')
+            .eq('training_group_id', groupId);
+
+        console.log('📊 Query result:', { data, error, count: data?.length });
+        if (error) console.error('❌ Error fetching students:', error);
 
         if (data) {
             const studentList = data.map(s => ({
                 id: s.id,
                 assessment_id: null,
                 full_name: s.full_name,
-                photo_url: s.photo_url,
                 coach_name: (s.coaches as any)?.[0]?.full_name || (s.coaches as any)?.full_name || '',
                 status: 'present'
             }));
+            console.log('✅ Setting students:', studentList);
             setStudents(studentList);
+        } else {
+            console.warn('⚠️ No data returned from query');
         }
     };
 
@@ -202,7 +206,10 @@ id,
     };
 
     const handleSave = async (evaluationStatus: 'completed' | 'assigned' = 'completed') => {
-        if (!title.trim() || selectedSkills.length === 0 || students.length === 0) return;
+        if (!title.trim()) return toast.error('Please enter an assessment title');
+        if (selectedSkills.length === 0) return toast.error('Please add at least one skill');
+        if (students.length === 0) return toast.error('No students selected for this assessment');
+
         setLoading(true);
         const toastId = toast.loading(evaluationStatus === 'assigned' ? 'Assigning assessment...' : 'Saving assessments...');
 
@@ -658,7 +665,13 @@ id,
                     <div className="flex gap-3">
                         {step === 2 && !initialAssignment && (
                             <button
-                                onClick={() => handleSave('assigned')}
+                                onClick={() => {
+                                    if (assessorId && assessorId !== currentCoachId) {
+                                        handleSave('assigned');
+                                    } else {
+                                        toast.error('Please select an Assessing Coach first');
+                                    }
+                                }}
                                 disabled={loading || !title || students.length === 0 || selectedSkills.length === 0}
                                 className={`px-6 py-3 rounded-xl transition-all font-black uppercase tracking-widest text-[10px] flex items-center gap-2 border ${assessorId && assessorId !== currentCoachId
                                     ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border-emerald-400 scale-105'
@@ -674,7 +687,7 @@ id,
                             <button
                                 onClick={() => {
                                     if (step === 1) {
-                                        if (!title) return toast.error('Please enter a title');
+                                        if (!title.trim()) return toast.error('Please enter an assessment title');
                                         if (!selectedGroupId) return toast.error('Please select a group');
 
                                         if (isMixedMode) {
@@ -685,11 +698,12 @@ id,
                                                     id: s.id,
                                                     assessment_id: null,
                                                     full_name: s.full_name,
-                                                    photo_url: s.photo_url,
                                                     coach_name: (s.coaches as any)?.[0]?.full_name || (s.coaches as any)?.full_name || '',
                                                     status: 'present'
                                                 }));
                                             setStudents(picked);
+                                        } else {
+                                            if (students.length === 0) return toast.error('No students found in this group');
                                         }
                                     }
                                     if (step === 2 && selectedSkills.length === 0) return toast.error('Please add at least one skill');
