@@ -11,7 +11,6 @@ import { useTheme } from '../context/ThemeContext';
 import GroupsList from '../components/GroupsList';
 import ConfirmModal from '../components/ConfirmModal';
 import GroupFormModal from '../components/GroupFormModal';
-import GroupFormModal from '../components/GroupFormModal';
 
 export default function PersonalDashboard() {
     const { t } = useTranslation();
